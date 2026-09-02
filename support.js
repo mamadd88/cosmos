@@ -1,6 +1,38 @@
 // GENERATED from dc-runtime/src/*.ts — do not edit. Rebuild with `cd dc-runtime && bun run build`.
 "use strict";
 (() => {
+  try {
+    var makeFetchWritable = function(obj) {
+      if (!obj) return;
+      try {
+        var desc = Object.getOwnPropertyDescriptor(obj, 'fetch');
+        if (desc && (!desc.set || !desc.writable)) {
+          var _fn = obj.fetch;
+          Object.defineProperty(obj, 'fetch', {
+            get: function() { return _fn; },
+            set: function(val) { _fn = val; },
+            configurable: true,
+            enumerable: desc.enumerable !== undefined ? desc.enumerable : true
+          });
+        }
+      } catch (_) {}
+    };
+    if (typeof window !== "undefined") {
+      makeFetchWritable(window);
+      if (typeof Window !== "undefined" && Window.prototype) makeFetchWritable(Window.prototype);
+      var wDesc = Object.getOwnPropertyDescriptor(window, 'fetch');
+      if (!wDesc || !wDesc.set) {
+        var _currFetch = window.fetch;
+        Object.defineProperty(window, 'fetch', {
+          get: function() { return _currFetch; },
+          set: function(val) { _currFetch = val; },
+          configurable: true,
+          enumerable: true
+        });
+      }
+    }
+  } catch (_) {}
+
   var __defProp = Object.defineProperty;
   var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
   var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
@@ -156,11 +188,16 @@
     runtime.setRootName(rootName);
     runtime.adoptParsed(rootName, parsed);
     if (!window.__resources) {
-      fetch(location.href).then((res) => res.ok ? res.text() : "").then((t) => {
-        const raw = t ? parseDcText(t) : null;
-        if (raw?.template) runtime.updateHtml(rootName, raw.template);
-      }).catch(() => {
-      });
+      try {
+        const fetchFn = typeof window !== "undefined" && typeof window.fetch === "function" ? window.fetch.bind(window) : (typeof fetch === "function" ? fetch : null);
+        if (fetchFn) {
+          fetchFn(location.href).then((res) => res.ok ? res.text() : "").then((t) => {
+            const raw = t ? parseDcText(t) : null;
+            if (raw?.template) runtime.updateHtml(rootName, raw.template);
+          }).catch(() => {
+          });
+        }
+      } catch (_) {}
     }
     const dc = doc.querySelector("x-dc");
     const hostEl = doc.createElement("div");
@@ -1203,7 +1240,8 @@
       const p = ready.then(() => {
         const pre = bundledBlob(url);
         if (pre) return pre.text();
-        return fetch(url).then((r) => {
+        const fetchFn = typeof window !== "undefined" && typeof window.fetch === "function" ? window.fetch.bind(window) : fetch;
+        return fetchFn(url).then((r) => {
           if (!r.ok) throw new Error("HTTP " + r.status);
           return r.text();
         });
@@ -1648,7 +1686,8 @@
       const pre = res ? res[url] : void 0;
       const target = typeof pre === "string" && pre ? pre : url;
       const blob = bundledBlob(target);
-      (blob ? blob.text() : fetch(target).then((res2) => {
+      const fetchFn = typeof window !== "undefined" && typeof window.fetch === "function" ? window.fetch.bind(window) : fetch;
+      (blob ? blob.text() : fetchFn(target).then((res2) => {
         if (!res2.ok) {
           console.error(
             '[dc-runtime] sibling fetch for "' + name + '" failed:',
