@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cosmos</title>
+<meta name="description" content="Application de gouvernance personnelle et de suivi des domaines de vie">
+<meta property="og:title" content="Cosmos">
+<meta property="og:description" content="Application de gouvernance personnelle et de suivi des domaines de vie">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;background:#09090b;color:#a1a1aa;font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:#fafafa;text-decoration:none}a:hover{color:#e4e4e7}
+*{box-sizing:border-box}
+input,textarea,select,button{font-family:inherit}
+input::placeholder,textarea::placeholder{color:#52525b}
+input:focus,textarea:focus{outline:none;border-color:#52525b !important}
+::-webkit-scrollbar{width:9px;height:9px}::-webkit-scrollbar-thumb{background:#27272a;border-radius:6px}::-webkit-scrollbar-track{background:transparent}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+@keyframes popin{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes slidein{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:none}}
+</style>
+</helmet>
+<div style="min-height:100vh;display:flex;flex-direction:column;font-size:13px">
+
+<div style="position:sticky;top:0;z-index:20;height:58px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:0 24px;background:rgba(9,9,11,0.9);backdrop-filter:blur(12px);border-bottom:1px solid rgba(39,39,42,0.8)">
+  <div style="font-size:14px;font-weight:700;letter-spacing:0.22em;color:#fafafa;text-transform:uppercase">Cosmos</div>
+  <div style="display:flex;padding:4px;border-radius:13px;border:1px solid rgba(39,39,42,0.8);background:rgba(24,24,27,0.5);gap:2px">
+    <div onClick="{{ tabTable.onClick }}" style="padding:6px 14px;border-radius:10px;font-size:12.5px;font-weight:500;cursor:pointer;color:{{ tabTable.color }};background:{{ tabTable.bg }};border:1px solid {{ tabTable.border }}" style-hover="color:#f4f4f5">Tableau</div>
+    <div onClick="{{ tabTpl.onClick }}" style="padding:6px 14px;border-radius:10px;font-size:12.5px;font-weight:500;cursor:pointer;color:{{ tabTpl.color }};background:{{ tabTpl.bg }};border:1px solid {{ tabTpl.border }}" style-hover="color:#f4f4f5">Modèles</div>
+    <div onClick="{{ tabStats.onClick }}" style="padding:6px 14px;border-radius:10px;font-size:12.5px;font-weight:500;cursor:pointer;color:{{ tabStats.color }};background:{{ tabStats.bg }};border:1px solid {{ tabStats.border }}" style-hover="color:#f4f4f5">Statistiques</div>
+    <div onClick="{{ tabJournal.onClick }}" style="padding:6px 14px;border-radius:10px;font-size:12.5px;font-weight:500;cursor:pointer;color:{{ tabJournal.color }};background:{{ tabJournal.bg }};border:1px solid {{ tabJournal.border }}" style-hover="color:#f4f4f5">Journal</div>
+  </div>
+  <div style="display:flex;justify-content:flex-end;align-items:center;gap:8px;position:relative">
+    <button onClick="{{ toggleDataMenu }}" title="Données" style="width:32px;height:32px;border-radius:10px;border:1px solid #27272a;background:#09090b;color:#a1a1aa;cursor:pointer;display:inline-flex;align-items:center;justify-content:center" style-hover="color:#f4f4f5;border-color:#3f3f46"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M3 5v14c0 1.7 4 3 9 3s9-1.3 9-3V5"></path><path d="M3 12c0 1.7 4 3 9 3s9-1.3 9-3"></path></svg></button>
+    <input type="file" accept="application/json,.json" ref="{{ importRef }}" onChange="{{ importJson }}" style="display:none">
+    <sc-if value="{{ dataMenu }}" hint-placeholder-val="{{ false }}">
+      <div style="position:absolute;top:40px;right:0;z-index:50;width:280px;background:#0c0c0e;border:1px solid rgba(39,39,42,0.9);border-radius:14px;padding:8px;display:flex;flex-direction:column;gap:2px;animation:popin 150ms ease">
+        <div style="padding:8px 10px 6px;font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:0.09em;color:#52525b">Données · sauvegardées localement</div>
+        <button onClick="{{ exportJson }}" style="text-align:left;background:transparent;border:none;color:#f4f4f5;padding:9px 10px;border-radius:8px;font-size:12.5px;cursor:pointer;display:flex;flex-direction:column;gap:2px" style-hover="background:rgba(39,39,42,0.55)"><span>Exporter en JSON</span><span style="font-size:11px;color:#71717a">cosmos, mini-cosmos, étapes, historique</span></button>
+        <button onClick="{{ openImport }}" style="text-align:left;background:transparent;border:none;color:#f4f4f5;padding:9px 10px;border-radius:8px;font-size:12.5px;cursor:pointer;display:flex;flex-direction:column;gap:2px" style-hover="background:rgba(39,39,42,0.55)"><span>Importer un JSON</span><span style="font-size:11px;color:#71717a">remplace les données actuelles</span></button>
+        <div style="height:1px;background:rgba(39,39,42,0.8);margin:4px 6px"></div>
+        <sc-if value="{{ confirmReset }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;border-radius:8px;background:rgba(244,63,94,0.1);font-size:12px;color:#fb7185">Tout remplacer par l'exemple ?<span style="display:flex;gap:6px"><button onClick="{{ cancelReset }}" style="background:transparent;border:none;color:#a1a1aa;font-size:12px;cursor:pointer">Non</button><button onClick="{{ resetData }}" style="background:#fb7185;border:none;color:#09090b;font-weight:600;font-size:12px;padding:4px 10px;border-radius:8px;cursor:pointer">Oui</button></span></div>
+        </sc-if>
+        <button onClick="{{ askReset }}" style="text-align:left;background:transparent;border:none;color:#a1a1aa;padding:9px 10px;border-radius:8px;font-size:12.5px;cursor:pointer" style-hover="background:rgba(39,39,42,0.55);color:#fb7185">Restaurer les données d'exemple</button>
+      </div>
+    </sc-if>
+    <button onClick="{{ openCosmos }}" style="background:#09090b;color:#a1a1aa;border:1px solid #27272a;padding:7px 12px;border-radius:10px;font-size:12.5px;font-weight:500;cursor:pointer;white-space:nowrap" style-hover="color:#f4f4f5;border-color:#3f3f46">+ cosmos</button>
+    <button onClick="{{ openMini }}" style="background:#fafafa;color:#09090b;border:none;padding:7px 13px;border-radius:10px;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap" style-hover="background:#e4e4e7">+ mini-cosmos</button>
+  </div>
+</div>
+
+<sc-if value="{{ isJournal }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;align-items:center;justify-content:center;padding:28px 24px 0;width:min(100%,1100px);margin:0 auto">
+  <input value="{{ jQuery }}" onChange="{{ setJQuery }}" placeholder="Rechercher un mini-cosmos, un cosmos, un détail…" style="width:420px;background:#09090b;border:1px solid #27272a;border-radius:10px;padding:9px 12px;font-size:12.5px;color:#f4f4f5">
+</div>
+<div style="display:flex;align-items:center;justify-content:center;gap:6px;padding:20px 24px 0;flex-wrap:wrap;width:min(100%,1100px);margin:0 auto">
+  <sc-for list="{{ jTypeChips }}" as="c" hint-placeholder-count="9">
+    <button onClick="{{ c.onClick }}" style="padding:5px 11px;border-radius:99px;font-size:12px;cursor:pointer;color:{{ c.color }};background:{{ c.bg }};border:1px solid {{ c.border }};display:flex;gap:6px;align-items:center"><span style="width:{{ c.dotW }};height:6px;border-radius:99px;background:{{ c.dot }}"></span>{{ c.label }} <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#fafafa">{{ c.count }}</span></button>
+  </sc-for>
+</div>
+<div style="display:flex;flex-direction:column;gap:14px;padding:24px 24px 32px;width:min(100%,1100px);margin:0 auto">
+  <sc-if value="{{ jEmpty }}" hint-placeholder-val="{{ false }}"><div style="padding:40px;text-align:center;font-size:12.5px;color:#52525b;border:1px dashed rgba(39,39,42,0.8);border-radius:16px">aucune entrée</div></sc-if>
+  <sc-for list="{{ jGroups }}" as="g" hint-placeholder-count="3">
+    <div style="background:rgba(24,24,27,0.5);backdrop-filter:blur(12px);border:1px solid rgba(39,39,42,0.8);border-radius:16px;overflow:hidden">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:rgba(24,24,27,0.75);border-bottom:1px solid rgba(39,39,42,0.8)"><span style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#fafafa">{{ g.label }}</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#71717a">{{ g.count }}</span></div>
+      <sc-for list="{{ g.items }}" as="e" hint-placeholder-count="4">
+        <div style="display:grid;grid-template-columns:48px 96px 120px 1fr 90px;gap:14px;align-items:center;padding:10px 16px;border-bottom:1px solid rgba(39,39,42,0.35)">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#71717a">{{ e.time }}</span>
+          <span><span style="padding:3px 9px;border-radius:99px;font-size:11px;font-weight:600;color:{{ e.typeColor }};background:rgba(39,39,42,0.55)">{{ e.typeLabel }}</span></span>
+          <span style="display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font-size:12.5px;font-weight:600;color:#fafafa;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ e.mini }}</span><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#52525b;text-transform:uppercase">{{ e.cosmos }}</span></span>
+          <span style="font-size:12.5px;color:#d4d4d8">{{ e.detail }}</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:{{ e.authorColor }};text-align:right">{{ e.author }}</span>
+        </div>
+      </sc-for>
+    </div>
+  </sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{ isStats }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:28px 24px 0">
+  <div style="display:flex;flex-direction:column;gap:4px">
+    <div style="font-size:20px;font-weight:700;letter-spacing:-0.01em;color:#fafafa">Statistiques</div>
+    <div style="font-size:11.5px;color:#71717a"><span style="font-family:'JetBrains Mono',monospace">{{ openCount }}</span> mini-cosmos ouverts · <span style="font-family:'JetBrains Mono',monospace">{{ closedCount }}</span> clôturés</div>
+  </div>
+  <div style="display:flex;gap:6px">
+    <sc-for list="{{ periodChips }}" as="c" hint-placeholder-count="4">
+      <button onClick="{{ c.onClick }}" style="padding:5px 11px;border-radius:99px;font-size:12px;cursor:pointer;color:{{ c.color }};background:{{ c.bg }};border:1px solid {{ c.border }};font-family:'JetBrains Mono',monospace">{{ c.label }}</button>
+    </sc-for>
+  </div>
+</div>
+<div style="display:flex;align-items:center;justify-content:center;padding:24px 24px 0">
+  <div style="display:flex;align-items:center;gap:22px;padding:10px 20px;border-radius:14px;border:1px solid rgba(39,39,42,0.8);background:rgba(24,24,27,0.5);backdrop-filter:blur(12px)">
+    <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="8">
+      <sc-if value="{{ k.isSep }}" hint-placeholder-val="{{ false }}"><span style="width:1px;height:26px;background:rgba(39,39,42,0.8)"></span></sc-if>
+      <sc-if value="{{ k.notSep }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:2px;min-width:44px">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:600;line-height:1;color:{{ k.color }}">{{ k.value }}</span>
+          <span style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:#52525b;white-space:nowrap">{{ k.label }}</span>
+        </div>
+      </sc-if>
+    </sc-for>
+  </div>
+</div>
+<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:14px;padding:24px 24px 0">
+  <sc-for list="{{ activity }}" as="m" hint-placeholder-count="4">
+    <div style="background:rgba(24,24,27,0.5);backdrop-filter:blur(12px);border:1px solid rgba(39,39,42,0.8);border-radius:16px;padding:18px 20px;display:flex;flex-direction:column;gap:8px">
+      <div style="font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:0.09em;color:#52525b">{{ m.label }} · {{ periodLabel }}</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:32px;font-weight:600;line-height:1;color:{{ m.color }}">{{ m.value }}</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:{{ m.deltaColor }}">{{ m.deltaLabel }}</div>
+    </div>
+  </sc-for>
+    <div style="background:rgba(24,24,27,0.5);backdrop-filter:blur(12px);border:1px solid rgba(39,39,42,0.8);border-radius:16px;padding:18px 20px;display:flex;flex-direction:column;gap:8px">
+      <div style="font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:0.09em;color:#52525b">étapes / semaine · {{ periodLabel }}</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:32px;font-weight:600;line-height:1;color:#34d399">{{ stepsPerWeek }}</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#52525b">rythme moyen</div>
+    </div>
+</div>
+<div style="display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:14px;padding:14px 24px 0;align-items:start">
+    <div style="background:rgba(24,24,27,0.5);backdrop-filter:blur(12px);border:1px solid rgba(39,39,42,0.8);border-radius:16px;overflow:hidden">
+      <div style="padding:12px 16px;background:rgba(24,24,27,0.75);border-bottom:1px solid rgba(39,39,42,0.8);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#fafafa">Répartition par cosmos</div>
+      <div style="display:grid;grid-template-columns:minmax(110px,150px) minmax(60px,1fr) 48px 48px 56px 56px 70px;gap:0 12px;padding:9px 16px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:#52525b;border-bottom:1px solid rgba(39,39,42,0.35)">
+        <span>Cosmos</span><span>Mini-cosmos</span><span style="text-align:right">Conq.</span><span style="text-align:right">Maint.</span><span style="text-align:right;color:#fbbf24">Dérive</span><span style="text-align:right;color:#fb7185">Danger</span><span style="text-align:right">Prog. moy.</span>
+      </div>
+      <sc-for list="{{ repartition }}" as="c" hint-placeholder-count="4">
+        <div style="display:grid;grid-template-columns:minmax(110px,150px) minmax(60px,1fr) 48px 48px 56px 56px 70px;gap:0 12px;align-items:center;padding:11px 16px;border-bottom:1px solid rgba(39,39,42,0.35);font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#d4d4d8">
+          <span style="display:flex;align-items:center;gap:8px;font-family:Inter,system-ui,sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#fafafa"><span style="width:3px;height:14px;border-radius:2px;background:{{ c.color }}"></span>{{ c.name }}</span>
+          <span style="display:flex;align-items:center;gap:10px"><span style="flex:1;height:6px;border-radius:3px;background:#27272a;overflow:hidden"><span style="display:block;height:100%;border-radius:3px;background:{{ c.color }};width:{{ c.barW }}"></span></span><span style="min-width:20px;text-align:right">{{ c.total }}</span></span>
+          <span style="text-align:right;color:#c084fc">{{ c.conq }}</span><span style="text-align:right;color:#22d3ee">{{ c.maint }}</span><span style="text-align:right;color:#fbbf24">{{ c.derive }}</span><span style="text-align:right;color:#fb7185">{{ c.danger }}</span><span style="text-align:right">{{ c.avg }}</span>
+        </div>
+      </sc-for>
+    </div>
+    <div style="background:rgba(24,24,27,0.5);backdrop-filter:blur(12px);border:1px solid rgba(39,39,42,0.8);border-radius:16px;overflow:hidden">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:rgba(24,24,27,0.75);border-bottom:1px solid rgba(39,39,42,0.8)"><span style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#fafafa">Conquêtes · progression</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#71717a">{{ conqCount }} actives</span></div>
+      <div style="display:grid;grid-template-columns:minmax(90px,1fr) minmax(80px,120px) minmax(70px,110px) minmax(60px,1fr) 44px;gap:0 14px;padding:9px 16px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:#52525b;border-bottom:1px solid rgba(39,39,42,0.35)">
+        <span>Mini-cosmos</span><span>Cosmos</span><span>Valeur actuelle</span><span>Progression</span><span style="text-align:right">%</span>
+      </div>
+      <sc-for list="{{ conquetes }}" as="x" hint-placeholder-count="6">
+        <div style="display:grid;grid-template-columns:minmax(90px,1fr) minmax(80px,120px) minmax(70px,110px) minmax(60px,1fr) 44px;gap:0 14px;align-items:center;padding:9px 16px;border-bottom:1px solid rgba(39,39,42,0.35)">
+          <span style="font-size:12.5px;font-weight:600;color:#fafafa">{{ x.name }}</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#71717a;text-transform:uppercase">{{ x.cosmos }}</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#d4d4d8">{{ x.actuel }}</span>
+          <span style="height:4px;border-radius:2px;background:#27272a;overflow:hidden"><span style="display:block;height:100%;background:{{ x.color }};width:{{ x.pct }}"></span></span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#d4d4d8;text-align:right">{{ x.pctLabel }}</span>
+        </div>
+      </sc-for>
+    </div>
+</div>
+<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;padding:14px 24px 32px;align-items:start">
+    <div style="background:rgba(24,24,27,0.5);backdrop-filter:blur(12px);border:1px solid rgba(244,63,94,0.35);border-radius:16px;overflow:hidden">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:rgba(244,63,94,0.08);border-bottom:1px solid rgba(39,39,42,0.8)"><span style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#fb7185"><span style="width:6px;height:6px;border-radius:99px;background:#fb7185;animation:pulse 2.4s ease-in-out infinite"></span>Danger</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#fb7185">{{ dangerCount }}</span></div>
+      <sc-if value="{{ noDanger }}" hint-placeholder-val="{{ false }}"><div style="padding:16px;font-size:12px;color:#52525b">aucun mini-cosmos en danger</div></sc-if>
+      <sc-for list="{{ dangerList }}" as="it" hint-placeholder-count="1">
+        <div style="display:flex;flex-direction:column;gap:6px;padding:10px 16px;border-bottom:1px solid rgba(39,39,42,0.35)">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px"><span style="font-size:12.5px;font-weight:600;color:#fafafa">{{ it.name }}</span><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#52525b;text-transform:uppercase">{{ it.cosmos }}</span></div>
+          <div style="display:flex;gap:14px;font-family:'JetBrains Mono',monospace;font-size:11px"><span style="color:#d4d4d8">actuel {{ it.actuel }}</span><span style="color:#fb7185">kill {{ it.seuil }}</span></div>
+          <div style="font-size:11.5px;color:#a1a1aa">→ {{ it.action }}</div>
+        </div>
+      </sc-for>
+    </div>
+    <div style="background:rgba(24,24,27,0.5);backdrop-filter:blur(12px);border:1px solid rgba(245,158,11,0.3);border-radius:16px;overflow:hidden">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:rgba(245,158,11,0.07);border-bottom:1px solid rgba(39,39,42,0.8)"><span style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#fbbf24"><span style="width:6px;height:6px;border-radius:99px;background:#fbbf24"></span>En dérive</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#fbbf24">{{ deriveCount }}</span></div>
+      <sc-if value="{{ noDerive }}" hint-placeholder-val="{{ false }}"><div style="padding:16px;font-size:12px;color:#52525b">aucun mini-cosmos en dérive</div></sc-if>
+      <sc-for list="{{ deriveList }}" as="it" hint-placeholder-count="1">
+        <div style="display:flex;flex-direction:column;gap:6px;padding:10px 16px;border-bottom:1px solid rgba(39,39,42,0.35)">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px"><span style="font-size:12.5px;font-weight:600;color:#fafafa">{{ it.name }}</span><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#52525b;text-transform:uppercase">{{ it.cosmos }}</span></div>
+          <div style="display:flex;gap:14px;font-family:'JetBrains Mono',monospace;font-size:11px"><span style="color:#d4d4d8">actuel {{ it.actuel }}</span><span style="color:#fbbf24">alerte {{ it.seuil }}</span></div>
+          <div style="font-size:11.5px;color:#a1a1aa">→ {{ it.action }}</div>
+        </div>
+      </sc-for>
+    </div>
+    <div style="background:rgba(24,24,27,0.5);backdrop-filter:blur(12px);border:1px solid rgba(39,39,42,0.8);border-radius:16px;overflow:hidden">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:rgba(24,24,27,0.75);border-bottom:1px solid rgba(39,39,42,0.8)"><span style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#fafafa">Clôtures à venir</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#71717a">90 prochains jours</span></div>
+      <sc-if value="{{ noClotures }}" hint-placeholder-val="{{ false }}"><div style="padding:16px;font-size:12px;color:#52525b">aucune clôture prévue sur 90 jours</div></sc-if>
+      <sc-for list="{{ clotures }}" as="m" hint-placeholder-count="2">
+        <div style="display:flex;flex-direction:column">
+          <div style="display:flex;justify-content:space-between;padding:10px 16px 4px;font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:0.09em;color:#52525b"><span>{{ m.label }}</span><span style="font-family:'JetBrains Mono',monospace">{{ m.count }}</span></div>
+          <sc-for list="{{ m.items }}" as="it" hint-placeholder-count="2">
+            <div style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:8px 16px;border-bottom:1px solid rgba(39,39,42,0.35)">
+              <span style="display:flex;flex-direction:column;gap:2px"><span style="font-size:12.5px;font-weight:600;color:#fafafa">{{ it.name }}</span><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#52525b;text-transform:uppercase">{{ it.cosmos }}</span></span>
+              <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:{{ it.color }}">{{ it.daysLabel }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </sc-for>
+    </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isTemplates }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:20px 24px 0">
+  <div style="display:flex;flex-direction:column;gap:4px">
+    <div style="font-size:20px;font-weight:700;letter-spacing:-0.01em;color:#fafafa">Modèles de mini-cosmos</div>
+    <div style="font-size:11.5px;color:#71717a"><span style="font-family:'JetBrains Mono',monospace">{{ tplTotal }}</span> terrains prêts à gouverner — cliquer un modèle ouvre le formulaire pré-rempli</div>
+  </div>
+  <input value="{{ tplQuery }}" onChange="{{ setTplQuery }}" placeholder="Rechercher un modèle…" style="width:280px;background:#09090b;border:1px solid #27272a;border-radius:10px;padding:9px 12px;font-size:12.5px;color:#f4f4f5">
+</div>
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(400px,1fr));gap:14px;padding:16px 24px 32px;align-items:start">
+  <sc-for list="{{ tplGroups }}" as="g" hint-placeholder-count="8">
+    <div style="background:rgba(24,24,27,0.5);backdrop-filter:blur(12px);border:1px solid rgba(39,39,42,0.8);border-radius:16px;overflow:hidden">
+      <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:rgba(24,24,27,0.75);border-bottom:1px solid rgba(39,39,42,0.8)">
+        <span style="width:3px;height:16px;border-radius:2px;background:{{ g.color }}"></span>
+        <span style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#fafafa">{{ g.domain }}</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#71717a">{{ g.count }} modèles</span>
+        <span style="flex:1"></span>
+        <sc-if value="{{ g.exists }}" hint-placeholder-val="{{ true }}">
+          <span style="padding:3px 9px;border-radius:99px;font-size:11px;font-weight:600;color:#34d399;background:rgba(16,185,129,0.1)">Cosmos existant</span>
+        </sc-if>
+        <sc-if value="{{ g.missing }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ g.createCosmos }}" style="background:#09090b;color:#a1a1aa;border:1px solid #27272a;padding:5px 11px;border-radius:99px;font-size:11px;font-weight:600;cursor:pointer" style-hover="color:#f4f4f5;border-color:#3f3f46">+ Créer ce cosmos</button>
+        </sc-if>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;padding:14px 16px">
+        <sc-for list="{{ g.items }}" as="t" hint-placeholder-count="8">
+          <button onClick="{{ t.use }}" style="padding:5px 11px;border-radius:99px;font-size:12px;cursor:pointer;color:#a1a1aa;background:#09090b;border:1px solid #27272a" style-hover="color:#f4f4f5;border-color:#3f3f46">{{ t.label }}</button>
+        </sc-for>
+      </div>
+    </div>
+  </sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{ isTable }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;align-items:center;justify-content:center;gap:6px;padding:32px 24px 0;flex-wrap:wrap;width:min(100%,2200px);margin:0 auto">
+  <sc-for list="{{ filterChips }}" as="c" hint-placeholder-count="6">
+    <button onClick="{{ c.onClick }}" style="padding:5px 11px;border-radius:99px;font-size:12px;cursor:pointer;color:{{ c.color }};background:{{ c.bg }};border:1px solid {{ c.border }};display:flex;gap:6px;align-items:center">{{ c.label }} <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#fafafa">{{ c.count }}</span></button>
+  </sc-for>
+  <span style="width:1px;height:18px;background:rgba(39,39,42,0.8);margin:0 8px"></span>
+  <sc-for list="{{ etatChipsF }}" as="c" hint-placeholder-count="4">
+    <button onClick="{{ c.onClick }}" title="État" style="padding:5px 11px;border-radius:99px;font-size:12px;cursor:pointer;color:{{ c.color }};background:{{ c.bg }};border:1px solid {{ c.border }};display:flex;gap:6px;align-items:center"><span style="width:{{ c.dotW }};height:6px;border-radius:99px;background:{{ c.dot }}"></span>{{ c.label }} <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#fafafa">{{ c.count }}</span></button>
+  </sc-for>
+  <span style="width:1px;height:18px;background:rgba(39,39,42,0.8);margin:0 8px"></span>
+  <sc-for list="{{ cosmosChips }}" as="c" hint-placeholder-count="5">
+    <button onClick="{{ c.onClick }}" style="padding:5px 11px;border-radius:99px;font-size:12px;cursor:pointer;color:{{ c.color }};background:{{ c.bg }};border:1px solid {{ c.border }};display:flex;gap:6px;align-items:center"><span style="width:{{ c.dotW }};height:6px;border-radius:99px;background:{{ c.dot }}"></span>{{ c.label }} <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#fafafa">{{ c.count }}</span></button>
+  </sc-for>
+  <span style="width:1px;height:18px;background:rgba(39,39,42,0.8);margin:0 8px"></span>
+  <sc-for list="{{ timeChips }}" as="c" hint-placeholder-count="3">
+    <button onClick="{{ c.onClick }}" title="Clôture dans ce délai" style="padding:5px 11px;border-radius:99px;font-size:12px;cursor:pointer;color:{{ c.color }};background:{{ c.bg }};border:1px solid {{ c.border }};display:flex;gap:6px;align-items:center;font-family:'JetBrains Mono',monospace">{{ c.label }} <span style="font-size:11px;color:#fafafa">{{ c.count }}</span></button>
+  </sc-for>
+  <select value="{{ quarterFilter }}" onChange="{{ setQuarter }}" title="Trimestre de clôture" style="padding:5px 10px;border-radius:99px;font-size:12px;cursor:pointer;color:{{ quarterStyle.color }};background:{{ quarterStyle.bg }};border:1px solid {{ quarterStyle.border }};font-family:'JetBrains Mono',monospace;color-scheme:dark;outline:none">
+    <option value="">Trimestre</option>
+    <sc-for list="{{ quarterGroups }}" as="g" hint-placeholder-count="1"><optgroup label="{{ g.year }}"><sc-for list="{{ g.items }}" as="o" hint-placeholder-count="1"><option value="{{ o.value }}">{{ o.label }}</option></sc-for></optgroup></sc-for>
+  </select>
+  <select value="{{ monthFilter }}" onChange="{{ setMonth }}" title="Mois de clôture" style="padding:5px 10px;border-radius:99px;font-size:12px;cursor:pointer;color:{{ monthStyle.color }};background:{{ monthStyle.bg }};border:1px solid {{ monthStyle.border }};font-family:'JetBrains Mono',monospace;color-scheme:dark;outline:none">
+    <option value="">Mois</option>
+    <sc-for list="{{ monthGroups }}" as="g" hint-placeholder-count="1"><optgroup label="{{ g.year }}"><sc-for list="{{ g.items }}" as="o" hint-placeholder-count="1"><option value="{{ o.value }}">{{ o.label }}</option></sc-for></optgroup></sc-for>
+  </select>
+  <select value="{{ yearFilter }}" onChange="{{ setYear }}" title="Année de clôture" style="padding:5px 10px;border-radius:99px;font-size:12px;cursor:pointer;color:{{ yearStyle.color }};background:{{ yearStyle.bg }};border:1px solid {{ yearStyle.border }};font-family:'JetBrains Mono',monospace;color-scheme:dark;outline:none">
+    <sc-for list="{{ yearOptions }}" as="o" hint-placeholder-count="1"><option value="{{ o.value }}">{{ o.label }}</option></sc-for>
+  </select>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:14px;padding:32px 24px 32px;width:min(100%,2200px);margin:0 auto">
+<sc-if value="{{ noResult }}" hint-placeholder-val="{{ false }}">
+  <div style="padding:40px;text-align:center;font-size:12.5px;color:#52525b;border:1px dashed rgba(39,39,42,0.8);border-radius:16px">aucun mini-cosmos ne correspond à ces filtres</div>
+</sc-if>
+<sc-for list="{{ groups }}" as="g" hint-placeholder-count="4">
+  <div onDragOver="{{ g.gDragOver }}" onDrop="{{ g.gDrop }}" style="background:rgba(24,24,27,0.5);backdrop-filter:blur(12px);border:1px solid {{ g.cardBorder }};border-radius:16px;overflow:hidden;opacity:{{ g.cardOpacity }};transition:border-color 150ms ease,opacity 150ms ease">
+    <div draggable="true" onDragStart="{{ g.gDragStart }}" onDragEnd="{{ g.gDragEnd }}" style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:rgba(24,24,27,0.75);border-bottom:1px solid rgba(39,39,42,0.8);cursor:grab">
+      <span title="Glisser pour réordonner" style="font-family:'JetBrains Mono',monospace;font-size:13px;color:#3f3f46;letter-spacing:-2px;user-select:none">⋮⋮</span>
+      <span style="width:3px;height:16px;border-radius:2px;background:{{ g.color }}"></span>
+      <sc-if value="{{ g.notEditing }}" hint-placeholder-val="{{ true }}">
+        <span onDoubleClick="{{ g.startEdit }}" title="Double-clic pour renommer" style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#fafafa">{{ g.name }}</span>
+      </sc-if>
+      <sc-if value="{{ g.isEditing }}" hint-placeholder-val="{{ false }}">
+        <input value="{{ g.editName }}" onChange="{{ g.setEditName }}" onBlur="{{ g.saveEdit }}" onKeyDown="{{ g.editKey }}" autoFocus="{{ true }}" style="background:#09090b;border:1px solid #3f3f46;border-radius:8px;padding:4px 10px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#fafafa;width:200px">
+      </sc-if>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#71717a">{{ g.count }} mini-cosmos</span>
+      <span style="flex:1"></span>
+      <sc-if value="{{ g.confirmDelete }}" hint-placeholder-val="{{ false }}">
+        <span style="display:flex;align-items:center;gap:8px;padding:4px 6px 4px 12px;border-radius:10px;background:rgba(244,63,94,0.1);font-size:12px;color:#fb7185">Supprimer {{ g.name }} et ses {{ g.totalRows }} mini-cosmos ?
+          <button onClick="{{ g.cancelDelete }}" style="background:transparent;border:none;color:#a1a1aa;font-size:12px;cursor:pointer">Annuler</button>
+          <button onClick="{{ g.doDelete }}" style="background:#fb7185;border:none;color:#09090b;font-weight:600;font-size:12px;padding:4px 10px;border-radius:8px;cursor:pointer">Supprimer</button>
+        </span>
+      </sc-if>
+      <sc-if value="{{ g.notConfirmDelete }}" hint-placeholder-val="{{ true }}">
+        <button onClick="{{ g.startEdit }}" title="Renommer le cosmos" style="width:28px;height:28px;border-radius:8px;border:1px solid #27272a;background:#09090b;color:#a1a1aa;cursor:pointer;display:inline-flex;align-items:center;justify-content:center" style-hover="color:#f4f4f5;border-color:#3f3f46"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg></button>
+        <button onClick="{{ g.askDelete }}" title="Supprimer le cosmos" style="width:28px;height:28px;border-radius:8px;border:1px solid #27272a;background:#09090b;color:#a1a1aa;cursor:pointer;display:inline-flex;align-items:center;justify-content:center" style-hover="color:#fb7185;border-color:rgba(244,63,94,0.5)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M8 6V4h8v2"></path><path d="M19 6l-1 14H6L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path></svg></button>
+      </sc-if>
+      <button onClick="{{ g.addMini }}" style="width:28px;height:28px;border-radius:8px;border:1px solid #27272a;background:#09090b;color:#a1a1aa;cursor:pointer;font-size:14px;line-height:1" style-hover="color:#f4f4f5;border-color:#3f3f46" title="Ajouter un mini-cosmos">+</button>
+    </div>
+    <div style="overflow-x:auto">
+      <div style="min-width:2140px">
+        <div style="display:grid;grid-template-columns:24px minmax(150px,1.2fr) minmax(110px,1fr) minmax(105px,0.8fr) minmax(120px,1fr) minmax(120px,1fr) minmax(120px,1fr) minmax(120px,0.9fr) minmax(140px,1.1fr) minmax(140px,1.1fr) minmax(160px,1.3fr) minmax(130px,1fr) minmax(220px,1.9fr) minmax(110px,0.9fr) minmax(90px,0.7fr) minmax(100px,0.8fr);padding:9px 14px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:#52525b;border-bottom:1px solid rgba(39,39,42,0.35)">
+          <span></span>
+          <sc-for list="{{ columns }}" as="c" hint-placeholder-count="15">
+            <span onClick="{{ c.onClick }}" title="Trier" style="cursor:pointer;user-select:none;display:flex;align-items:center;gap:5px;color:{{ c.color }};padding-right:8px" style-hover="color:#a1a1aa">{{ c.label }}<span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#fafafa">{{ c.arrow }}</span></span>
+          </sc-for>
+        </div>
+        <sc-if value="{{ g.empty }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:16px 14px;font-size:12px;color:#52525b">{{ g.emptyLabel }}</div>
+        </sc-if>
+        <sc-for list="{{ g.rows }}" as="r" hint-placeholder-count="3">
+          <div onClick="{{ r.open }}" draggable="true" onDragStart="{{ r.dragStart }}" onDragOver="{{ r.dragOver }}" onDrop="{{ r.drop }}" onDragEnd="{{ r.dragEnd }}" style="display:grid;grid-template-columns:24px minmax(150px,1.2fr) minmax(110px,1fr) minmax(105px,0.8fr) minmax(120px,1fr) minmax(120px,1fr) minmax(120px,1fr) minmax(120px,0.9fr) minmax(140px,1.1fr) minmax(140px,1.1fr) minmax(160px,1.3fr) minmax(130px,1fr) minmax(220px,1.9fr) minmax(110px,0.9fr) minmax(90px,0.7fr) minmax(100px,0.8fr);align-items:center;padding:11px 14px;border-bottom:1px solid rgba(39,39,42,0.35);border-top:{{ r.blockTop }};opacity:{{ r.dragOpacity }};cursor:pointer;font-size:12.5px;font-weight:500;color:#a1a1aa;background:{{ r.rowBg }}" style-hover="background:rgba(39,39,42,0.35)">
+            <span title="Glisser pour réordonner" style="font-family:'JetBrains Mono',monospace;font-size:13px;color:#3f3f46;letter-spacing:-2px;user-select:none;cursor:grab">⋮⋮</span>
+            <span style="color:{{ r.nameColor }};font-weight:600;font-size:13px;padding-right:10px">{{ r.name }}</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#d4d4d8;padding-right:10px">{{ r.objectif }}</span>
+            <span><span style="padding:3px 9px;border-radius:99px;font-size:11px;font-weight:600;color:{{ r.typeColor }};background:{{ r.typeBg }}">{{ r.type }}</span></span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#d4d4d8;padding-right:10px;white-space:pre-wrap">{{ r.actuel }}</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#fbbf24;padding-right:10px">{{ r.alerte }}</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#fb7185;padding-right:10px">{{ r.kill }}</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#71717a;padding-right:10px">{{ r.sas }}</span>
+            <span style="padding-right:10px;font-weight:400;color:#71717a">{{ r.entropie }}</span>
+            <span style="padding-right:10px;font-weight:400">{{ r.reponse }}</span>
+            <span style="padding-right:10px;font-weight:400">{{ r.maintenance }}</span>
+            <span style="display:flex;align-items:center;gap:10px;padding-right:14px">
+              <sc-if value="{{ r.isConquete }}" hint-placeholder-val="{{ true }}">
+                <span style="flex:1;height:4px;border-radius:2px;background:#27272a;overflow:hidden"><span style="display:block;height:100%;border-radius:2px;background:{{ r.barColor }};width:{{ r.pct }}"></span></span>
+                <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#d4d4d8;min-width:34px;text-align:right">{{ r.pctLabel }}</span>
+              </sc-if>
+              <sc-if value="{{ r.isMaintenance }}" hint-placeholder-val="{{ false }}">
+                <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#3f3f46">—</span>
+              </sc-if>
+            </span>
+            <span style="display:flex;align-items:center;gap:8px;padding-right:10px"><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#71717a;background:rgba(113,113,122,0.12);padding:2px 6px;border-radius:6px;flex:none">{{ r.stepsLabel }}</span><span style="color:#d4d4d8">{{ r.action }}</span></span>
+            <span><sc-if value="{{ r.notDraft }}" hint-placeholder-val="{{ true }}"><span style="display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:99px;font-size:11px;font-weight:600;color:{{ r.etatColor }};background:{{ r.etatBg }}"><span style="width:6px;height:6px;border-radius:99px;background:{{ r.etatColor }};animation:{{ r.etatAnim }}"></span>{{ r.etatLabel }}</span></sc-if><sc-if value="{{ r.isDraft }}" hint-placeholder-val="{{ false }}"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#3f3f46">—</span></sc-if></span>
+            <span><span style="padding:3px 9px;border-radius:99px;font-size:11px;font-weight:600;color:{{ r.statutColor }};background:{{ r.statutBg }}">{{ r.statut }}</span></span>
+            <span style="display:flex;flex-direction:column;gap:2px;font-family:'JetBrains Mono',monospace;font-size:11px;color:{{ r.clotureColor }}"><span>{{ r.cloture }}</span><span style="font-size:10px;color:#52525b">{{ r.clotureSub }}</span></span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+</sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{ detail }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ closeDetail }}" style="position:fixed;inset:0;z-index:30;background:rgba(0,0,0,0.35);animation:fadein 150ms ease"></div>
+  <div style="position:fixed;top:0;right:0;bottom:0;width:448px;z-index:31;background:#0c0c0e;border-left:1px solid rgba(39,39,42,0.9);display:flex;flex-direction:column;animation:slidein 200ms ease">
+    <div style="display:flex;align-items:flex-start;gap:12px;padding:20px 20px 16px;border-bottom:1px solid rgba(39,39,42,0.8)">
+      <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#71717a;text-transform:uppercase;letter-spacing:0.08em">{{ detail.cosmos }} · {{ detail.id }}</div>
+        <sc-if value="{{ detail.notEditing }}" hint-placeholder-val="{{ true }}">
+          <div style="font-size:18px;font-weight:700;letter-spacing:-0.01em;color:#fafafa">{{ detail.name }}</div>
+        </sc-if>
+        <sc-if value="{{ detail.editing }}" hint-placeholder-val="{{ false }}">
+          <input value="{{ detail.raw.name }}" onChange="{{ detail.edit.name }}" style="background:#09090b;border:1px solid #27272a;border-radius:10px;padding:8px 12px;font-size:16px;font-weight:700;color:#fafafa;letter-spacing:-0.01em">
+        </sc-if>
+        <div style="display:flex;gap:8px">
+          <sc-if value="{{ detail.notDraft }}" hint-placeholder-val="{{ true }}"><span style="display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:99px;font-size:11px;font-weight:600;color:{{ detail.etatColor }};background:{{ detail.etatBg }}"><span style="width:6px;height:6px;border-radius:99px;background:{{ detail.etatColor }}"></span>{{ detail.etatLabel }}</span></sc-if>
+          <span style="padding:3px 9px;border-radius:99px;font-size:11px;font-weight:600;color:{{ detail.statutColor }};background:{{ detail.statutBg }}">{{ detail.statut }}</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <sc-if value="{{ detail.notEditing }}" hint-placeholder-val="{{ true }}">
+          <button onClick="{{ detail.toggleEdit }}" style="height:28px;padding:0 10px;border-radius:8px;border:1px solid #27272a;background:#09090b;color:#a1a1aa;cursor:pointer;font-size:12px;display:flex;align-items:center;gap:6px" style-hover="color:#f4f4f5;border-color:#3f3f46"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>Modifier</button>
+          <button onClick="{{ askDeleteMini }}" title="Supprimer le mini-cosmos" style="width:28px;height:28px;border-radius:8px;border:1px solid #27272a;background:#09090b;color:#a1a1aa;cursor:pointer;display:inline-flex;align-items:center;justify-content:center" style-hover="color:#fb7185;border-color:rgba(244,63,94,0.5)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M8 6V4h8v2"></path><path d="M19 6l-1 14H6L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path></svg></button>
+        </sc-if>
+        <sc-if value="{{ detail.editing }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ detail.toggleEdit }}" style="height:28px;padding:0 10px;border-radius:8px;border:none;background:#fafafa;color:#09090b;cursor:pointer;font-size:12px;font-weight:600" style-hover="background:#e4e4e7">Terminer</button>
+        </sc-if>
+        <button onClick="{{ closeDetail }}" style="width:28px;height:28px;border-radius:8px;border:1px solid #27272a;background:#09090b;color:#a1a1aa;cursor:pointer" style-hover="color:#f4f4f5;border-color:#3f3f46">✕</button>
+      </div>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:18px 20px;display:flex;flex-direction:column;gap:20px">
+      <sc-if value="{{ detail.allDone }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 14px;border-radius:12px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3)">
+          <span style="font-size:12.5px;color:#34d399">Toutes les étapes sont faites — la conquête est terminée.</span>
+          <button onClick="{{ detail.closeIt }}" style="background:#34d399;color:#09090b;border:none;padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap" style-hover="background:#6ee7b7">Clôturer</button>
+        </div>
+      </sc-if>
+      <sc-if value="{{ detail.isConquete }}" hint-placeholder-val="{{ true }}">
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;justify-content:space-between;font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:0.09em;color:#52525b"><span>Progression</span><span style="font-family:'JetBrains Mono',monospace;color:#d4d4d8">{{ detail.pctLabel }} <span style="color:#52525b">· {{ detail.stepsLabel }} étapes</span></span></div>
+        <div style="height:6px;border-radius:3px;background:#27272a;overflow:hidden"><div style="height:100%;border-radius:3px;background:{{ detail.barColor }};width:{{ detail.pct }}"></div></div>
+      </div>
+      </sc-if>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:0.09em;color:#52525b">Gouvernance</div>
+        <sc-if value="{{ detail.notEditing }}" hint-placeholder-val="{{ true }}">
+          <div style="display:grid;grid-template-columns:110px 1fr;gap:8px 12px;font-family:'JetBrains Mono',monospace;font-size:11.5px;line-height:1.6">
+            <span style="color:#52525b">type objectif</span><span style="color:{{ detail.typeColor }};font-weight:600">{{ detail.type }}</span>
+            <span style="color:#52525b">objectif</span><span style="color:#d4d4d8">{{ detail.objectif }}</span>
+            <span style="color:#52525b">actuel</span><span style="color:#d4d4d8">{{ detail.actuel }}</span>
+            <span style="color:#52525b">sas</span><span style="color:#d4d4d8">{{ detail.sas }}</span>
+            <span style="color:#52525b">entropie</span><span style="color:#d4d4d8">{{ detail.entropie }}</span>
+            <span style="color:#52525b">réponse</span><span style="color:#d4d4d8">{{ detail.reponse }}</span>
+            <span style="color:#52525b">force</span><span style="color:#d4d4d8">{{ detail.maintenance }}</span>
+            <span style="color:#52525b">clôture</span><span style="color:{{ detail.clotureColor }}">{{ detail.cloture }} <span style="color:#52525b">{{ detail.clotureSub }}</span></span>
+          </div>
+        </sc-if>
+        <sc-if value="{{ detail.editing }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;flex-direction:column;gap:5px"><label style="font-size:11.5px;font-weight:600;color:#a1a1aa">Cosmos parent</label><div style="display:flex;gap:6px;flex-wrap:wrap"><sc-for list="{{ detail.parentChips }}" as="p" hint-placeholder-count="4"><button onClick="{{ p.onClick }}" style="padding:5px 11px;border-radius:99px;font-size:12px;cursor:pointer;color:{{ p.color }};background:{{ p.bg }};border:1px solid {{ p.border }};display:flex;gap:7px;align-items:center"><span style="width:6px;height:6px;border-radius:99px;background:{{ p.dot }}"></span>{{ p.label }}</button></sc-for></div></div>
+            <div style="display:flex;flex-direction:column;gap:5px"><label style="font-size:11.5px;font-weight:600;color:#a1a1aa">Type objectif</label><div style="display:flex;gap:6px"><sc-for list="{{ detail.typeChips }}" as="t" hint-placeholder-count="2"><button onClick="{{ t.onClick }}" style="padding:5px 11px;border-radius:99px;font-size:12px;font-weight:600;cursor:pointer;color:{{ t.color }};background:{{ t.bg }};border:1px solid {{ t.border }}">{{ t.label }}</button></sc-for></div></div>
+            <div style="display:flex;flex-direction:column;gap:5px"><label style="font-size:11.5px;font-weight:600;color:#a1a1aa">Objectif</label><textarea value="{{ detail.raw.objectif }}" onChange="{{ detail.edit.objectif }}" rows="2" style="background:#09090b;border:1px solid #27272a;border-radius:10px;padding:9px 12px;font-size:12.5px;color:#f4f4f5;resize:vertical;line-height:1.6"></textarea></div>
+            <div style="display:flex;flex-direction:column;gap:5px"><label style="font-size:11.5px;font-weight:600;color:#a1a1aa">Valeur actuelle</label><textarea value="{{ detail.raw.actuel }}" onChange="{{ detail.edit.actuel }}" rows="2" placeholder="Où en es-tu aujourd'hui ?" style="background:#09090b;border:1px solid #27272a;border-radius:10px;padding:9px 12px;font-size:12.5px;color:#f4f4f5;resize:vertical;line-height:1.6"></textarea></div>
+            <div style="display:flex;flex-direction:column;gap:5px"><label style="font-size:11.5px;font-weight:600;color:#a1a1aa">SAS (test)</label><input value="{{ detail.raw.sas }}" onChange="{{ detail.edit.sas }}" style="background:#09090b;border:1px solid #27272a;border-radius:10px;padding:9px 12px;font-size:12.5px;color:#f4f4f5"></div>
+            <div style="display:flex;flex-direction:column;gap:5px"><label style="font-size:11.5px;font-weight:600;color:#a1a1aa">Entropie</label><textarea value="{{ detail.raw.entropie }}" onChange="{{ detail.edit.entropie }}" rows="2" style="background:#09090b;border:1px solid #27272a;border-radius:10px;padding:9px 12px;font-size:12.5px;color:#f4f4f5;resize:vertical;line-height:1.6"></textarea></div>
+            <div style="display:flex;flex-direction:column;gap:5px"><label style="font-size:11.5px;font-weight:600;color:#a1a1aa">Réponse entropie</label><textarea value="{{ detail.raw.reponse }}" onChange="{{ detail.edit.reponse }}" rows="2" style="background:#09090b;border:1px solid #27272a;border-radius:10px;padding:9px 12px;font-size:12.5px;color:#f4f4f5;resize:vertical;line-height:1.6"></textarea></div>
+            <div style="display:flex;flex-direction:column;gap:5px"><label style="font-size:11.5px;font-weight:600;color:#a1a1aa">Force (maintenance)</label><textarea value="{{ detail.raw.maintenance }}" onChange="{{ detail.edit.maintenance }}" rows="2" style="background:#09090b;border:1px solid #27272a;border-radius:10px;padding:9px 12px;font-size:12.5px;color:#f4f4f5;resize:vertical;line-height:1.6"></textarea></div>
+            <sc-if value="{{ detail.isConquete }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;flex-direction:column;gap:5px"><label style="font-size:11.5px;font-weight:600;color:#a1a1aa">Date de clôture</label>
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <input type="date" value="{{ detail.clotureDate }}" onChange="{{ detail.edit.cloture }}" style="background:#09090b;border:1px solid #27272a;border-radius:10px;padding:8px 12px;font-size:12.5px;color:#f4f4f5;font-family:'JetBrains Mono',monospace;color-scheme:dark">
+                <div style="display:flex;gap:6px;flex-wrap:wrap"><sc-for list="{{ detail.clotureChips }}" as="c" hint-placeholder-count="5"><button onClick="{{ c.onClick }}" style="padding:5px 11px;border-radius:99px;font-size:12px;cursor:pointer;color:{{ c.color }};background:{{ c.bg }};border:1px solid {{ c.border }};font-family:'JetBrains Mono',monospace">{{ c.label }}</button></sc-for></div>
+              </div>
+            </div>
+            </sc-if>
+          </div>
+        </sc-if>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:0.09em;color:#52525b">Seuils de protection</div>
+        <sc-if value="{{ detail.notEditing }}" hint-placeholder-val="{{ true }}">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <div style="background:#09090b;border:1px solid rgba(39,39,42,0.8);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:6px"><span style="font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:0.09em;color:#fbbf24">Alerte</span><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#f4f4f5">{{ detail.alerte }}</span><span style="font-size:11px;color:#52525b">seuil de correction</span></div>
+            <div style="background:#09090b;border:1px solid rgba(39,39,42,0.8);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:6px"><span style="font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:0.09em;color:#fb7185">Kill</span><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#f4f4f5">{{ detail.kill }}</span><span style="font-size:11px;color:#52525b">seuil de non-retour</span></div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ detail.editing }}" hint-placeholder-val="{{ false }}">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <div style="display:flex;flex-direction:column;gap:5px"><label style="font-size:11.5px;font-weight:600;color:#fbbf24">Alerte</label><input value="{{ detail.raw.alerte }}" onChange="{{ detail.edit.alerte }}" style="background:#09090b;border:1px solid #27272a;border-radius:10px;padding:9px 12px;font-size:12.5px;color:#f4f4f5;font-family:'JetBrains Mono',monospace"></div>
+            <div style="display:flex;flex-direction:column;gap:5px"><label style="font-size:11.5px;font-weight:600;color:#fb7185">Kill</label><input value="{{ detail.raw.kill }}" onChange="{{ detail.edit.kill }}" style="background:#09090b;border:1px solid #27272a;border-radius:10px;padding:9px 12px;font-size:12.5px;color:#f4f4f5;font-family:'JetBrains Mono',monospace"></div>
+          </div>
+        </sc-if>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;justify-content:space-between;font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:0.09em;color:#52525b"><span>Étapes</span><span style="font-family:'JetBrains Mono',monospace">{{ detail.doneCount }} / {{ detail.actionCount }} faites</span></div>
+        <div style="font-size:11.5px;color:#52525b">{{ detail.stepsHint }}</div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <sc-if value="{{ detail.notEditing }}" hint-placeholder-val="{{ true }}">
+            <sc-for list="{{ detail.actions }}" as="a" hint-placeholder-count="2">
+              <div onClick="{{ a.toggle }}" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;border:1px solid rgba(39,39,42,0.8);background:#09090b;cursor:pointer;font-size:12.5px;color:{{ a.color }};text-decoration:{{ a.deco }}" style-hover="border-color:#3f3f46">
+                <span style="width:16px;height:16px;border-radius:5px;border:1px solid {{ a.boxBorder }};background:{{ a.boxBg }};display:inline-flex;align-items:center;justify-content:center;font-size:10px;color:#09090b;font-weight:700">{{ a.mark }}</span>{{ a.text }}
+              </div>
+            </sc-for>
+          </sc-if>
+          <sc-if value="{{ detail.editing }}" hint-placeholder-val="{{ false }}">
+            <sc-for list="{{ detail.actions }}" as="a" hint-placeholder-count="2">
+              <div style="display:flex;align-items:center;gap:8px">
+                <span onClick="{{ a.toggle }}" style="width:16px;height:16px;flex:none;border-radius:5px;border:1px solid {{ a.boxBorder }};background:{{ a.boxBg }};display:inline-flex;align-items:center;justify-content:center;font-size:10px;color:#09090b;font-weight:700;cursor:pointer">{{ a.mark }}</span>
+                <input value="{{ a.text }}" onChange="{{ a.onText }}" placeholder="nouvelle étape" style="flex:1;background:#09090b;border:1px solid #27272a;border-radius:10px;padding:8px 12px;font-size:12.5px;color:#f4f4f5">
+                <button onClick="{{ a.remove }}" title="Supprimer l'étape" style="width:28px;height:28px;flex:none;border-radius:8px;border:none;background:rgba(244,63,94,0.1);color:#fb7185;cursor:pointer;font-size:12px" style-hover="background:rgba(244,63,94,0.18)">✕</button>
+              </div>
+            </sc-for>
+            <button onClick="{{ detail.addStep }}" style="background:#09090b;color:#a1a1aa;border:1px dashed #27272a;padding:8px 12px;border-radius:10px;font-size:12.5px;cursor:pointer;text-align:left" style-hover="color:#f4f4f5;border-color:#3f3f46">+ Ajouter une étape</button>
+          </sc-if>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:0.09em;color:#52525b">État</div>
+        <sc-if value="{{ detail.isDraft }}" hint-placeholder-val="{{ false }}"><div style="font-size:11.5px;color:#52525b">pas d'état en {{ detail.statut }} — passe-le en Actif pour le juger</div></sc-if>
+        <sc-if value="{{ detail.notDraft }}" hint-placeholder-val="{{ true }}">
+        <div style="font-size:11.5px;color:#52525b">à juger manuellement au regard de la valeur actuelle et des seuils</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">
+          <sc-for list="{{ detail.etatChips }}" as="e" hint-placeholder-count="5">
+            <button onClick="{{ e.onClick }}" style="padding:5px 11px;border-radius:99px;font-size:12px;font-weight:600;cursor:pointer;color:{{ e.color }};background:{{ e.bg }};border:1px solid {{ e.border }};display:flex;gap:6px;align-items:center"><span style="width:6px;height:6px;border-radius:99px;background:{{ e.color }}"></span>{{ e.label }}</button>
+          </sc-for>
+        </div>
+        </sc-if>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:0.09em;color:#52525b">Changer le statut</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">
+          <sc-for list="{{ detail.statutChips }}" as="s" hint-placeholder-count="6">
+            <button onClick="{{ s.onClick }}" style="padding:5px 11px;border-radius:99px;font-size:12px;cursor:pointer;color:{{ s.color }};background:{{ s.bg }};border:1px solid {{ s.border }}">{{ s.label }}</button>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:space-between;gap:8px;padding:14px 20px;border-top:1px solid rgba(39,39,42,0.8)">
+      <sc-if value="{{ confirmDeleteMini }}" hint-placeholder-val="{{ false }}">
+        <div style="flex:1;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 12px;border-radius:10px;background:rgba(244,63,94,0.1);font-size:12px;color:#fb7185">
+          <span>Supprimer définitivement ce mini-cosmos ?</span>
+          <span style="display:flex;gap:6px"><button onClick="{{ cancelDeleteMini }}" style="background:transparent;border:none;color:#a1a1aa;font-size:12px;cursor:pointer">Annuler</button><button onClick="{{ doDeleteMini }}" style="background:#fb7185;border:none;color:#09090b;font-weight:600;font-size:12px;padding:5px 10px;border-radius:8px;cursor:pointer">Supprimer</button></span>
+        </div>
+      </sc-if>
+      <sc-if value="{{ footerIdle }}" hint-placeholder-val="{{ true }}">
+        <span></span>
+        <button onClick="{{ closeDetail }}" style="background:#fafafa;color:#09090b;border:none;padding:8px 15px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:#e4e4e7">Fermer</button>
+      </sc-if>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ showCosmosModal }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;inset:0;z-index:40;background:rgba(0,0,0,0.65);display:flex;align-items:center;justify-content:center;animation:fadein 150ms ease">
+    <div style="width:560px;background:#0c0c0e;border:1px solid rgba(39,39,42,0.9);border-radius:20px;animation:popin 180ms ease;display:flex;flex-direction:column">
+      <div style="display:flex;align-items:flex-start;padding:20px 22px 16px;border-bottom:1px solid rgba(39,39,42,0.8)">
+        <div style="flex:1;display:flex;flex-direction:column;gap:4px"><div style="font-size:17px;font-weight:700;color:#fafafa;letter-spacing:-0.01em">Nouveau cosmos</div><div style="font-size:11.5px;color:#71717a">un grand domaine de ta vie que tu décides de structurer et de protéger</div></div>
+        <button onClick="{{ closeModals }}" style="width:28px;height:28px;border-radius:8px;border:1px solid #27272a;background:#09090b;color:#a1a1aa;cursor:pointer" style-hover="color:#f4f4f5">✕</button>
+      </div>
+      <div style="padding:20px 22px;display:flex;flex-direction:column;gap:16px">
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <label style="font-size:11.5px;font-weight:600;color:#a1a1aa;display:flex;gap:8px"><span style="font-family:'JetBrains Mono',monospace;color:#52525b">01</span>Nom du cosmos <span style="color:#fb7185">*</span></label>
+          <input value="{{ cosmosName }}" onChange="{{ setCosmosName }}" placeholder="ENTREPRISE, FAMILLE, RELATIONS…" style="background:#09090b;border:1px solid #27272a;border-radius:10px;padding:10px 12px;font-size:13px;color:#f4f4f5;text-transform:uppercase;letter-spacing:0.04em">
+        </div>
+        <div style="background:#0c0c0e;border:1px solid rgba(39,39,42,0.8);border-radius:12px;padding:12px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#71717a;line-height:1.6">Un cosmos est une pièce. Un mini-cosmos est un meuble.<br>Tu pourras y ajouter des mini-cosmos depuis le tableau ou les modèles.</div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;padding:14px 22px;border-top:1px solid rgba(39,39,42,0.8)">
+        <button onClick="{{ closeModals }}" style="background:#09090b;color:#a1a1aa;border:1px solid #27272a;padding:8px 13px;border-radius:10px;font-size:13px;cursor:pointer" style-hover="color:#f4f4f5;border-color:#3f3f46">Annuler</button>
+        <button onClick="{{ saveCosmos }}" disabled="{{ cosmosInvalid }}" style="background:#fafafa;color:#09090b;border:none;padding:8px 15px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;opacity:{{ cosmosBtnOpacity }}" style-hover="background:#e4e4e7">Créer le cosmos</button>
+      </div>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ showMiniModal }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;inset:0;z-index:40;background:rgba(0,0,0,0.65);display:flex;align-items:center;justify-content:center;animation:fadein 150ms ease">
+    <div style="width:720px;max-height:88vh;background:#0c0c0e;border:1px solid rgba(39,39,42,0.9);border-radius:22px;animation:popin 180ms ease;display:flex;flex-direction:column">
+      <div style="display:flex;align-items:flex-start;padding:20px 22px 0;gap:12px">
+        <div style="flex:1;display:flex;flex-direction:column;gap:4px"><div style="font-size:17px;font-weight:700;color:#fafafa;letter-spacing:-0.01em">Nouveau mini-cosmos</div><div style="font-size:11.5px;color:#71717a">un terrain précis que tu gouvernes à l'intérieur d'un cosmos</div></div>
+        <button onClick="{{ closeModals }}" style="width:28px;height:28px;border-radius:8px;border:1px solid #27272a;background:#09090b;color:#a1a1aa;cursor:pointer" style-hover="color:#f4f4f5">✕</button>
+      </div>
+      <div style="display:flex;gap:20px;padding:14px 22px 0;border-bottom:1px solid rgba(39,39,42,0.8)">
+        <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="3">
+          <button onClick="{{ t.onClick }}" style="background:transparent;border:none;border-bottom:2px solid {{ t.line }};padding:8px 2px 10px;font-size:12.5px;font-weight:500;color:{{ t.color }};cursor:pointer;display:flex;gap:8px;align-items:center"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#52525b">{{ t.num }}</span>{{ t.label }}</button>
+        </sc-for>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:20px 22px;display:flex;flex-direction:column;gap:16px">
+        <sc-if value="{{ tab0 }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <label style="font-size:11.5px;font-weight:600;color:#a1a1aa;display:flex;gap:8px"><span style="font-family:'JetBrains Mono',monospace;color:#52525b">01</span>Cosmos parent <span style="color:#fb7185">*</span></label>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <sc-for list="{{ parentChips }}" as="p" hint-placeholder-count="4">
+                <button onClick="{{ p.onClick }}" style="padding:5px 11px;border-radius:99px;font-size:12px;cursor:pointer;color:{{ p.color }};background:{{ p.bg }};border:1px solid {{ p.border }};display:flex;gap:7px;align-items:center"><span style="width:6px;height:6px;border-radius:99px;background:{{ p.dot }}"></span>{{ p.label }}</button>
+              </sc-for>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <label style="font-size:11.5px;font-weight:600;color:#a1a1aa;display:flex;gap:8px"><span style="font-family:'JetBrains Mono',monospace;color:#52525b">02</span>Nom du mini-cosmos <span style="color:#fb7185">*</span></label>
+            <input value="{{ form.name }}" onChange="{{ set.name }}" placeholder="Projet A, Maison, Lecture…" style="background:#09090b;border:1px solid #27272a;border-radius:10px;padding:10px 12px;font-size:13px;color:#f4f4f5">
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <label style="font-size:11.5px;font-weight:600;color:#a1a1aa;display:flex;gap:8px"><span style="font-family:'JetBrains Mono',monospace;color:#52525b">03</span>Type objectif</label>
+            <div style="display:flex;gap:6px"><sc-for list="{{ formTypeChips }}" as="t" hint-placeholder-count="2"><button onClick="{{ t.onClick }}" style="padding:5px 11px;border-radius:99px;font-size:12px;font-weight:600;cursor:pointer;color:{{ t.color }};background:{{ t.bg }};border:1px solid {{ t.border }}">{{ t.label }}</button></sc-for></div>
+            <div style="font-size:11px;color:#52525b">conquête : atteindre un état nouveau, avec progression et clôture · maintenance : tenir un état acquis, sans fin ni progression</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <label style="font-size:11.5px;font-weight:600;color:#a1a1aa;display:flex;gap:8px"><span style="font-family:'JetBrains Mono',monospace;color:#52525b">03b</span>Objectif</label>
+            <textarea value="{{ form.objectif }}" onChange="{{ set.objectif }}" rows="2" placeholder="Quel est l'état à atteindre ou maintenir ?" style="background:#09090b;border:1px solid #27272a;border-radius:10px;padding:10px 12px;font-size:13px;color:#f4f4f5;resize:vertical;line-height:1.6"></textarea>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <label style="font-size:11.5px;font-weight:600;color:#a1a1aa;display:flex;gap:8px"><span style="font-family:'JetBrains Mono',monospace;color:#52525b">04</span>Valeur actuelle</label>
+            <textarea value="{{ form.actuel }}" onChange="{{ set.actuel }}" rows="2" placeholder="Où en es-tu aujourd'hui ?" style="background:#09090b;border:1px solid #27272a;border-radius:10px;padding:10px 12px;font-size:13px;color:#f4f4f5;resize:vertical;line-height:1.6"></textarea>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <label style="font-size:11.5px;font-weight:600;color:#a1a1aa;display:flex;gap:8px"><span style="font-family:'JetBrains Mono',monospace;color:#52525b">05</span>SAS (test)</label>
+            <textarea value="{{ form.sas }}" onChange="{{ set.sas }}" rows="2" placeholder="Quel est le test à réaliser avant de valider ce mini-cosmos ?" style="background:#09090b;border:1px solid #27272a;border-radius:10px;padding:10px 12px;font-size:13px;color:#f4f4f5;resize:vertical;line-height:1.6"></textarea>
+          </div>
+        </sc-if>
+        <sc-if value="{{ tab1 }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;flex-direction:column;gap:6px">
+            <label style="font-size:11.5px;font-weight:600;color:#a1a1aa;display:flex;gap:8px"><span style="font-family:'JetBrains Mono',monospace;color:#52525b">06</span>Entropie</label>
+            <textarea value="{{ form.entropie }}" onChange="{{ set.entropie }}" rows="2" placeholder="Quels sont les dangers qui guettent ce mini-cosmos ?" style="background:#09090b;border:1px solid #27272a;border-radius:10px;padding:10px 12px;font-size:13px;color:#f4f4f5;resize:vertical;line-height:1.6"></textarea>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <label style="font-size:11.5px;font-weight:600;color:#a1a1aa;display:flex;gap:8px"><span style="font-family:'JetBrains Mono',monospace;color:#52525b">07</span>Réponse entropie</label>
+            <textarea value="{{ form.reponse }}" onChange="{{ set.reponse }}" rows="2" placeholder="Quelle est la parade à ce danger ?" style="background:#09090b;border:1px solid #27272a;border-radius:10px;padding:10px 12px;font-size:13px;color:#f4f4f5;resize:vertical;line-height:1.6"></textarea>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <label style="font-size:11.5px;font-weight:600;color:#a1a1aa;display:flex;gap:8px"><span style="font-family:'JetBrains Mono',monospace;color:#52525b">08</span>Force (maintenance)</label>
+            <textarea value="{{ form.maintenance }}" onChange="{{ set.maintenance }}" rows="2" placeholder="Quelle est l'action régulière pour maintenir l'ordre ?" style="background:#09090b;border:1px solid #27272a;border-radius:10px;padding:10px 12px;font-size:13px;color:#f4f4f5;resize:vertical;line-height:1.6"></textarea>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <label style="font-size:11.5px;font-weight:600;color:#fbbf24;display:flex;gap:8px"><span style="font-family:'JetBrains Mono',monospace;color:#52525b">09</span>Alerte</label>
+              <input value="{{ form.alerte }}" onChange="{{ set.alerte }}" placeholder="Seuil de correction (avant le Kill)" style="background:#09090b;border:1px solid #27272a;border-radius:10px;padding:10px 12px;font-size:13px;color:#f4f4f5;font-family:'JetBrains Mono',monospace">
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <label style="font-size:11.5px;font-weight:600;color:#fb7185;display:flex;gap:8px"><span style="font-family:'JetBrains Mono',monospace;color:#52525b">10</span>Kill</label>
+              <input value="{{ form.kill }}" onChange="{{ set.kill }}" placeholder="Seuil de non-retour" style="background:#09090b;border:1px solid #27272a;border-radius:10px;padding:10px 12px;font-size:13px;color:#f4f4f5;font-family:'JetBrains Mono',monospace">
+            </div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ tab2 }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <label style="font-size:11.5px;font-weight:600;color:#a1a1aa;display:flex;gap:8px"><span style="font-family:'JetBrains Mono',monospace;color:#52525b">11</span>Statut</label>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <sc-for list="{{ formStatutChips }}" as="s" hint-placeholder-count="6">
+                <button onClick="{{ s.onClick }}" style="padding:5px 11px;border-radius:99px;font-size:12px;cursor:pointer;color:{{ s.color }};background:{{ s.bg }};border:1px solid {{ s.border }}">{{ s.label }}</button>
+              </sc-for>
+            </div>
+          </div>
+          <sc-if value="{{ formIsConquete }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <label style="font-size:11.5px;font-weight:600;color:#a1a1aa;display:flex;gap:8px"><span style="font-family:'JetBrains Mono',monospace;color:#52525b">12</span>Clôture</label>
+            <div style="display:flex;gap:6px;align-items:center">
+              <input type="date" value="{{ formClotureDate }}" onChange="{{ set.cloture }}" style="width:170px;background:#09090b;border:1px solid #27272a;border-radius:10px;padding:9px 12px;font-size:12.5px;color:#f4f4f5;font-family:'JetBrains Mono',monospace;color-scheme:dark">
+              <div style="display:flex;gap:6px;flex-wrap:wrap"><sc-for list="{{ formDateChips }}" as="d" hint-placeholder-count="5"><button onClick="{{ d.onClick }}" style="padding:5px 11px;border-radius:99px;font-size:12px;cursor:pointer;color:{{ d.color }};background:{{ d.bg }};border:1px solid {{ d.border }};font-family:'JetBrains Mono',monospace">{{ d.label }}</button></sc-for></div>
+            </div>
+          </div>
+          </sc-if>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <label style="font-size:11.5px;font-weight:600;color:#a1a1aa;display:flex;gap:8px"><span style="font-family:'JetBrains Mono',monospace;color:#52525b">13</span>Étapes <span style="font-weight:400;color:#52525b">— chaque étape cochée fait avancer la progression</span></label>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <sc-for list="{{ formActions }}" as="a" hint-placeholder-count="5">
+                <div style="display:flex;align-items:center;gap:10px">
+                  <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#52525b;width:60px">étape {{ a.n }}</span>
+                  <input value="{{ a.value }}" onChange="{{ a.onChange }}" placeholder="étape à venir" style="flex:1;background:#09090b;border:1px solid #27272a;border-radius:10px;padding:9px 12px;font-size:12.5px;color:#f4f4f5">
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:14px 22px;border-top:1px solid rgba(39,39,42,0.8)">
+        <span style="font-size:11.5px;color:{{ formHintColor }}">{{ formHint }}</span>
+        <div style="display:flex;gap:8px">
+          <button onClick="{{ closeModals }}" style="background:#09090b;color:#a1a1aa;border:1px solid #27272a;padding:8px 13px;border-radius:10px;font-size:13px;cursor:pointer" style-hover="color:#f4f4f5;border-color:#3f3f46">Annuler</button>
+          <sc-if value="{{ notLastTab }}" hint-placeholder-val="{{ true }}">
+            <button onClick="{{ nextTab }}" style="background:#09090b;color:#f4f4f5;border:1px solid #3f3f46;padding:8px 13px;border-radius:10px;font-size:13px;cursor:pointer">Suivant ›</button>
+          </sc-if>
+          <button onClick="{{ saveMini }}" disabled="{{ miniInvalid }}" style="background:#fafafa;color:#09090b;border:none;padding:8px 15px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;opacity:{{ miniBtnOpacity }}" style-hover="background:#e4e4e7">Créer le mini-cosmos</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ toast }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:50;background:#0c0c0e;border:1px solid rgba(39,39,42,0.9);border-radius:12px;padding:10px 14px;font-size:12.5px;color:#f4f4f5;display:flex;gap:10px;align-items:center;animation:popin 180ms ease"><span style="width:6px;height:6px;border-radius:99px;background:#34d399"></span>{{ toast }}</div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;author&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Toi&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Journal&quot;},&quot;highlightDanger&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Tableau&quot;},&quot;hideThresholds&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Tableau&quot;},&quot;pulseLive&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Motion&quot;}}">
+const COLORS = ['#818cf8','#34d399','#fbbf24','#fb7185','#22d3ee','#c084fc','#f472b6','#a3e635','#fb923c','#a1a1aa'];
+const ETATS = {
+  stable:{label:'Stable',color:'#34d399',bg:'rgba(16,185,129,0.1)',live:true},
+  derive:{label:'En dérive',color:'#fbbf24',bg:'rgba(245,158,11,0.1)'},
+  danger:{label:'Danger',color:'#fb7185',bg:'rgba(244,63,94,0.1)',live:true},
+};
+const STATUTS = ['Draft','Actif','Pause','Clôturé'];
+const STATUT_STYLE = {
+  'Actif':['#34d399','rgba(16,185,129,0.1)'],
+  'Draft':['#a1a1aa','rgba(113,113,122,0.12)'],
+  'Pause':['#d4a054','rgba(212,160,84,0.12)'],
+  'Clôturé':['#71717a','rgba(113,113,122,0.12)']
+};
+// steps: [texte, fait]. La progression = étapes faites / étapes totales.
+const r = (cosmos,name,objectif,sas,maintenance,entropie,alerte,kill,etat,statut,cloture,steps) =>
+  ({cosmos,name,objectif,sas,maintenance,entropie,alerte,kill,etat,statut,cloture,actions:steps.map(([text,done])=>({text,done:!!done}))});
+const SEED = [
+  r('ENTREPRISE','Projet A','50 k€','—','Revue Ads (15 min/j)','Usure créations → Rotation visuels','< 4 000 € j25','< 3 000 € j25','stable','Actif','2026-12-31',[['Valider offre',1],['Créer page de vente',1],['Préparer 3 visuels',1],['Lancer campagne ads',0],['Atteindre 50 k€',0]]),
+  r('ENTREPRISE','Projet B','30 k€','—','Analyse conv (15 min/j)','Fatigue mentale → Coucher 23h','< 50 cmd 15/11','< 40 cmd 30/11','derive','Draft','30 nov',[['Mettre en ligne',1],['Premières 10 commandes',1],['Analyser CPA',0],['Revoir landing page',0],['Atteindre 30 k€',0]]),
+  r('ENTREPRISE','Trésorerie','50 k€','—','Vérif hebdo (30 min/sem)','Variations marché → Réserve 6 mois','< 35 k€ 15/11','< 30 k€ 30/11','danger','Actif','30 nov',[['Ouvrir compte réserve',1],['Automatiser vérif hebdo',1],['Relancer factures impayées',1],['Couper dépenses',0]]),
+  r('ENTREPRISE','Équipe','3 recrutements','—','1 point/sem (30 min)','Conflits internes → Communication claire','1 conflit/mois','2 conflits/mois','stable','Actif','2026-12-31',[['Définir 3 fiches de poste',1],['Recruter n°1',1],['Recruter n°2',1],['Poster offre n°3',0],['Recruter n°3',0]]),
+  r('ENTREPRISE','Pinterest Ads','CPA < 14 €','14 jours (CPA < 14 €)','Création 3 visuels/sem','Lancement concurrent → Différenciation','—','—','stable','Draft','30/09',[['Créer compte Ads',1],['Installer tracking',1],['Lancer 1re campagne',1],['Tester 3 créations',0],['Valider CPA < 14 €',0]]),
+  r('FAMILLE','Enfants','1h/jour','—','1h présence non négociable','Fatigue parentale → Délégation','0h/1 sem','0h/3 sem','stable','Actif','Permanent',[['Bloquer 18h–19h agenda',1],['Couper notifications',1],['Rituel du soir',1],['Activité samedi',0]]),
+  r('FAMILLE','Sport Léon','Natation','2 mois (30/11)','—','Désintérêt enfant → Observation','—','—','stable','Draft','30/11',[['Inscrire essai',0],['Observer 4 séances',0],['Décider inscription annuelle',0]]),
+  r('FAMILLE','Couple','2h/semaine','—','1 date/semaine','Routine → Variété','0/2 sem','0/1 mois','stable','Actif','Permanent',[['Trouver babysitter',1],['Liste de 10 idées',1],['Date night vendredi',0],['Week-end à deux',0],['Bilan mensuel',0]]),
+  r('FAMILLE','Maison','Propre et fonctionnelle','14 jours (20 min/j)','30 min rangement/jour','Accumulation → 30 min/jour','Désordre 1j','Désordre 3j','stable','Draft','15/09',[['Trier entrée',1],['Trier cuisine',1],['Rangement soir',0],['Trier chambre',0]]),
+  r('FAMILLE','Vacances ski','1 sem/février','—','Réservation avant 1er déc','Prix élevé → Budget anticipation','Pas validé 1/12','Pas validé 15/12','derive','Draft','15/12',[['Fixer dates',1],['Réserver hébergement',0],['Réserver transport',0],['Louer matériel',0]]),
+  r('FAMILLE','Scolarité','1 réunion/période','—','1 réunion/période','Manque de suivi → Agenda partagé','1 alerte/mois','2 alertes/mois','stable','Actif','Année scolaire',[['Créer agenda partagé',1],['Réunion période 1',1],['Contacter prof',0],['Réunion période 2',0],['Réunion période 3',0]]),
+  r('RELATIONS','Amitiés','1 sortie/mois','—','1 appel/semaine','Éloignement → 1 sortie/mois','0/1 mois','0/3 mois','stable','Actif','Permanent',[['Lister 5 amis proches',1],['Appeler Thomas',0],['Sortie du mois',0]]),
+  r('RELATIONS','Vie sociale','1 sortie/sem','—','1 invitation/mois','Isolement → Accepter invitations','0/1 mois','0/2 mois','stable','Actif','Permanent',[['Accepter 1 invitation',1],['Organiser dîner',0],['Rejoindre un club',0],['Sortie hebdo',0],['Bilan trimestriel',0]]),
+  r('RELATIONS','Mentors','1 rencontre/trim','—','Préparer questions','Manque préparation → Préparer questions','0/3 mois','0/6 mois','stable','Actif','Permanent',[['Identifier 2 mentors',1],['Premier contact',1],['Préparer questions',0]]),
+  r('RELATIONS','Réseau pro','1 event/mois','—','1 inscription/mois','Inaction → 1 inscription/mois','0/1 mois','0/2 mois','stable','Actif','Permanent',[['Mettre à jour profil',1],['Event de septembre',1],["S'inscrire conférence",0]]),
+  r('PERSONNEL','Santé physique','3 séances/sem','—','3 séances/semaine','Blessure → Échauffement','< 2/1 sem','< 2/3 sem','stable','Actif','Permanent',[['Plan 12 semaines',1],['Semaine 1–4',1],['Semaine 5–8',1],['Course mardi 18h',0]]),
+  r('PERSONNEL','Santé mentale','Revue quotidienne','—','Revue du soir (10 min)','Rumination → Revue du soir','1 jour rumination','3 jours rumination','stable','Actif','Permanent',[['Choisir carnet',1],['7 jours consécutifs',1],['30 jours consécutifs',1],['Trouver un thérapeute',1],['Faire revue ce soir',0]]),
+  r('PERSONNEL','Sommeil','7h/nuit','—','Coucher à 23h','Écrans → Coucher à 23h','< 6.5h/1 nuit','< 6h/3 nuits','stable','Actif','Permanent',[['Alarme 22h30',1],['Téléphone hors chambre',1],['Coucher 22h30',0],['7 nuits à 7h',0],['Bilan sommeil',0]]),
+  r('PERSONNEL','Nutrition','Alimentation saine','—','1 repas préparé/sem','Junk food → 1 repas/sem','2 écarts/sem','3 écarts/sem','stable','Actif','Permanent',[['Liste de 10 recettes',1],['Meal prep dimanche',0],['4 semaines sans écart',0],['Bilan poids',0]]),
+  r('PERSONNEL','Lecture','1 livre/sem','—','30 min lecture/jour','Manque de temps → 30 min/jour','1 sem sans livre','2 sem sans livre','stable','Actif','31 déc',[['Choisir 12 livres',1],['Livre 1 terminé',1],['Finir chapitre 3',0],['Livre 2 terminé',0],['Livre 3 terminé',0]]),
+  r('PERSONNEL','Réserve financière','6 mois dépenses','—','Virement auto (1er du mois)','Dépenses imprévues → 6 mois réserve','< 4 mois','< 3 mois','stable','Actif','Permanent',[['Calculer dépenses mensuelles',1],['Ouvrir livret',1],['Virement épargne',0]]),
+  r('PERSONNEL','Méditation','10 min/jour','30 jours (30/09)','—','Inconstance → 30 jours test','—','—','stable','Draft','30/09',[['Tester méditation',0],['7 jours d\'affilée',0],['30 jours d\'affilée',0]])
+];
+// valeur actuelle + zone : ok (au-dessus de l'alerte) · alerte (entre alerte et kill) · kill (sous le kill) · none (pas de seuil)
+const ACTUEL = ['38 500 €','46 cmd','29 k€','0 conflit','CPA 15,2 €',
+  '1h10/jour','—','1/2 sem','Désordre 2j','Non réservé','1 alerte/mois',
+  '1/1 mois','0/1 mois','1/3 mois','1/1 mois',
+  '3/sem','0 jour','6h50/nuit','1 écart/sem','0 sem sans livre','4,2 mois','—'];
+// clôture stockée en ISO (AAAA-MM-JJ) ou 'Permanent' / 'À dater'
+const CLOTURE = {'30 nov':'2026-11-30','30/09':'2026-09-30','15/09':'2026-09-15','30/11':'2026-11-30','15/12':'2026-12-15','31 déc':'2026-12-31','Année scolaire':'2027-06-30'};
+const TYPES = ['C','C','M','C','C','M','C','M','M','C','M','M','M','M','M','M','M','M','M','C','C','C'].map(t=>t==='C'?'Conquête':'Maintenance');
+const TYPE_STYLE = {'Conquête':['#c084fc','rgba(192,132,252,0.12)'],'Maintenance':['#22d3ee','rgba(34,211,238,0.1)']};
+SEED.forEach((x,i)=>{ x.id='mc-'+String(i+1).padStart(2,'0'); x.actuel=ACTUEL[i]; x.type=TYPES[i]; x.cloture=CLOTURE[x.cloture]||x.cloture;
+  const p=x.entropie.split(' → '); x.entropie=p[0]; x.reponse=p[1]||'—'; });
+const clotureInfo = c => {
+  if(!c||c==='À dater'||c==='Permanent') return {label:'Permanent', sub:'', color:'#34d399'};
+  if(CLOTURE[c]) c=CLOTURE[c];
+  const dm=c.match(/^(\d{2})\/(\d{2})$/); if(dm) c='2026-'+dm[2]+'-'+dm[1];
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(c)) return {label:c, sub:'', color:'#a1a1aa'};
+  const d=new Date(c+'T00:00:00');
+  const today=new Date(); today.setHours(0,0,0,0);
+  const days=Math.round((d-today)/86400000);
+  const label=String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear();
+  if(days<0) return {label, sub:'J+'+(-days), color:'#fb7185'};
+  if(days<=14) return {label, sub:'J-'+days, color:'#fbbf24'};
+  return {label, sub:'J-'+days, color:'#34d399'};
+};
+
+// historique simulé : création, étapes cochées, changements d'état
+const TODAY=new Date(); TODAY.setHours(0,0,0,0);
+const isoD=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const daysAgo=n=>{ const d=new Date(TODAY); d.setDate(d.getDate()-n); return isoD(d); };
+SEED.forEach((x,i)=>{ const age=20+(i*37)%110; x.createdAt=daysAgo(age); x.history=[{t:x.createdAt,type:'created'}];
+  const done=x.actions.filter(a=>a.done).length; for(let j=0;j<done;j++) x.history.push({t:daysAgo(Math.max(0,Math.round(age-(j+1)*age/(done+1)))),type:'step'});
+  if(x.etat==='danger'||x.etat==='derive') x.history.push({t:daysAgo(2+(i*7)%20),type:'etat',value:x.etat}); });
+[['ENTREPRISE','Site vitrine','Site en ligne','Conquête',12,95],['PERSONNEL','Déclaration impôts','Déclaration envoyée','Conquête',40,130]].forEach(([cosmos,name,objectif,type,closedAgo,age],k)=>{
+  SEED.push({id:'mc-c'+k,cosmos,name,objectif,type,actuel:'Fait',sas:'—',maintenance:'—',entropie:'—',reponse:'—',alerte:'—',kill:'—',etat:'stable',statut:'Clôturé',cloture:daysAgo(closedAgo),createdAt:daysAgo(age),
+    actions:[{text:'Préparer',done:true},{text:'Réaliser',done:true},{text:'Valider',done:true}],history:[{t:daysAgo(age),type:'created'},{t:daysAgo(Math.round(age*0.6)),type:'step'},{t:daysAgo(Math.round(age*0.3)),type:'step'},{t:daysAgo(closedAgo),type:'step'},{t:daysAgo(closedAgo),type:'statut',value:'Clôturé'}]}); });
+// raccourcis d'échéance : +30 j, +90 j, fin du trimestre en cours, fin du suivant, fin d'année
+const dateShortcuts=()=>{ const y=TODAY.getFullYear(), q=Math.floor(TODAY.getMonth()/3); const endQ=(yy,qq)=>isoD(new Date(yy,qq*3+3,0));
+  const quarters=[0,1,2,3].map(i=>{ const yy=y+Math.floor((q+i)/4), qq=(q+i)%4; return {label:'Fin Q'+(qq+1)+(yy!==y?' '+yy:''),value:endQ(yy,qq)}; });
+  return [{label:'30 j',value:daysAgo(-30)},{label:'90 j',value:daysAgo(-90)},...quarters]; };
+const progOf = x => { const t=x.actions.length; const d=x.actions.filter(a=>a.done).length; return t?Math.round(d/t*100):0; };
+const nextOf = x => { const n=x.actions.find(a=>!a.done); return n?n.text:(x.actions.length?'toutes les étapes faites':'—'); };
+const EMPTY_FORM = {cosmos:'',name:'',type:'Conquête',objectif:'',actuel:'',sas:'',maintenance:'',entropie:'',reponse:'',alerte:'',kill:'',statut:'Draft',cloture:'',actions:['','','','','']}
+// à l'ouverture du formulaire la clôture est pré-remplie à +90 j (conquête)
+const freshForm=(over={})=>({...EMPTY_FORM,cloture:daysAgo(-90),...over});;
+const TEMPLATES = [
+  ['ENTREPRISE',['Projet','Produit / offre','Pricing','Acquisition','Canal d\u2019acquisition','Publicité / Ads','SEO','Vente','Tunnel / page de vente','Rétention / churn','Communauté clients','Partenariats / affiliés','Marque / branding','Marque personnelle','Contenu / édition','Veille concurrentielle','Innovation / R&D','Test / sonde','Data / KPI','Trésorerie / cash','Comptabilité','Revue financière / reporting','Équipe','Recrutement','Formation interne','Processus internes','Automatisation','Production','Ops / livraison client','Logistique','Fournisseurs','Support client / SAV','Juridique','Conformité / RGPD','Infrastructure / IT','Sécurité','Saison / opération saisonnière']],
+  ['CARRIÈRE',['Poste actuel','Évolution / promotion','Salaire / négociation','Employabilité','Réputation professionnelle','Recherche d\u2019emploi','Bilan de compétences']],
+  ['FAMILLE',['Enfants','Santé des enfants','Scolarité','Activité / sport d\u2019un enfant','Couple','Communication couple','Rôles / charge mentale','Temps en solo (parent)','Traditions / rituels','Maison / organisation du foyer','Projets de maison / travaux','Organisation quotidienne','Budget familial','Vacances en famille','Événements familiaux','Anniversaires / dates clés','Famille élargie / parents / fratrie','Santé d\u2019un proche','Animaux','Administratif familial','Transmission / héritage']],
+  ['RELATIONS',['Amitié','Vie sociale / sorties','Cercle / communauté','Voisinage','Mentor / conseiller','Réseau professionnel','Relations professionnelles clés','Partenariat / collaboration','Relation à maintenir','Relations à risque / limites','Conflits à résoudre','Nouveaux contacts','Gratitude / remerciements','Communication relationnelle','Projets collaboratifs']],
+  ['PERSONNEL',['Santé physique','Santé mentale','Gestion du stress','Énergie / sieste','Sommeil','Nutrition / alimentation','Cuisine','Hydratation','Sport / performance','Étirements / mobilité','Posture / ergonomie','Prévention santé','Vue / dentaire','Vie sexuelle','Addictions / habitudes à couper','Lecture','Apprentissage / étude','Formation / certification','Compétence spécifique','Apprentissage d\u2019une langue','Apprentissage musical','Créativité / écriture','Spiritualité / stoïcisme','Journal / gratitude / réflexion','Attention','Pensées / rumination','Discipline','Confiance / prise de parole','Gestion du temps','Routine matinale','Routine du soir','Digital detox / écrans','Médias / consommation','Loisirs','Vêtements / apparence']],
+  ['FINANCES / PATRIMOINE',['Budget personnel','Finances personnelles','Épargne','Réserve financière / fonds d\u2019urgence','Investissements / placements','Revenus passifs','Immobilier','Dette','Crédit / score','Assurance','Fiscalité','Retraite','Gros achat','Dons / générosité','Patrimoine','Transmission patrimoniale']],
+  ['ENVIRONNEMENT / LOGISTIQUE',['Logement','Bureau','Objets / matériel','Garde-robe capsule','Plantes / jardin','Fichiers / documents','Photos / souvenirs','Espace numérique','Mail / inbox','Mots de passe','Téléphone','Abonnements','Sécurité numérique','Sauvegardes / backups','Vie administrative / papiers','Automobile / véhicule','Mobilité']],
+  ['CONTRIBUTION',['Bénévolat','Engagement local','Mentorat donné','Dons','Écologie personnelle','Transmission de savoir']],
+  ['CRÉATION',['Projet artistique','Side project','Portfolio','Publication / livre','Jeu / prototype','Musique / album','Chaîne / podcast']],
+  ['SENS / IDENTITÉ',['Valeurs','Mission de vie','Bilan annuel','Projets de vie à 5 ans','Legs / trace laissée','Retraite spirituelle']],
+  ['EXPÉRIENCES / TEMPORAIRE',['Voyage','Vacances','Événement','Challenge','Expérience personnelle','Achat important','Déménagement','Formation ponctuelle','Préparation compétition','Année sabbatique','Deuil / transition']]
+];
+const chipOff = {color:'#71717a',bg:'#09090b',border:'#27272a'};
+const chipOn = {color:'#f4f4f5',bg:'rgba(63,63,70,0.55)',border:'rgba(113,113,122,0.7)'};
+
+class Component extends DCLogic {
+  state = { cosmos:['ENTREPRISE','FAMILLE','RELATIONS','PERSONNEL'], rows:SEED, filter:'Tous', selected:null, confirmKill:false,
+    showCosmosModal:false, showMiniModal:false, cosmosName:'', form:freshForm(), tab:0, toast:null, clock:'' };
+  // persistance locale — un seul document JSON versionné, même format que l'export
+  STORE_KEY='cosmos-app-v1';
+  serialize(){ const s=this.state; return {version:1,exportedAt:new Date().toISOString(),cosmos:s.cosmos,miniCosmos:s.rows,journal:s.journal||[],view:s.view||'table'}; }
+  load(){ try{ const raw=localStorage.getItem(this.STORE_KEY); if(!raw) return null; const d=JSON.parse(raw); if(d&&d.version===1&&Array.isArray(d.cosmos)&&Array.isArray(d.miniCosmos)) return d; }catch(e){} return null; }
+  persist(){ try{ localStorage.setItem(this.STORE_KEY,JSON.stringify(this.serialize())); }catch(e){} }
+  componentDidMount(){ this.tick(); this.t = setInterval(()=>this.tick(),30000);
+    const d=this.load(); if(d) this.setState({cosmos:d.cosmos,rows:d.miniCosmos,journal:d.journal||this.journalFromRows(d.miniCosmos),view:d.view||'table',loadedFromStore:true}); else this.setState({journal:this.journalFromRows(SEED)}); }
+  componentDidUpdate(){ const s=this.state; const k=[s.cosmos,s.rows,s.view,s.journal]; if(!this.__snap||k.some((v,i)=>v!==this.__snap[i])){ this.__snap=k; this.persist(); } }
+  componentWillUnmount(){ clearInterval(this.t); }
+  exportJson(){ const blob=new Blob([JSON.stringify(this.serialize(),null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='cosmos-'+daysAgo(0)+'.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000); this.flash('Export JSON téléchargé'); }
+  importJson(file){ if(!file) return; const r=new FileReader(); r.onload=()=>{ try{ const d=JSON.parse(r.result); if(!(d&&d.version===1&&Array.isArray(d.cosmos)&&Array.isArray(d.miniCosmos))) throw 0; this.setState({cosmos:d.cosmos,rows:d.miniCosmos,journal:d.journal||this.journalFromRows(d.miniCosmos)}); this.logJ({type:'donnees',detail:'Import JSON — '+d.miniCosmos.length+' mini-cosmos, '+d.cosmos.length+' cosmos'}); this.flash(d.miniCosmos.length+' mini-cosmos importés'); }catch(e){ this.flash('Fichier invalide'); } }; r.readAsText(file); }
+  resetData(){ this.setState({cosmos:['ENTREPRISE','FAMILLE','RELATIONS','PERSONNEL'],rows:SEED,journal:this.journalFromRows(SEED),confirmReset:false}); this.logJ({type:'donnees',detail:'Données d\u2019exemple restaurées'}); this.flash('Données d\u2019exemple restaurées'); }
+  tick(){ const d=new Date(); this.setState({clock:d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short'})+' · '+d.toTimeString().slice(0,5)}); }
+  flash(msg){ this.setState({toast:msg}); clearTimeout(this.tt); this.tt=setTimeout(()=>this.setState({toast:null}),2600); }
+  setField(k){ return e=>this.setState(s=>({form:{...s.form,[k]:e.target.value}})); }
+  // journal : trace horodatée de toute écriture (humain aujourd'hui, agents IA demain)
+  logJ(e){ this.setState(s=>({journal:[{id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),t:new Date().toISOString(),author:this.props.author??'Toi',...e},...(s.journal||[])]})); }
+  update(id,patch,ev){ const row=this.state.rows.find(x=>x.id===id);
+    const HIST=['created','statut','etat','step'];
+    this.setState(s=>({rows:s.rows.map(x=>x.id===id?{...x,...patch,history:ev&&HIST.includes(ev.type)?[...(x.history||[]),{t:daysAgo(0),type:ev.type,value:ev.value}]:x.history}:x)}));
+    if(ev&&row){ const map={statut:'statut',etat:'etat',step:'etape',unstep:'etape',created:'creation'};
+      this.logJ({type:map[ev.type]||ev.type,mini:row.name,cosmos:row.cosmos,detail:ev.detail||(ev.type==='statut'?'Statut → '+ev.value:ev.type==='etat'?'État → '+(ETATS[ev.value]||{}).label:'')}); } }
+  journalFromRows(rows){ return rows.flatMap(x=>(x.history||[]).map((e,i)=>({id:x.id+'-'+i,t:e.t+'T09:00:00',author:'Exemple',type:{created:'creation',statut:'statut',etat:'etat',step:'etape'}[e.type]||e.type,mini:x.name,cosmos:x.cosmos,detail:e.type==='statut'?'Statut → '+e.value:e.type==='etat'?'État → '+(ETATS[e.value]||{}).label:e.type==='step'?'Étape cochée':'Mini-cosmos créé'}))).sort((a,b)=>a.t<b.t?1:-1); }
+  // drag & drop — lignes (dans ou entre cosmos) et cartes cosmos
+  moveRow(dragId, targetId, cosmos){
+    this.setState(s=>{
+      const rows=[...s.rows]; const from=rows.findIndex(x=>x.id===dragId); if(from<0) return {};
+      const [item]=rows.splice(from,1); if(item.cosmos!==cosmos) setTimeout(()=>this.logJ({type:'deplacement',mini:item.name,cosmos,detail:'Cosmos parent : '+item.cosmos+' → '+cosmos}),0); item.cosmos=cosmos;
+      const to=targetId?rows.findIndex(x=>x.id===targetId):-1;
+      if(to<0){ const last=rows.map(x=>x.cosmos).lastIndexOf(cosmos); rows.splice(last+1,0,item); } else rows.splice(to,0,item);
+      return {rows};
+    });
+  }
+  moveGroup(dragName, targetName){
+    this.setState(s=>{ const c=[...s.cosmos]; const from=c.indexOf(dragName), to=c.indexOf(targetName); if(from<0||to<0||from===to) return {}; c.splice(from,1); c.splice(to,0,dragName); return {cosmos:c}; });
+  }
+  decorate(x){
+    const e = ETATS[x.etat]||ETATS.stable; const isDraft=x.statut==='Draft'||x.statut==='Pause'; const st = STATUT_STYLE[x.statut]||STATUT_STYLE['Actif'];
+    const hideThresh = this.props.hideThresholds ?? false;
+    const prog = progOf(x); const doneN = x.actions.filter(a=>a.done).length;
+    const c = clotureInfo(x.cloture);
+    let entropie=x.entropie, reponse=x.reponse; if(reponse==null&&/ → /.test(entropie||'')){ const p=entropie.split(' → '); entropie=p[0]; reponse=p[1]; }
+    const ty=TYPE_STYLE[x.type||'Conquête'];
+    return {...x, entropie, reponse:reponse||'—', type:x.type||'Conquête', typeColor:ty[0], typeBg:ty[1], prog, action:nextOf(x), stepsLabel:doneN+' / '+x.actions.length, actuel:x.actuel||'—', cloture:x.type==='Maintenance'?'—':c.label, clotureSub:x.type==='Maintenance'?'':c.sub, clotureColor:x.type==='Maintenance'?'#3f3f46':c.color, isDraft, notDraft:!isDraft, nameColor:x.statut==='Draft'?'#71717a':'#fafafa', rowOpacity:x.statut==='Draft'?0.75:1, etatLabel:e.label, etatColor:e.color, etatBg:e.bg, etatAnim:e.live&&(this.props.pulseLive??true)?'pulse 2.4s ease-in-out infinite':'none',
+      statutColor:st[0], statutBg:st[1],
+      isConquete:(x.type||'Conquête')==='Conquête', isMaintenance:x.type==='Maintenance',
+      pct:prog+'%', pctLabel:prog+' %', barColor:x.etat==='danger'?'#fb7185':x.etat==='derive'?'#fbbf24':'#34d399',
+      alerte:hideThresh?'···':x.alerte, kill:hideThresh?'···':x.kill,
+      open:()=>this.setState({selected:x.id,confirmKill:false}),
+      dragStart:ev=>{ ev.dataTransfer.effectAllowed='move'; ev.dataTransfer.setData('text/plain',x.id); this.setState({drag:{type:'row',id:x.id}}); },
+      dragOver:ev=>{ const d=this.state.drag; if(d&&d.type==='row'){ const src=this.state.rows.find(r=>r.id===d.id); if(!src||src.statut!==x.statut) return; ev.preventDefault(); ev.stopPropagation(); if(this.state.over!==x.id) this.setState({over:x.id}); } },
+      drop:ev=>{ ev.preventDefault(); ev.stopPropagation(); const d=this.state.drag; if(d&&d.type==='row'&&d.id!==x.id) this.moveRow(d.id,x.id,x.cosmos); this.setState({drag:null,over:null}); },
+      dragEnd:()=>this.setState({drag:null,over:null}),
+      dropLine:this.state.over===x.id?'2px solid #fafafa':'2px solid transparent',
+      rowBg:this.state.over===x.id?'rgba(63,63,70,0.35)':(this.props.highlightDanger??true)&&x.etat==='danger'?'rgba(244,63,94,0.05)':'transparent',
+      dragOpacity:this.state.drag&&this.state.drag.id===x.id?0.4:(x.statut==='Draft'?0.72:1) };
+  }
+  journalVals(){
+    const s=this.state; if((s.view||'table')!=='journal') return {};
+    const J=s.journal||[]; const tf=s.jType||'Tous'; const q=(s.jQuery||'').toLowerCase();
+    const TYPES={creation:['Création','#34d399'],statut:['Statut','#818cf8'],etat:['État','#fbbf24'],etape:['Étape','#22d3ee'],modification:['Modification','#d4d4d8'],deplacement:['Déplacement','#c084fc'],suppression:['Suppression','#fb7185'],cosmos:['Cosmos','#fafafa'],donnees:['Données','#71717a']};
+    const list=J.filter(e=>(tf==='Tous'||e.type===tf)&&(!q||[e.mini,e.cosmos,e.detail,e.author].join(' ').toLowerCase().includes(q)));
+    const typeChips=[['Tous','Tous',null],...Object.keys(TYPES).map(k=>[k,TYPES[k][0],TYPES[k][1]])].map(([k,label,dot])=>({label,dot:dot||'transparent',dotW:dot?'6px':'0px',...(tf===k?chipOn:chipOff),count:k==='Tous'?J.length:J.filter(e=>e.type===k).length,onClick:()=>this.setState({jType:k})}));
+    const today=daysAgo(0), yest=daysAgo(1); const MOIS=['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'];
+    const dayLabel=d=>d===today?'Aujourd\u2019hui':d===yest?'Hier':(+d.slice(8,10))+' '+MOIS[+d.slice(5,7)-1]+' '+d.slice(0,4);
+    const groups=[]; list.forEach(e=>{ const dt=new Date(e.t); const d=isNaN(dt)?e.t.slice(0,10):isoD(dt); const time=isNaN(dt)?e.t.slice(11,16):String(dt.getHours()).padStart(2,'0')+':'+String(dt.getMinutes()).padStart(2,'0');
+      let g=groups[groups.length-1]; if(!g||g.day!==d){ g={day:d,label:dayLabel(d),items:[]}; groups.push(g); }
+      const ty=TYPES[e.type]||[e.type,'#a1a1aa']; g.items.push({...e,time,typeLabel:ty[0],typeColor:ty[1],hasMini:!!e.mini,mini:e.mini||'',cosmos:e.cosmos||'',authorColor:e.author==='Toi'?'#fafafa':e.author==='Exemple'?'#52525b':'#c084fc'}); });
+    groups.forEach(g=>g.count=g.items.length);
+    return {jGroups:groups,jEmpty:groups.length===0,jTypeChips:typeChips,jQuery:s.jQuery||'',setJQuery:e=>this.setState({jQuery:e.target.value}),jTotal:J.length,jShown:list.length};
+  }
+  statsVals(){
+    const s=this.state; if((s.view||'table')!=='stats') return {};
+    const P=s.statsPeriod??0; const ALL=P===0; const from=ALL?'0000-00-00':daysAgo(P), prevFrom=ALL?'0000-00-00':daysAgo(2*P), end=daysAgo(-1);
+    const rows=s.rows;
+    const count=(type,f,t,val)=>rows.reduce((a,x)=>a+(x.history||[]).filter(e=>e.type===type&&(!val||e.value===val)&&e.t>=f&&e.t<t).length,0);
+    const metric=(label,type,val,color)=>{ const cur=count(type,from,end,val), prev=count(type,prevFrom,from,val), d=cur-prev; return {label,value:cur,color,deltaLabel:ALL?'depuis le début':(d>0?'+':'')+d+' vs période préc.',deltaColor:ALL?'#52525b':d>0?(type==='etat'?'#fb7185':'#34d399'):d<0?(type==='etat'?'#34d399':'#fb7185'):'#52525b'}; };
+    const activity=[metric('créés','created',null,'#fafafa'),metric('clôturés','statut','Clôturé','#71717a'),metric('passés en danger','etat','danger','#fb7185'),metric('étapes cochées','step',null,'#34d399')];
+    const open=rows.filter(x=>x.statut!=='Clôturé');
+    const maxN=Math.max(1,...s.cosmos.map(c=>open.filter(x=>x.cosmos===c).length));
+    const repartition=s.cosmos.map((c,i)=>{ const r=open.filter(x=>x.cosmos===c); const cq=r.filter(x=>x.type!=='Maintenance').length; const live=r.filter(x=>x.statut==='Actif');
+      return {name:c,color:COLORS[i%COLORS.length],total:r.length,conq:cq,maint:r.length-cq,derive:live.filter(x=>x.etat==='derive').length,danger:live.filter(x=>x.etat==='danger').length,barW:Math.round(r.length/maxN*100)+'%',
+        avg:(()=>{const q=live.filter(x=>x.type!=='Maintenance');return q.length?Math.round(q.reduce((a,x)=>a+progOf(x),0)/q.length)+' %':'—';})()}; });
+    const isoOf=x=>{ if(x.type==='Maintenance') return null; let c=x.cloture; if(CLOTURE[c]) c=CLOTURE[c]; return /^\d{4}-\d{2}-\d{2}$/.test(c||'')?c:null; };
+    const horizon=daysAgo(-90); const MOIS=['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'];
+    const upcoming=open.map(x=>({x,c:isoOf(x)})).filter(o=>o.c&&o.c<=horizon).sort((a,b)=>a.c<b.c?-1:1);
+    const byMonth={}; upcoming.forEach(({x,c})=>{ const k=c.slice(0,7); (byMonth[k]=byMonth[k]||[]).push({name:x.name,cosmos:x.cosmos,days:Math.round((new Date(c+'T00:00:00')-TODAY)/86400000)}); });
+    const clotures=Object.keys(byMonth).sort().map(k=>({label:MOIS[+k.slice(5,7)-1]+' '+k.slice(0,4),count:byMonth[k].length,items:byMonth[k].map(it=>({...it,daysLabel:it.days<0?'J+'+(-it.days):'J-'+it.days,color:it.days<0?'#fb7185':it.days<=14?'#fbbf24':'#34d399'}))}));
+    const conq=open.filter(x=>x.type!=='Maintenance'&&x.statut==='Actif').map(x=>({name:x.name,cosmos:x.cosmos,actuel:x.actuel||'—',prog:progOf(x),pct:progOf(x)+'%',pctLabel:progOf(x)+' %',color:x.etat==='danger'?'#fb7185':x.etat==='derive'?'#fbbf24':'#34d399'})).sort((a,b)=>b.prog-a.prog);
+    const conquetes=conq;
+    const oldest=rows.reduce((a,x)=>x.createdAt&&x.createdAt<a?x.createdAt:a,daysAgo(0)); const spanDays=ALL?Math.max(7,Math.round((TODAY-new Date(oldest+'T00:00:00'))/86400000)):P;
+    const stepsDone=count('step',from,end), stepsPerWeek=(stepsDone/(spanDays/7)).toFixed(1);
+    const periodChips=[[0,'Tout'],[7,'7 j'],[30,'30 j'],[90,'90 j'],[365,'1 an']].map(([d,label])=>({label,...(P===d?chipOn:chipOff),onClick:()=>this.setState({statsPeriod:d})}));
+    const alertList=k=>open.filter(x=>x.statut==='Actif'&&x.etat===k).map(x=>({name:x.name,cosmos:x.cosmos,actuel:x.actuel||'—',seuil:k==='danger'?x.kill:x.alerte,action:nextOf(x)}));
+    const deriveList=alertList('derive'), dangerList=alertList('danger');
+    return {deriveList,dangerList,deriveCount:deriveList.length,dangerCount:dangerList.length,noDerive:deriveList.length===0,noDanger:dangerList.length===0,activity,repartition,clotures,noClotures:clotures.length===0,conquetes,conqCount:conquetes.length,periodChips,periodLabel:ALL?'toute la période':P===365?'12 derniers mois':P+' derniers jours',stepsPerWeek,openCount:open.length,closedCount:rows.length-open.length};
+  }
+  renderVals(){
+    const s=this.state; const showClosed=false;
+    const visible = s.rows.filter(x=>showClosed||s.filter==='Clôturé'||x.statut!=='Clôturé');
+    const tf=s.timeFilter||0;
+    const daysTo=x=>{ if(x.type==='Maintenance') return null; let c=x.cloture; if(CLOTURE[c]) c=CLOTURE[c]; if(!/^\d{4}-\d{2}-\d{2}$/.test(c||'')) return null; const t=new Date(); t.setHours(0,0,0,0); return Math.round((new Date(c+'T00:00:00')-t)/86400000); };
+    const isoOf=x=>{ if(x.type==='Maintenance') return null; let c=x.cloture; if(CLOTURE[c]) c=CLOTURE[c]; return /^\d{4}-\d{2}-\d{2}$/.test(c||'')?c:null; };
+    const mf=s.monthFilter||'', yf=s.yearFilter||'', qf=(typeof s.quarterFilter==='string'?s.quarterFilter:'');
+    const qOf=c=>c.slice(0,4)+'-Q'+(Math.floor((+c.slice(5,7)-1)/3)+1);
+    const inPeriod=x=>{ if(!mf&&!yf&&!qf) return true; const c=isoOf(x); if(!c) return false; return (!yf||c.slice(0,4)===yf)&&(!mf||c.slice(0,7)===mf)&&(!qf||qOf(c)===qf); };
+    const inTime=x=>{ if(!tf) return inPeriod(x); const d=daysTo(x); return d!=null&&d<=tf&&inPeriod(x); };
+    const y0=new Date().getFullYear();
+    const years=Array.from({length:11},(_,i)=>String(y0+i));
+    const yearOptions=[{value:'',label:'Année'},...years.map(y=>({value:y,label:y}))];
+    const MOIS=['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'];
+    const monthGroups=years.map(y=>({year:y,items:MOIS.map((m,i)=>({value:y+'-'+String(i+1).padStart(2,'0'),label:m+' '+y}))}));
+    const quarterGroups=years.map(y=>({year:y,items:[1,2,3,4].map(q=>({value:y+'-Q'+q,label:'Q'+q+' '+y}))}));
+    const selStyle=v=>v?chipOn:chipOff;
+    const ef=s.etatFilter||'Tous';
+    const inEtat=x=>ef==='Tous'||(x.etat===ef&&x.statut!=='Draft'&&x.statut!=='Pause');
+    const filtered = visible.filter(x=>(s.filter==='Tous'||x.statut===s.filter)&&inEtat(x)&&inTime(x));
+    const etatChipsF=[['Tous','Tous',null],['stable','Stable','#34d399'],['derive','En dérive','#fbbf24'],['danger','Danger','#fb7185']].map(([k,label,dot])=>({label,dot:dot||'transparent',dotW:dot?'6px':'0px',...(ef===k?chipOn:chipOff),count:k==='Tous'?visible.length:visible.filter(x=>x.etat===k&&x.statut!=='Draft'&&x.statut!=='Pause').length,onClick:()=>this.setState({etatFilter:k})}));
+    const timeChips=[[0,'Tous'],[7,'7 j'],[30,'30 j'],[90,'90 j']].map(([d,label])=>({label,...(tf===d?chipOn:chipOff),
+      count:d?visible.filter(x=>{const k=daysTo(x);return k!=null&&k<=d;}).length:visible.length,onClick:()=>this.setState({timeFilter:d})}));
+    const cf=s.cosmosFilter||'Tous';
+    const cosmosChips=['Tous',...s.cosmos].map((c,i)=>({label:c,...(cf===c?chipOn:chipOff),dot:c==='Tous'?'transparent':COLORS[(i-1)%COLORS.length],dotW:c==='Tous'?'0px':'6px',
+      count:c==='Tous'?visible.length:visible.filter(x=>x.cosmos===c).length,onClick:()=>this.setState({cosmosFilter:c})}));
+    const COLS=[['name','Mini-cosmos'],['objectif','Objectif'],['type','Type objectif'],['actuel','Valeur actuelle'],['alerte','Alerte (seuil)'],['kill','Kill'],['sas','SAS (test fixe)'],['entropie','Entropie'],['reponse','Réponse entropie'],['maintenance','Force (maintenance)'],['prog','Progression'],['action','Prochaine étape'],['etat','État'],['statut','Statut'],['cloture','Clôture']];
+    const sort=s.sort||null;
+    const ETAT_ORDER={stable:0,derive:1,danger:2};
+    const STATUT_ORDER={Actif:0,Pause:1,Draft:2,'Clôturé':3};
+    const sortVal=(x,k)=>{
+      if(k==='prog') return x.type==='Maintenance'?-1:x.prog;
+      if(k==='etat') return (x.statut==='Draft'||x.statut==='Pause')?-1:(ETAT_ORDER[x.etat]??0);
+      if(k==='statut') return STATUT_ORDER[x.statut]??9;
+      if(k==='cloture'){ const c=isoOf(x); return c||(x.type==='Maintenance'?'9999-99':'9999-98'); }
+      const v=x[k]; return (v==null||v==='—')?'':String(v);
+    };
+    const sortRows=rows=>{ const r=[...rows]; const statutDir=sort&&sort.key==='statut'&&sort.dir==='desc'?-1:1; const col=sort&&sort.key!=='statut'?sort:null;
+      r.sort((a,b)=>{ const sa=(STATUT_ORDER[a.statut]??9)-(STATUT_ORDER[b.statut]??9); if(sa) return sa*statutDir; if(!col) return 0;
+        const va=sortVal(a,col.key), vb=sortVal(b,col.key); const c=typeof va==='number'&&typeof vb==='number'?va-vb:String(va).localeCompare(String(vb),'fr',{numeric:true,sensitivity:'base'}); return col.dir==='desc'?-c:c; });
+      return r.map((x,i)=>({...x,blockTop:i>0&&r[i-1].statut!==x.statut?'1px solid rgba(63,63,70,0.9)':x.dropLine})); };
+    const columns=COLS.map(([key,label])=>({key,label,active:sort&&sort.key===key,color:(sort&&sort.key===key)||(key==='statut'&&!sort)?'#fafafa':'#52525b',
+      arrow:sort&&sort.key===key?(sort.dir==='asc'?'↑':'↓'):(key==='statut'&&!sort?'↑':''),
+      onClick:()=>this.setState(st=>{ const cur=st.sort; if(!cur||cur.key!==key) return {sort:{key,dir:'asc'}}; if(cur.dir==='asc') return {sort:{key,dir:'desc'}}; return {sort:null}; })}));
+    const anyFilterEarly=s.filter!=='Tous'||ef!=='Tous'||cf!=='Tous'||tf||mf||yf||qf;
+    const groups = s.cosmos.map((name,i)=>({name,i})).filter(g=>cf==='Tous'||g.name===cf).map(({name,i})=>{
+      const rows=sortRows(filtered.filter(x=>x.cosmos===name).map(x=>this.decorate(x)));
+      const dg=s.drag, isGroupDrag=dg&&dg.type==='group';
+      return {name,color:COLORS[i%COLORS.length],rows,count:rows.length,empty:rows.length===0,emptyLabel:anyFilterEarly?'aucun mini-cosmos pour ce filtre':'aucun mini-cosmos — ajoute-en un avec le bouton +',
+        avg:(()=>{const c=rows.filter(x=>x.type!=='Maintenance');return c.length?Math.round(c.reduce((a,x)=>a+x.prog,0)/c.length):'—';})(),
+        gDragStart:ev=>{ ev.dataTransfer.effectAllowed='move'; ev.dataTransfer.setData('text/plain',name); this.setState({drag:{type:'group',id:name}}); },
+        gDragOver:ev=>{ const d=this.state.drag; if(!d) return; ev.preventDefault(); const key=(d.type==='group'?'g:':'c:')+name; if(this.state.over!==key) this.setState({over:key}); },
+        gDrop:ev=>{ ev.preventDefault(); const d=this.state.drag; if(d&&d.type==='group') this.moveGroup(d.id,name); else if(d&&d.type==='row') this.moveRow(d.id,null,name); this.setState({drag:null,over:null}); },
+        gDragEnd:()=>this.setState({drag:null,over:null}),
+        isEditing:s.editCosmos===name, notEditing:s.editCosmos!==name,
+        editName:s.editCosmosName??name,
+        startEdit:ev=>{ ev.stopPropagation(); this.setState({editCosmos:name,editCosmosName:name,confirmDelete:null}); },
+        setEditName:e=>this.setState({editCosmosName:e.target.value}),
+        saveEdit:()=>{ const n=(s.editCosmosName||'').trim().toUpperCase(); if(!n||(n!==name&&s.cosmos.includes(n))){ this.setState({editCosmos:null}); return; }
+          this.setState(st=>({cosmos:st.cosmos.map(c=>c===name?n:c),rows:st.rows.map(x=>x.cosmos===name?{...x,cosmos:n}:x),cosmosFilter:st.cosmosFilter===name?n:st.cosmosFilter,editCosmos:null})); if(n!==name){ this.logJ({type:'cosmos',cosmos:n,detail:'Cosmos renommé : '+name+' → '+n}); this.flash(name+' renommé en '+n); } },
+        cancelEdit:()=>this.setState({editCosmos:null}),
+        editKey:e=>{ if(e.key==='Enter') e.currentTarget.blur(); if(e.key==='Escape') this.setState({editCosmos:null}); },
+        totalRows:s.rows.filter(x=>x.cosmos===name).length,
+        confirmDelete:s.confirmDelete===name, notConfirmDelete:s.confirmDelete!==name,
+        askDelete:ev=>{ ev.stopPropagation(); this.setState({confirmDelete:name,editCosmos:null}); },
+        cancelDelete:()=>this.setState({confirmDelete:null}),
+        doDelete:()=>{ this.setState(st=>({cosmos:st.cosmos.filter(c=>c!==name),rows:st.rows.filter(x=>x.cosmos!==name),cosmosFilter:st.cosmosFilter===name?'Tous':st.cosmosFilter,confirmDelete:null})); this.logJ({type:'cosmos',cosmos:name,detail:'Cosmos supprimé avec '+s.rows.filter(x=>x.cosmos===name).length+' mini-cosmos'}); this.flash('Cosmos '+name+' supprimé'); },
+        cardBorder:s.over==='g:'+name||s.over==='c:'+name?'rgba(161,161,170,0.9)':'rgba(39,39,42,0.8)',
+        cardOpacity:isGroupDrag&&dg.id===name?0.4:1,
+        addMini:()=>this.setState({showMiniModal:true,tab:0,form:freshForm({cosmos:name})})};
+    });
+    const filterNames=['Tous','Draft','Actif','Pause','Clôturé'];
+    const filterChips=filterNames.map(f=>({label:f,...(s.filter===f?chipOn:chipOff),
+      count:f==='Tous'?visible.length:s.rows.filter(x=>x.statut===f).length,
+      onClick:()=>this.setState({filter:f})}));
+    const sel = s.rows.find(x=>x.id===s.selected);
+    let detail=null;
+    if(sel){ const d=this.decorate(sel);
+      const edit={}; ['name','objectif','actuel','sas','maintenance','entropie','reponse','alerte','kill','cloture'].forEach(k=>{ edit[k]=e=>{ if(k==='cloture'&&!e.target.value) return; this.update(sel.id,{[k]:e.target.value}); }; });
+      const isDate=/^\d{4}-\d{2}-\d{2}$/.test(sel.cloture||'');
+      const allDone=sel.actions.length>0&&sel.actions.every(a=>a.done)&&sel.type!=='Maintenance'&&sel.statut!=='Clôturé';
+      const closeIt=()=>{ this.update(sel.id,{statut:'Clôturé',cloture:daysAgo(0)},{type:'statut',value:'Clôturé',detail:'Statut → Clôturé (date effective '+daysAgo(0)+')'}); this.flash(sel.name+' clôturé'); };
+      detail={...d, editing:s.editing, notEditing:!s.editing, edit, raw:sel, allDone, closeIt,
+        parentChips:s.cosmos.map((c,i)=>({label:c,dot:COLORS[i%COLORS.length],...(sel.cosmos===c?chipOn:chipOff),onClick:()=>{ if(c!==sel.cosmos){ this.update(sel.id,{cosmos:c},{type:'deplacement',detail:'Cosmos parent : '+sel.cosmos+' → '+c}); this.flash(sel.name+' → '+c); } }})),
+        clotureDate:isDate?sel.cloture:'',
+        clotureChips:dateShortcuts().map(d=>({label:d.label,...(sel.cloture===d.value?chipOn:chipOff),onClick:()=>this.update(sel.id,{cloture:d.value})})),
+        stepsHint:sel.type==='Maintenance'?'liste de tâches — sans progression pour un objectif de maintenance':'cocher une étape fait avancer la progression',
+        typeChips:['Conquête','Maintenance'].map(t=>({label:t,color:sel.type===t?TYPE_STYLE[t][0]:'#71717a',bg:sel.type===t?TYPE_STYLE[t][1]:'#09090b',border:sel.type===t?TYPE_STYLE[t][0]:'#27272a',onClick:()=>{ if(t!==sel.type) this.update(sel.id,{type:t},{type:'modification',detail:'Type objectif → '+t}); }})),
+        etatChips:['stable','derive','danger'].map(k=>({label:ETATS[k].label,color:sel.etat===k?ETATS[k].color:'#71717a',bg:sel.etat===k?ETATS[k].bg:'#09090b',border:sel.etat===k?ETATS[k].color:'#27272a',onClick:()=>this.update(sel.id,{etat:k},{type:'etat',value:k})})),
+        toggleEdit:()=>{ if(!s.editing){ this.setState({editing:true,editSnap:JSON.parse(JSON.stringify(sel))}); return; }
+          const snap=s.editSnap||{}; const L={name:'Nom',objectif:'Objectif',actuel:'Valeur actuelle',sas:'SAS',maintenance:'Force',entropie:'Entropie',reponse:'Réponse entropie',alerte:'Alerte',kill:'Kill',cloture:'Clôture'};
+          const changed=Object.keys(L).filter(k=>(snap[k]||'')!==(sel[k]||'')).map(k=>L[k]);
+          if(JSON.stringify((snap.actions||[]).map(a=>a.text))!==JSON.stringify(sel.actions.map(a=>a.text))) changed.push('Étapes');
+          if(changed.length) this.logJ({type:'modification',mini:sel.name,cosmos:sel.cosmos,detail:changed.join(', ')+(changed.length>1?' modifiés':' modifié')});
+          this.setState({editing:false,editSnap:null}); },
+        addStep:()=>this.update(sel.id,{actions:[...sel.actions,{text:'',done:false}]}),
+        actionCount:sel.actions.length, doneCount:sel.actions.filter(a=>a.done).length,
+        actions:sel.actions.map((a,i)=>({text:a.text,color:a.done?'#52525b':'#f4f4f5',deco:a.done?'line-through':'none',mark:a.done?'✓':'',boxBg:a.done?'#34d399':'#09090b',boxBorder:a.done?'#34d399':'#3f3f46',
+          toggle:()=>this.update(sel.id,{actions:sel.actions.map((b,j)=>j===i?{...b,done:!b.done}:b)},a.done?{type:'unstep',detail:'Étape décochée : '+a.text}:{type:'step',detail:'Étape cochée : '+a.text}),
+          onText:e=>this.update(sel.id,{actions:sel.actions.map((b,j)=>j===i?{...b,text:e.target.value}:b)}),
+          remove:()=>this.update(sel.id,{actions:sel.actions.filter((b,j)=>j!==i)})})),
+        statutChips:STATUTS.map(st=>({label:st,...(sel.statut===st?chipOn:chipOff),onClick:()=>{ if(st==='Clôturé') closeIt(); else { this.update(sel.id,{statut:st,etat:sel.etat},{type:'statut',value:st}); this.flash(sel.name+' → '+st); } }}))};
+    }
+    const f=s.form; const set={}; Object.keys(EMPTY_FORM).forEach(k=>{ if(k!=='actions') set[k]=this.setField(k); });
+    const tabs=[['01–05','Identité'],['06–10','Gouvernance'],['11–13','Suivi']].map(([num,label],i)=>({num,label,color:s.tab===i?'#fafafa':'#71717a',line:s.tab===i?'#fafafa':'transparent',onClick:()=>this.setState({tab:i})}));
+    const miniInvalid=!f.cosmos||!f.name.trim()||(f.type!=='Maintenance'&&!/^\d{4}-\d{2}-\d{2}$/.test(f.cloture||''));
+    const cosmosInvalid=!s.cosmosName.trim()||s.cosmos.includes(s.cosmosName.trim().toUpperCase());
+    const q=(s.tplQuery||'').toLowerCase();
+    const tplGroups=TEMPLATES.map(([domain,items],i)=>{
+      const list=items.filter(t=>!q||t.toLowerCase().includes(q)||domain.toLowerCase().includes(q));
+      const exists=s.cosmos.includes(domain);
+      return {domain,color:COLORS[i%COLORS.length],count:list.length,exists,missing:!exists,
+        createCosmos:()=>{ this.setState(st=>({cosmos:[...st.cosmos,domain]})); this.logJ({type:'cosmos',cosmos:domain,detail:'Cosmos créé depuis les modèles'}); this.flash('Cosmos '+domain+' créé'); },
+        items:list.map(t=>({label:t,use:()=>this.setState({showMiniModal:true,tab:0,form:freshForm({name:t,cosmos:exists?domain:''})})}))};
+    }).filter(g=>g.count>0);
+    const anyFilter=s.filter!=='Tous'||ef!=='Tous'||cf!=='Tous'||tf||mf||yf||qf;
+    const shownGroups=anyFilter?groups.filter(g=>g.count>0):groups;
+    const view=s.view||'table';
+    return {
+      clock:s.clock, columns, groups:shownGroups, noResult:anyFilter&&shownGroups.length===0, filterChips, etatChipsF,
+      kpis:(()=>{ const all=s.rows; const live=all.filter(x=>x.statut==='Actif');
+        const n=(f)=>all.filter(f).length;
+        return [
+          {label:'draft',value:n(x=>x.statut==='Draft'),color:'#a1a1aa'},{label:'actif',value:live.length,color:'#34d399'},{label:'pause',value:n(x=>x.statut==='Pause'),color:'#d4a054'},{label:'clôturé',value:n(x=>x.statut==='Clôturé'),color:'#71717a'},{sep:true},
+          {label:'stable',value:live.filter(x=>x.etat==='stable').length,color:'#34d399'},{label:'en dérive',value:live.filter(x=>x.etat==='derive').length,color:'#fbbf24'},{label:'danger',value:live.filter(x=>x.etat==='danger').length,color:'#fb7185'}
+        ].map(k=>({...k,isSep:!!k.sep,notSep:!k.sep})); })(), cosmosChips, timeChips,
+      monthGroups, quarterGroups, yearOptions, monthFilter:mf, yearFilter:yf, quarterFilter:qf, quarterStyle:selStyle(qf), setQuarter:e=>this.setState({quarterFilter:e.target.value,monthFilter:''}),
+      monthStyle:selStyle(mf), yearStyle:selStyle(yf),
+      setMonth:e=>this.setState({monthFilter:e.target.value,quarterFilter:''}), setYear:e=>this.setState({yearFilter:e.target.value}),
+      isTable:view==='table', isTemplates:view==='templates', isStats:view==='stats', isJournal:view==='journal',
+      tabJournal:{color:view==='journal'?'#fafafa':'#a1a1aa',bg:view==='journal'?'rgba(39,39,42,0.55)':'transparent',border:view==='journal'?'rgba(63,63,70,0.8)':'transparent',onClick:()=>this.setState({view:'journal'})},
+      ...this.journalVals(),
+      exportJson:()=>this.exportJson(), importJson:e=>{ this.importJson(e.target.files&&e.target.files[0]); e.target.value=''; }, importRef:this.importRef||(this.importRef=React.createRef()), openImport:()=>this.importRef.current&&this.importRef.current.click(),
+      confirmReset:!!s.confirmReset, askReset:()=>this.setState({confirmReset:true}), cancelReset:()=>this.setState({confirmReset:false}), resetData:()=>this.resetData(),
+      dataMenu:!!s.dataMenu, toggleDataMenu:()=>this.setState(st=>({dataMenu:!st.dataMenu,confirmReset:false})),
+      tabStats:{color:view==='stats'?'#fafafa':'#a1a1aa',bg:view==='stats'?'rgba(39,39,42,0.55)':'transparent',border:view==='stats'?'rgba(63,63,70,0.8)':'transparent',onClick:()=>this.setState({view:'stats'})},
+      ...this.statsVals(),
+      tabTable:{color:view==='table'?'#fafafa':'#a1a1aa',bg:view==='table'?'rgba(39,39,42,0.55)':'transparent',border:view==='table'?'rgba(63,63,70,0.8)':'transparent',onClick:()=>this.setState({view:'table'})},
+      tabTpl:{color:view==='templates'?'#fafafa':'#a1a1aa',bg:view==='templates'?'rgba(39,39,42,0.55)':'transparent',border:view==='templates'?'rgba(63,63,70,0.8)':'transparent',onClick:()=>this.setState({view:'templates'})},
+      tplGroups, tplQuery:s.tplQuery||'', setTplQuery:e=>this.setState({tplQuery:e.target.value}), tplTotal:TEMPLATES.reduce((a,[,i])=>a+i.length,0),
+      stats:{total:visible.length, shown:filtered.length, cosmos:s.cosmos.length, danger:visible.filter(x=>x.etat==='danger'&&x.statut!=='Draft'&&x.statut!=='Pause').length},
+      detail, closeDetail:()=>this.setState({selected:null,confirmKill:false,confirmDeleteMini:false,editing:false}),
+      confirmKill:s.confirmKill, notConfirmKill:!s.confirmKill,
+      askKill:()=>this.setState({confirmKill:true,confirmDeleteMini:false}), cancelKill:()=>this.setState({confirmKill:false}),
+      confirmDeleteMini:!!s.confirmDeleteMini, footerIdle:!s.confirmKill&&!s.confirmDeleteMini,
+      askDeleteMini:()=>this.setState({confirmDeleteMini:true,confirmKill:false}), cancelDeleteMini:()=>this.setState({confirmDeleteMini:false}),
+      doDeleteMini:()=>{ if(sel){ this.setState(st=>({rows:st.rows.filter(x=>x.id!==sel.id)})); this.logJ({type:'suppression',mini:sel.name,cosmos:sel.cosmos,detail:'Mini-cosmos supprimé'}); this.flash(sel.name+' supprimé'); } this.setState({selected:null,confirmDeleteMini:false,editing:false}); },
+      showCosmosModal:s.showCosmosModal, showMiniModal:s.showMiniModal,
+      openCosmos:()=>this.setState({showCosmosModal:true,cosmosName:''}),
+      openMini:()=>this.setState({showMiniModal:true,tab:0,form:freshForm()}),
+      closeModals:()=>this.setState({showCosmosModal:false,showMiniModal:false}),
+      cosmosName:s.cosmosName, setCosmosName:e=>this.setState({cosmosName:e.target.value}),
+      cosmosInvalid, cosmosBtnOpacity:cosmosInvalid?0.4:1,
+      saveCosmos:()=>{ const n=s.cosmosName.trim().toUpperCase(); if(!n) return; this.setState(st=>({cosmos:[...st.cosmos,n],showCosmosModal:false})); this.logJ({type:'cosmos',cosmos:n,detail:'Cosmos créé'}); this.flash('Cosmos '+n+' créé'); },
+      form:f, set, tabs, tab0:s.tab===0, tab1:s.tab===1, tab2:s.tab===2, notLastTab:s.tab<2, nextTab:()=>this.setState({tab:Math.min(2,s.tab+1)}),
+      parentChips:s.cosmos.map((c,i)=>({label:c,dot:COLORS[i%COLORS.length],...(f.cosmos===c?chipOn:chipOff),onClick:()=>this.setState(st=>({form:{...st.form,cosmos:c}}))})),
+      formTypeChips:['Conquête','Maintenance'].map(t=>({label:t,color:f.type===t?TYPE_STYLE[t][0]:'#71717a',bg:f.type===t?TYPE_STYLE[t][1]:'#09090b',border:f.type===t?TYPE_STYLE[t][0]:'#27272a',onClick:()=>this.setState(st=>({form:{...st.form,type:t}}))})),
+      formIsConquete:f.type!=='Maintenance',
+      formClotureDate:/^\d{4}-\d{2}-\d{2}$/.test(f.cloture)?f.cloture:'',
+      formDateChips:dateShortcuts().map(d=>({label:d.label,...(f.cloture===d.value?chipOn:chipOff),onClick:()=>this.setState(st=>({form:{...st.form,cloture:d.value}}))})),
+      formStatutChips:STATUTS.map(st=>({label:st,...(f.statut===st?chipOn:chipOff),onClick:()=>this.setState(x=>({form:{...x.form,statut:st}}))})),
+      formActions:f.actions.map((v,i)=>({n:i+1,value:v,onChange:e=>this.setState(st=>{const a=[...st.form.actions];a[i]=e.target.value;return {form:{...st.form,actions:a}};})})),
+      miniInvalid, miniBtnOpacity:miniInvalid?0.4:1,
+      formHint:miniInvalid?(!f.cosmos||!f.name.trim()?'cosmos parent et nom requis':'une conquête a besoin d\u2019une date de clôture'):'prêt à créer dans '+f.cosmos, formHintColor:miniInvalid?'#52525b':'#34d399',
+      saveMini:()=>{ if(miniInvalid) return; const acts=f.actions.filter(a=>a.trim());
+        const row={cosmos:f.cosmos,name:f.name.trim(),type:f.type,objectif:f.objectif||'—',actuel:f.actuel||'—',sas:f.sas||'—',maintenance:f.maintenance||'—',entropie:f.entropie||'—',reponse:f.reponse||'—',alerte:f.alerte||'—',kill:f.kill||'—',
+          etat:'stable', statut:f.statut, cloture:f.type==='Maintenance'?'Permanent':f.cloture,
+          actions:acts.map(t=>({text:t,done:false})), createdAt:daysAgo(0), history:[{t:daysAgo(0),type:'created'}], id:'mc-'+String(s.rows.length+1).padStart(2,'0')};
+        this.setState(st=>({rows:[...st.rows,row],showMiniModal:false})); this.logJ({type:'creation',mini:row.name,cosmos:row.cosmos,detail:'Mini-cosmos créé · '+row.type+' · '+row.statut}); this.flash(row.name+' créé dans '+row.cosmos); },
+      toast:s.toast
+    };
+  }
+}
+</script>
+</body>
+</html>
