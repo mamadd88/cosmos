@@ -1,8 +1,0 @@
-{
-  "name": "Cosmos",
-  "description": "Application de gouvernance personnelle et de suivi des domaines de vie",
-  "requestFramePermissions": [],
-  "majorCapabilities": [
-    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
-  ]
-}
