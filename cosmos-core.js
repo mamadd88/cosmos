@@ -10,11 +10,27 @@ const STATUT_STYLE = {
   'Clôturé':['#71717a','rgba(113,113,122,0.12)']
 };
 const hasSas = x => !!(x.sas&&x.sas.trim()&&x.sas!=='—');
+// SAS daté : sasUntil (AAAA-MM-JJ) = fin du test d'entrée ; un SAS non franchi vit au rythme de cette date
+const sasUntilOf = x => /^\d{4}-\d{2}-\d{2}$/.test(x.sasUntil||'')?x.sasUntil:null;
+const sasPendingOf = x => hasSas(x)&&!x.sasDone;
+// poids : vital > important > normal (défaut). Structurel, pas un état : il ordonne et hiérarchise, il ne colore pas.
+const POIDS = ['vital','important','normal'];
+const POIDS_LABEL = {vital:'Vital',important:'Important',normal:'Normal'};
+const POIDS_ORDER = {vital:0,important:1,normal:2};
+const poidsOf = x => POIDS.includes(x.poids)?x.poids:'normal';
+// point devant le nom : plein et lumineux (vital), atténué (important), creux discret (normal)
+const POIDS_DOT = {vital:{bg:'#fafafa',border:'#fafafa',glow:'0 0 6px rgba(250,250,250,0.55)'},important:{bg:'#71717a',border:'#71717a',glow:'none'},normal:{bg:'transparent',border:'#3f3f46',glow:'none'}};
+// lentilles (tags) : ce que touche un mini-cosmos, à travers les cosmos. Noms du registre (state.lentilles), stockés dans x.tags
+const normTag = t => String(t||'').trim().replace(/\s+/g,' ');
+const tagsOf = x => Array.isArray(x&&x.tags)?x.tags.filter(t=>typeof t==='string'&&t.trim()):[];
+const tagStyle = color => ({color, bg:color+'1f', border:color+'59'});
 const startOf = x => /^\d{4}-\d{2}-\d{2}$/.test(x.startAt||'')?x.startAt:(x.createdAt||null);
 const notStarted = x => { const s=startOf(x); return !!s && s>isoD(TODAY); };
 const statutOf = x => x.closed?'Clôturé':(x.pause||notStarted(x))?'Pause':(hasSas(x)&&!x.sasDone)?'SAS':'Actif';
 // migration des anciens statuts manuels (Draft/Actif/Pause/Clôturé) vers les drapeaux pause / closed
-const migrate = rows => rows.map(x=>{ const y={...x}; if(y.pause==null) y.pause=x.statut==='Pause'; if(y.closed==null) y.closed=x.statut==='Clôturé'; if(y.sasDone==null) y.sasDone=false; return y; });
+const migrate = rows => rows.map(x=>{ const y={...x}; if(y.pause==null) y.pause=x.statut==='Pause'; if(y.closed==null) y.closed=x.statut==='Clôturé'; if(y.sasDone==null) y.sasDone=false;
+  if(sasPendingOf(y)&&!sasUntilOf(y)) y.sasUntil=inferSasUntil(y);
+  if(!y.cloture||y.cloture==='Permanent'||y.cloture==='À dater') y.cloture=mandatDepuis(startOf(y)||y.createdAt); return y; });
 // steps: [texte, fait]. Les champs etat/maintenance sont conservés dans les données d'exemple mais ne sont plus utilisés.
 const r = (cosmos,name,objectif,sas,maintenance,entropie,alerte,kill,etat,statut,cloture,steps) =>
   ({cosmos,name,objectif,sas,maintenance,entropie,alerte,kill,etat,statut,cloture,actions:steps.map(([text,done])=>({text,done:!!done}))});
@@ -53,24 +69,28 @@ const TYPES = ['C','C','M','C','C','M','C','M','M','C','M','M','M','M','M','M','
 // ancien type Maintenance → échéance Permanent ; ancien type Conquête → échéance datée
 SEED.forEach((x,i)=>{ x.id='mc-'+String(i+1).padStart(2,'0'); x.actuel=ACTUEL[i]; x.cloture=TYPES[i]==='Maintenance'?'Permanent':(CLOTURE[x.cloture]||x.cloture);
   const p=x.entropie.split(' → '); x.entropie=p[0]; x.reponse=p[1]||'—'; x.pause=x.statut==='Pause'; x.closed=false; x.sasDone=false; });
-// clôture stockée : ISO 'AAAA-MM-JJ' (date précise) · 'M:AAAA-MM' (fin de mois) · 'Q:AAAA-Qn' (fin de trimestre) · 'Y:AAAA' (fin d'année) · 'Permanent'
+// clôture stockée : ISO 'AAAA-MM-JJ' (date précise) · 'M:AAAA-MM' (fin de mois) · 'Q:AAAA-Qn' (fin de trimestre) · 'Y:AAAA' (fin d'année)
+// · 'A:AAAA-MM-JJ' (mandat d'un an : objectif continu, revu au terme puis renouvelé ou supprimé). L'ancien 'Permanent' est converti en mandat à la migration.
+const isMandat = c => /^A:\d{4}-\d{2}-\d{2}$/.test(c||'');
 const MOIS_S=['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'];
 const lastDay=(y,m)=>isoD(new Date(y,m+1,0));
 const fmtJM=iso=>{ const d=new Date(iso+'T00:00:00'); return d.getDate()+' '+MOIS_S[d.getMonth()]; };
 const fmtFR=iso=>iso.split('-').reverse().join('/');
 const resolveCloture=c=>{ if(!c||c==='Permanent'||c==='À dater') return null; if(CLOTURE[c]) c=CLOTURE[c]; let m;
+  if(m=c.match(/^A:(\d{4}-\d{2}-\d{2})$/)) return m[1];
   if(m=c.match(/^M:(\d{4})-(\d{2})$/)) return lastDay(+m[1],+m[2]-1);
   if(m=c.match(/^Q:(\d{4})-Q([1-4])$/)) return lastDay(+m[1],+m[2]*3-1);
   if(m=c.match(/^Y:(\d{4})$/)) return lastDay(+m[1],11);
   return /^\d{4}-\d{2}-\d{2}$/.test(c)?c:null; };
 const clotureLabel=c=>{ const iso=resolveCloture(c); if(!iso) return 'Permanent'; let m;
+  if(isMandat(c)) return 'Mandat jusqu\u2019au '+fmtFR(iso);
   if(m=c.match(/^M:(\d{4})-(\d{2})$/)) return 'Fin '+MOIS_S[+m[2]-1]+' '+m[1]+' ('+fmtJM(iso)+')';
   if(m=c.match(/^Q:(\d{4})-Q([1-4])$/)) return 'Fin Q'+m[2]+' '+m[1]+' ('+fmtJM(iso)+')';
   if(m=c.match(/^Y:(\d{4})$/)) return 'Fin '+m[1]+' ('+fmtJM(iso)+')';
   return fmtFR(iso); };
-const clotureShort=c=>clotureLabel(c).replace(/ \([^)]*\)$/,'');
+const clotureShort=c=>isMandat(c)?'Mandat · '+fmtFR(resolveCloture(c)):clotureLabel(c).replace(/ \([^)]*\)$/,'');
 const clotureInfo = c => { const iso=resolveCloture(c); if(!iso) return {label:'Permanent', short:'Permanent', sub:'', color:'#34d399'};
-  return {label:clotureLabel(c), short:clotureShort(c), sub:'', color:'#d4d4d8', days:Math.round((new Date(iso+'T00:00:00')-TODAY)/86400000)}; };
+  return {label:clotureLabel(c), short:clotureShort(c), sub:'', color:'#d4d4d8', mandat:isMandat(c), days:Math.round((new Date(iso+'T00:00:00')-TODAY)/86400000)}; };
 // menus d'échéance : jours relatifs · fins de mois (10 ans) · fins de trimestre (10 ans) · fins d'année (10 ans)
 const clotureOptions=()=>{ const y0=TODAY.getFullYear(), m0=TODAY.getMonth(), q0=Math.floor(m0/3);
   const rel=[[0,'Aujourd\u2019hui'],[7,'+7 j'],[14,'+14 j'],[30,'+30 j'],[60,'+60 j'],[90,'+90 j'],[180,'+180 j'],[365,'+365 j']].map(([n,l])=>({value:daysAgo(-n),label:l+' ('+fmtFR(daysAgo(-n))+')'}));
@@ -80,32 +100,53 @@ const clotureOptions=()=>{ const y0=TODAY.getFullYear(), m0=TODAY.getMonth(), q0
   return {rel,monthGroups,quarters,years}; };
 const clotureSel=c=>({rel:/^\d{4}-\d{2}-\d{2}$/.test(c||'')?c:'',month:/^M:/.test(c||'')?c:'',quarter:/^Q:/.test(c||'')?c:'',year:/^Y:/.test(c||'')?c:''});
 // projection : avancement dans le temps entre le début et l'échéance + jours restants / de retard
-// zone (statut de projection) : ok · tension (≤ préavis alertDays) · jourj · retard · continu · termine
-const PROJ = {ok:['À l\u2019heure','#34d399'],tension:['Tension','#fbbf24'],jourj:['Jour J','#fafafa'],retard:['Retard','#fb7185'],continu:['Continu','#71717a'],termine:['Terminé','#71717a']};
+// zone (statut de projection) : ok · tension (≤ préavis alertDays) · jourj · retard · sas (test en cours : bleu, sans préavis) · continu · termine
+const PROJ = {ok:['À l\u2019heure','#34d399'],sas:['Test','#818cf8'],tension:['Tension','#fbbf24'],jourj:['Jour J','#fafafa'],retard:['Retard','#fb7185'],continu:['Continu','#71717a'],termine:['Terminé','#71717a']};
 const alertDaysOf = x => { const n=parseInt(x.alertDays,10); return isNaN(n)||n<0?7:n; };
+// pendant un SAS non franchi, la jauge court du début à la fin du test : bleu tant que le test dure, rouge s'il est dépassé, jamais d'ambre (c'est un test) ; puis bascule vers la clôture
 const projectionOf = x => {
-  const c=resolveCloture(x.cloture); if(!c) return {permanent:true,zone:'continu',color:PROJ.continu[1],zoneLabel:PROJ.continu[0]};
+  const eff=echeanceEffective(x); const c=eff.iso; const finalIso=eff.final;
+  const finalDays=finalIso?Math.round((new Date(finalIso+'T00:00:00')-TODAY)/86400000):null;
+  if(!c) return {permanent:true,sas:false,zone:'continu',color:PROJ.continu[1],zoneLabel:PROJ.continu[0],finalIso,finalPermanent:true,finalDays};
   const end=new Date(c+'T00:00:00'), start=new Date((startOf(x)||daysAgo(0))+'T00:00:00');
   const days=Math.round((end-TODAY)/86400000);
-  if(x.closed) return {permanent:false,days,pct:100,zone:'termine',color:PROJ.termine[1],zoneLabel:PROJ.termine[0],label:'terminé'};
+  if(x.closed) return {permanent:false,sas:false,days,pct:100,zone:'termine',color:PROJ.termine[1],zoneLabel:PROJ.termine[0],label:'terminé',finalIso,finalPermanent:!finalIso,finalDays};
   const total=Math.max(1,Math.round((end-start)/86400000)), elapsed=Math.round((TODAY-start)/86400000);
   const pct=Math.max(0,Math.min(100,Math.round(elapsed/total*100)));
-  const zone=days<0?'retard':days===0?'jourj':days<=alertDaysOf(x)?'tension':'ok';
-  return {permanent:false,days,pct,zone,color:PROJ[zone][1],zoneLabel:PROJ[zone][0],label:days<0?'-'+(-days)+' j':days===0?'J+0':'+'+days+' j'};
+  const preavis=alertDaysOf(x);
+  const zone=eff.sas?(days<0?'retard':'sas'):(days<0?'retard':days===0?'jourj':days<=preavis?'tension':'ok');
+  const mandat=!eff.sas&&isMandat(x.cloture);
+  const zoneLabel=eff.sas?({retard:'Test dépassé',sas:days===0?'Dernier jour du test':'Test en cours'})[zone]:mandat?({retard:'Mandat dépassé',jourj:'Mandat à renouveler',tension:'Mandat à renouveler',ok:'Mandat en cours'})[zone]:PROJ[zone][0];
+  return {permanent:false,sas:eff.sas,mandat,days,pct,zone,color:PROJ[zone][1],zoneLabel,label:days<0?'-'+(-days)+' j':days===0?'J+0':'+'+days+' j',preavis,finalIso,finalPermanent:!finalIso,finalDays};
 };
 
 // historique simulé : création, étapes cochées, changements d'état
 const TODAY=new Date(); TODAY.setHours(0,0,0,0);
 const isoD=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 const daysAgo=n=>{ const d=new Date(TODAY); d.setDate(d.getDate()-n); return isoD(d); };
+const plusDays=(iso,n)=>{ const d=new Date(iso+'T00:00:00'); d.setDate(d.getDate()+n); return isoD(d); };
+const plusMonths=(iso,n)=>{ const d=new Date(iso+'T00:00:00'); d.setMonth(d.getMonth()+n); return isoD(d); };
+// fin du test déduite du texte du SAS : date explicite « (30/09) », sinon « 14 jours » / « 2 semaines » / « 1 mois » depuis le début, sinon 14 jours
+const inferSasUntil = x => { const base=startOf(x)||daysAgo(0); const t=String(x.sas||''); let m;
+  if(m=t.match(/\((\d{1,2})\/(\d{1,2})(?:\/(\d{4}))?\)/)){ const y=m[3]?+m[3]:+base.slice(0,4); let iso=y+'-'+String(+m[2]).padStart(2,'0')+'-'+String(+m[1]).padStart(2,'0');
+    if(!m[3]&&iso<base) iso=(y+1)+iso.slice(4); const d=new Date(iso+'T00:00:00'); if(!isNaN(d)&&isoD(d)===iso) return iso; }
+  if(m=t.match(/(\d+)\s*(?:jours?|j)\b/i)) return plusDays(base,+m[1]);
+  if(m=t.match(/(\d+)\s*(?:semaines?|sem)\b/i)) return plusDays(base,7*+m[1]);
+  if(m=t.match(/(\d+)\s*mois\b/i)) return plusMonths(base,+m[1]);
+  return plusDays(base,14); };
+// mandat d'un an depuis une date de base, reporté d'année en année jusqu'à la prochaine échéance après aujourd'hui
+const mandatDepuis = base => { const d=/^\d{4}-\d{2}-\d{2}$/.test(base||'')?base:daysAgo(0); const today=daysAgo(0); let end=plusMonths(d,12); let guard=0; while(end<=today&&guard++<200) end=plusMonths(end,12); return 'A:'+end; };
+// échéance effective : la fin du test tant que le SAS n'est pas franchi, sinon la clôture (null = sans date)
+const echeanceEffective = x => { const fin=resolveCloture(x.cloture); const su=(!x.closed&&sasPendingOf(x))?sasUntilOf(x):null; return su?{iso:su,sas:true,final:fin}:{iso:fin,sas:false,final:fin}; };
 SEED.forEach((x,i)=>{ const age=20+(i*37)%110; x.createdAt=daysAgo(age); x.history=[{t:x.createdAt,type:'created'}];
-  const done=x.actions.filter(a=>a.done).length; for(let j=0;j<done;j++) x.history.push({t:daysAgo(Math.max(0,Math.round(age-(j+1)*age/(done+1)))),type:'step'}); });
+  const done=x.actions.filter(a=>a.done).length; for(let j=0;j<done;j++) x.history.push({t:daysAgo(Math.max(0,Math.round(age-(j+1)*age/(done+1)))),type:'step'});
+  if(sasPendingOf(x)) x.sasUntil=inferSasUntil(x); if(x.cloture==='Permanent') x.cloture=mandatDepuis(x.createdAt); });
 [['ENTREPRISE','Site vitrine','Site en ligne','Conquête',12,95],['PERSONNEL','Déclaration impôts','Déclaration envoyée','Conquête',40,130]].forEach(([cosmos,name,objectif,type,closedAgo,age],k)=>{
   SEED.push({id:'mc-c'+k,cosmos,name,objectif,type,actuel:'Fait',sas:'—',maintenance:'—',entropie:'—',reponse:'—',alerte:'—',kill:'—',pause:false,closed:true,sasDone:false,cloture:daysAgo(closedAgo),createdAt:daysAgo(age),
     actions:[{text:'Préparer',done:true},{text:'Réaliser',done:true},{text:'Valider',done:true}],history:[{t:daysAgo(age),type:'created'},{t:daysAgo(Math.round(age*0.6)),type:'step'},{t:daysAgo(Math.round(age*0.3)),type:'step'},{t:daysAgo(closedAgo),type:'step'},{t:daysAgo(closedAgo),type:'statut',value:'Clôturé'}]}); });
 const progOf = x => { const t=x.actions.length; const d=x.actions.filter(a=>a.done).length; return t?Math.round(d/t*100):0; };
 const nextOf = x => { const n=x.actions.find(a=>!a.done); return n?n.text:(x.actions.length?'toutes les étapes faites':'—'); };
-const EMPTY_FORM = {cosmos:'',name:'',objectif:'',actuel:'',sas:'',entropie:'',reponse:'',alerte:'',kill:'',startAt:'',echeance:'datee',cloture:'',alertDays:7,actions:['','','','','']}
+const EMPTY_FORM = {cosmos:'',name:'',tags:[],poids:'normal',objectif:'',actuel:'',sas:'',sasUntil:'',entropie:'',reponse:'',alerte:'',kill:'',startAt:'',echeance:'datee',cloture:'',alertDays:7,actions:['','','','','']}
 // à l'ouverture du formulaire l'échéance est datée, calendrier positionné sur aujourd'hui
 const freshForm=(over={})=>({...EMPTY_FORM,startAt:daysAgo(0),cloture:daysAgo(0),...over});
 const TEMPLATES = [
@@ -124,4 +165,4 @@ const TEMPLATES = [
 const chipOff = {color:'#71717a',bg:'#09090b',border:'#27272a'};
 const chipOn = {color:'#f4f4f5',bg:'rgba(63,63,70,0.55)',border:'rgba(113,113,122,0.7)'};
 
-export { COLORS, STATUTS, STATUT_STYLE, hasSas, startOf, notStarted, statutOf, migrate, r, SEED, ACTUEL, CLOTURE, TYPES, MOIS_S, lastDay, fmtJM, fmtFR, resolveCloture, clotureLabel, clotureShort, clotureInfo, clotureOptions, clotureSel, PROJ, alertDaysOf, projectionOf, TODAY, isoD, daysAgo, progOf, nextOf, EMPTY_FORM, freshForm, TEMPLATES, chipOff, chipOn };
+export { COLORS, STATUTS, STATUT_STYLE, hasSas, sasUntilOf, sasPendingOf, isMandat, mandatDepuis, POIDS, POIDS_LABEL, POIDS_ORDER, POIDS_DOT, poidsOf, normTag, tagsOf, tagStyle, inferSasUntil, echeanceEffective, plusDays, plusMonths, startOf, notStarted, statutOf, migrate, r, SEED, ACTUEL, CLOTURE, TYPES, MOIS_S, lastDay, fmtJM, fmtFR, resolveCloture, clotureLabel, clotureShort, clotureInfo, clotureOptions, clotureSel, PROJ, alertDaysOf, projectionOf, TODAY, isoD, daysAgo, progOf, nextOf, EMPTY_FORM, freshForm, TEMPLATES, chipOff, chipOn };

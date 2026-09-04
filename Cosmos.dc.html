@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/dist/umd/supabase.min.js"></script>
 <script src="./support.js"></script>
 </head>
 <body>
@@ -10,6 +11,7 @@
 <helmet>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/@xyflow/react@12.11.6/dist/style.css" rel="stylesheet">
 <style>
 html,body{margin:0;background:#09090b;color:#a1a1aa;font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
 a{color:#fafafa;text-decoration:none}a:hover{color:#e4e4e7}
@@ -29,18 +31,21 @@ input:focus,textarea:focus{outline:none;border-color:#52525b !important}
 <div style="position:sticky;top:0;z-index:20;height:58px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:0 24px;background:rgba(9,9,11,0.9);backdrop-filter:blur(12px);border-bottom:1px solid rgba(39,39,42,0.8)">
   <div style="font-size:14px;font-weight:700;letter-spacing:0.22em;color:#fafafa;text-transform:uppercase">Cosmos</div>
   <div style="display:flex;padding:4px;border-radius:13px;border:1px solid rgba(39,39,42,0.8);background:rgba(24,24,27,0.5);gap:2px">
+    <a href="#/carte" style="padding:6px 14px;border-radius:10px;font-size:12.5px;font-weight:500;cursor:pointer;text-decoration:none;color:{{ tabCarte.color }};background:{{ tabCarte.bg }};border:1px solid {{ tabCarte.border }}" style-hover="color:#f4f4f5">Cosmos</a>
     <a href="#/tableau" style="padding:6px 14px;border-radius:10px;font-size:12.5px;font-weight:500;cursor:pointer;text-decoration:none;color:{{ tabTable.color }};background:{{ tabTable.bg }};border:1px solid {{ tabTable.border }}" style-hover="color:#f4f4f5">Tableau</a>
     <a href="#/modeles" style="padding:6px 14px;border-radius:10px;font-size:12.5px;font-weight:500;cursor:pointer;text-decoration:none;color:{{ tabTpl.color }};background:{{ tabTpl.bg }};border:1px solid {{ tabTpl.border }}" style-hover="color:#f4f4f5">Modèles</a>
     <a href="#/statistiques" style="padding:6px 14px;border-radius:10px;font-size:12.5px;font-weight:500;cursor:pointer;text-decoration:none;color:{{ tabStats.color }};background:{{ tabStats.bg }};border:1px solid {{ tabStats.border }}" style-hover="color:#f4f4f5">Statistiques</a>
     <a href="#/journal" style="padding:6px 14px;border-radius:10px;font-size:12.5px;font-weight:500;cursor:pointer;text-decoration:none;color:{{ tabJournal.color }};background:{{ tabJournal.bg }};border:1px solid {{ tabJournal.border }}" style-hover="color:#f4f4f5">Journal</a>
   </div>
   <div style="display:flex;justify-content:flex-end;align-items:center;gap:8px;position:relative">
+    <button onClick="{{ toggleDataMenu }}" title="Exporter en JSON (menu Données)" style="background:transparent;border:none;cursor:pointer;padding:0 6px;font-family:'JetBrains Mono',monospace;font-size:11px;color:{{ lastExportColor }};white-space:nowrap" style-hover="color:#f4f4f5">{{ lastExportLabel }}</button>
+    <sc-if value="{{ hasPending }}" hint-placeholder-val="{{ false }}"><button onClick="{{ openPending }}" title="Propositions d'agents en attente" style="height:32px;padding:0 11px;border-radius:10px;border:1px solid rgba(192,132,252,0.45);background:rgba(192,132,252,0.1);color:#c084fc;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap" style-hover="background:rgba(192,132,252,0.18)">✦ {{ pendingCount }}</button></sc-if>
     <button onClick="{{ toggleDataMenu }}" title="Données" style="width:32px;height:32px;border-radius:10px;border:1px solid #27272a;background:#09090b;color:#a1a1aa;cursor:pointer;display:inline-flex;align-items:center;justify-content:center" style-hover="color:#f4f4f5;border-color:#3f3f46"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M3 5v14c0 1.7 4 3 9 3s9-1.3 9-3V5"></path><path d="M3 12c0 1.7 4 3 9 3s9-1.3 9-3"></path></svg></button>
     <input type="file" accept="application/json,.json" ref="{{ importRef }}" onChange="{{ importJson }}" style="display:none">
     <sc-if value="{{ dataMenu }}" hint-placeholder-val="{{ false }}">
       <div style="position:absolute;top:40px;right:0;z-index:50;width:280px;background:#0c0c0e;border:1px solid rgba(39,39,42,0.9);border-radius:14px;padding:8px;display:flex;flex-direction:column;gap:2px;animation:popin 150ms ease">
-        <div style="padding:8px 10px 2px;font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:0.09em;color:#52525b">Données · sauvegardées localement</div>
-        <div style="padding:0 10px 6px;font-family:'JetBrains Mono',monospace;font-size:11px;color:{{ lastExportColor }}">{{ lastExportLabel }} · ce navigateur seulement</div>
+        <div style="padding:8px 10px 2px;font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:0.09em;color:#52525b">{{ storageTitle }}</div>
+        <div style="padding:0 10px 6px;font-family:'JetBrains Mono',monospace;font-size:11px;color:{{ lastExportColor }}">{{ storageHint }}</div>
         <button onClick="{{ exportJson }}" style="text-align:left;background:transparent;border:none;color:#f4f4f5;padding:9px 10px;border-radius:8px;font-size:12.5px;cursor:pointer;display:flex;flex-direction:column;gap:2px" style-hover="background:rgba(39,39,42,0.55)"><span>Exporter en JSON</span><span style="font-size:11px;color:#71717a">cosmos, mini-cosmos, étapes, historique</span></button>
         <button onClick="{{ openImport }}" style="text-align:left;background:transparent;border:none;color:#f4f4f5;padding:9px 10px;border-radius:8px;font-size:12.5px;cursor:pointer;display:flex;flex-direction:column;gap:2px" style-hover="background:rgba(39,39,42,0.55)"><span>Importer un JSON</span><span style="font-size:11px;color:#71717a">remplace les données actuelles</span></button>
         <div style="height:1px;background:rgba(39,39,42,0.8);margin:4px 6px"></div>
@@ -48,6 +53,13 @@ input:focus,textarea:focus{outline:none;border-color:#52525b !important}
           <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;border-radius:8px;background:rgba(244,63,94,0.1);font-size:12px;color:#fb7185">Tout remplacer par l'exemple ?<span style="display:flex;gap:6px"><button onClick="{{ cancelReset }}" style="background:transparent;border:none;color:#a1a1aa;font-size:12px;cursor:pointer">Non</button><button onClick="{{ resetData }}" style="background:#fb7185;border:none;color:#09090b;font-weight:600;font-size:12px;padding:4px 10px;border-radius:8px;cursor:pointer">Oui</button></span></div>
         </sc-if>
         <button onClick="{{ askReset }}" style="text-align:left;background:transparent;border:none;color:#a1a1aa;padding:9px 10px;border-radius:8px;font-size:12.5px;cursor:pointer" style-hover="background:rgba(39,39,42,0.55);color:#fb7185">Restaurer les données d'exemple</button>
+        <div style="height:1px;background:rgba(39,39,42,0.8);margin:4px 6px"></div>
+        <button onClick="{{ openTags }}" style="text-align:left;background:transparent;border:none;color:#f4f4f5;padding:9px 10px;border-radius:8px;font-size:12.5px;cursor:pointer;display:flex;flex-direction:column;gap:2px" style-hover="background:rgba(39,39,42,0.55)"><span>Lentilles</span><span style="font-size:11px;color:#71717a">{{ tagsHint }}</span></button>
+        <sc-if value="{{ isDb }}" hint-placeholder-val="{{ false }}">
+          <div style="height:1px;background:rgba(39,39,42,0.8);margin:4px 6px"></div>
+          <button onClick="{{ openAgents }}" style="text-align:left;background:transparent;border:none;color:#f4f4f5;padding:9px 10px;border-radius:8px;font-size:12.5px;cursor:pointer;display:flex;flex-direction:column;gap:2px" style-hover="background:rgba(39,39,42,0.55)"><span>Agents IA</span><span style="font-size:11px;color:#71717a">{{ agentsHint }}</span></button>
+          <button onClick="{{ logout }}" style="text-align:left;background:transparent;border:none;color:#a1a1aa;padding:9px 10px;border-radius:8px;font-size:12.5px;cursor:pointer" style-hover="background:rgba(39,39,42,0.55);color:#f4f4f5">Se déconnecter</button>
+        </sc-if>
       </div>
     </sc-if>
     <button onClick="{{ openCosmos }}" style="background:#09090b;color:#a1a1aa;border:1px solid #27272a;padding:7px 12px;border-radius:10px;font-size:12.5px;font-weight:500;cursor:pointer;white-space:nowrap" style-hover="color:#f4f4f5;border-color:#3f3f46">+ cosmos</button>
@@ -145,7 +157,7 @@ input:focus,textarea:focus{outline:none;border-color:#52525b !important}
     <div style="background:rgba(24,24,27,0.5);backdrop-filter:blur(12px);border:1px solid rgba(39,39,42,0.8);border-radius:16px;overflow:hidden">
       <div style="padding:12px 16px;background:rgba(24,24,27,0.75);border-bottom:1px solid rgba(39,39,42,0.8);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#fafafa">Répartition par cosmos</div>
       <div style="display:grid;grid-template-columns:minmax(110px,150px) minmax(60px,1fr) 44px 50px 56px 80px 70px 70px;gap:0 12px;padding:9px 16px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:#52525b;border-bottom:1px solid rgba(39,39,42,0.35)">
-        <span>Cosmos</span><span>Mini-cosmos</span><span style="text-align:right;color:#818cf8">SAS</span><span style="text-align:right;color:#d4a054">Pause</span><span style="text-align:right">Datés</span><span style="text-align:right">Permanents</span><span style="text-align:right;color:#fbbf24">Tension</span><span style="text-align:right;color:#fb7185">Retard</span>
+        <span>Cosmos</span><span>Mini-cosmos</span><span style="text-align:right;color:#818cf8">SAS</span><span style="text-align:right;color:#d4a054">Pause</span><span style="text-align:right">Datés</span><span style="text-align:right">Mandats</span><span style="text-align:right;color:#fbbf24">Tension</span><span style="text-align:right;color:#fb7185">Retard</span>
       </div>
       <sc-for list="{{ repartition }}" as="c" hint-placeholder-count="4">
         <div style="display:grid;grid-template-columns:minmax(110px,150px) minmax(60px,1fr) 44px 50px 56px 80px 70px 70px;gap:0 12px;align-items:center;padding:11px 16px;border-bottom:1px solid rgba(39,39,42,0.35);font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#d4d4d8">
@@ -155,6 +167,21 @@ input:focus,textarea:focus{outline:none;border-color:#52525b !important}
         </div>
       </sc-for>
     </div>
+    <sc-if value="{{ hasTagStats }}" hint-placeholder-val="{{ false }}">
+    <div style="background:rgba(24,24,27,0.5);backdrop-filter:blur(12px);border:1px solid rgba(39,39,42,0.8);border-radius:16px;overflow:hidden">
+      <div style="padding:12px 16px;background:rgba(24,24,27,0.75);border-bottom:1px solid rgba(39,39,42,0.8);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#fafafa">Répartition par lentille</div>
+      <div style="display:grid;grid-template-columns:minmax(110px,150px) minmax(60px,1fr) 44px 50px 56px 80px 70px 70px;gap:0 12px;padding:9px 16px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:#52525b;border-bottom:1px solid rgba(39,39,42,0.35)">
+        <span>Lentille</span><span>Mini-cosmos</span><span style="text-align:right;color:#818cf8">SAS</span><span style="text-align:right;color:#d4a054">Pause</span><span style="text-align:right">Datés</span><span style="text-align:right">Mandats</span><span style="text-align:right;color:#fbbf24">Tension</span><span style="text-align:right;color:#fb7185">Retard</span>
+      </div>
+      <sc-for list="{{ repartitionTags }}" as="c" hint-placeholder-count="2">
+        <div style="display:grid;grid-template-columns:minmax(110px,150px) minmax(60px,1fr) 44px 50px 56px 80px 70px 70px;gap:0 12px;align-items:center;padding:11px 16px;border-bottom:1px solid rgba(39,39,42,0.35);font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#d4d4d8">
+          <span style="display:flex;align-items:center;gap:8px;font-family:Inter,system-ui,sans-serif;font-size:12px;font-weight:700;color:#fafafa"><span style="width:8px;height:8px;border-radius:99px;background:{{ c.color }}"></span>{{ c.name }}</span>
+          <span style="display:flex;align-items:center;gap:10px"><span style="flex:1;height:6px;border-radius:3px;background:#27272a;overflow:hidden"><span style="display:block;height:100%;border-radius:3px;background:{{ c.color }};width:{{ c.barW }}"></span></span><span style="min-width:20px;text-align:right">{{ c.total }}</span></span>
+          <span style="text-align:right;color:#818cf8">{{ c.sas }}</span><span style="text-align:right;color:#d4a054">{{ c.pause }}</span><span style="text-align:right">{{ c.dated }}</span><span style="text-align:right;color:#71717a">{{ c.permanent }}</span><span style="text-align:right;color:#fbbf24">{{ c.soon }}</span><span style="text-align:right;color:#fb7185">{{ c.late }}</span>
+        </div>
+      </sc-for>
+    </div>
+    </sc-if>
     <div style="background:rgba(24,24,27,0.5);backdrop-filter:blur(12px);border:1px solid rgba(39,39,42,0.8);border-radius:16px;overflow:hidden">
       <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:rgba(24,24,27,0.75);border-bottom:1px solid rgba(39,39,42,0.8)"><span style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#fafafa">Clôtures à venir</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#71717a">90 prochains jours</span></div>
       <sc-if value="{{ noClotures }}" hint-placeholder-val="{{ false }}"><div style="padding:16px;font-size:12px;color:#52525b">aucune clôture prévue sur 90 jours</div></sc-if>
@@ -163,7 +190,7 @@ input:focus,textarea:focus{outline:none;border-color:#52525b !important}
           <div style="display:flex;justify-content:space-between;padding:10px 16px 4px;font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:0.09em;color:#52525b"><span>{{ m.label }}</span><span style="font-family:'JetBrains Mono',monospace">{{ m.count }}</span></div>
           <sc-for list="{{ m.items }}" as="it" hint-placeholder-count="2">
             <div style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:8px 16px;border-bottom:1px solid rgba(39,39,42,0.35)">
-              <span style="display:flex;flex-direction:column;gap:2px"><span style="font-size:12.5px;font-weight:600;color:#fafafa">{{ it.name }}</span><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#52525b;text-transform:uppercase">{{ it.cosmos }}</span></span>
+              <span style="display:flex;flex-direction:column;gap:2px"><span style="display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:#fafafa">{{ it.name }}<sc-if value="{{ it.isSas }}" hint-placeholder-val="{{ false }}"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;color:#818cf8;background:rgba(99,102,241,0.12);padding:1px 5px;border-radius:5px;flex:none">SAS</span></sc-if></span><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#52525b;text-transform:uppercase">{{ it.cosmos }}</span></span>
               <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:{{ it.color }}">{{ it.daysLabel }}</span>
             </div>
           </sc-for>
@@ -180,11 +207,11 @@ input:focus,textarea:focus{outline:none;border-color:#52525b !important}
       </div>
       <sc-for list="{{ echeances }}" as="x" hint-placeholder-count="6">
         <div style="display:grid;grid-template-columns:minmax(140px,1fr) minmax(110px,150px) 70px minmax(110px,160px) minmax(110px,140px) minmax(180px,2fr) 60px;gap:0 14px;align-items:center;padding:9px 16px;border-bottom:1px solid rgba(39,39,42,0.35)">
-          <span style="font-size:12.5px;font-weight:600;color:#fafafa">{{ x.name }}</span>
+          <span style="display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:#fafafa"><span style="width:8px;height:8px;border-radius:99px;flex:none;background:{{ x.poidsBg }};border:1.5px solid {{ x.poidsBorder }}"></span>{{ x.name }}</span>
           <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#71717a;text-transform:uppercase">{{ x.cosmos }}</span>
           <span><span style="padding:2px 8px;border-radius:99px;font-size:10.5px;font-weight:600;color:{{ x.statutColor }};background:{{ x.statutBg }}">{{ x.statut }}</span></span>
           <span style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#d4d4d8">{{ x.actuel }}</span>
-          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:{{ x.statutColor }}">{{ x.cloture }}</span>
+          <span style="display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:11px;color:{{ x.statutColor }}"><sc-if value="{{ x.isSas }}" hint-placeholder-val="{{ false }}"><span style="font-size:10px;color:#818cf8;background:rgba(99,102,241,0.12);padding:1px 5px;border-radius:5px;flex:none">SAS</span></sc-if>{{ x.cloture }}</span>
           <span style="height:4px;border-radius:2px;background:#27272a;overflow:hidden"><span style="display:block;height:100%;background:{{ x.color }};width:{{ x.pct }}"></span></span>
           <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:{{ x.color }};text-align:right">{{ x.label }}</span>
         </div>
@@ -229,6 +256,28 @@ input:focus,textarea:focus{outline:none;border-color:#52525b !important}
 <sc-if value="{{ booting }}" hint-placeholder-val="{{ false }}">
   <div style="padding:60px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:12px;color:#52525b">chargement du cœur métier… <span style="color:#fb7185">{{ bootError }}</span></div>
 </sc-if>
+<sc-if value="{{ needsLogin }}" hint-placeholder-val="{{ false }}">
+  <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:60px 16px">
+    <div style="width:340px;display:flex;flex-direction:column;gap:12px;padding:26px;border-radius:16px;border:1px solid rgba(39,39,42,0.9);background:#0c0c0e;animation:popin 180ms ease">
+      <div style="font-size:14px;font-weight:700;color:#f4f4f5">Connexion</div>
+      <div style="font-size:12px;color:#71717a;line-height:1.6">Tes données vivent dans ta base. Connecte-toi pour les ouvrir sur cet appareil.</div>
+      <input type="email" value="{{ loginEmail }}" onChange="{{ setLoginEmail }}" onKeyDown="{{ loginKey }}" placeholder="email" autoComplete="username" style="background:#09090b;border:1px solid #27272a;border-radius:10px;padding:10px 12px;font-size:13px;color:#f4f4f5">
+      <input type="password" value="{{ loginPassword }}" onChange="{{ setLoginPassword }}" onKeyDown="{{ loginKey }}" placeholder="mot de passe" autoComplete="current-password" style="background:#09090b;border:1px solid #27272a;border-radius:10px;padding:10px 12px;font-size:13px;color:#f4f4f5">
+      <sc-if value="{{ hasLoginError }}" hint-placeholder-val="{{ false }}"><div style="padding:9px 12px;border-radius:10px;background:rgba(244,63,94,0.1);font-size:12px;color:#fb7185;line-height:1.5">{{ loginError }}</div></sc-if>
+      <button onClick="{{ doLogin }}" style="background:#fafafa;color:#09090b;border:none;padding:10px 15px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;opacity:{{ loginBtnOpacity }}" style-hover="background:#e4e4e7">{{ loginLabel }}</button>
+    </div>
+  </div>
+</sc-if>
+<sc-if value="{{ isCarte }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:10px;padding:14px 16px 16px;width:100%">
+  <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px;padding:6px 0 2px">
+    <div style="display:flex;justify-content:flex-start;gap:6px;flex-wrap:wrap"><sc-if value="{{ hasCarteLens }}" hint-placeholder-val="{{ false }}"><sc-for list="{{ carteLensChips }}" as="c" hint-placeholder-count="2"><button onClick="{{ c.onClick }}" style="padding:5px 11px;border-radius:99px;font-size:12px;cursor:pointer;color:{{ c.color }};background:{{ c.bg }};border:1px solid {{ c.border }};display:flex;gap:6px;align-items:center"><span style="width:{{ c.dotW }};height:6px;border-radius:99px;background:{{ c.dot }}"></span>{{ c.label }}</button></sc-for></sc-if></div>
+    <div style="font-size:15px;font-weight:500;letter-spacing:0.02em;color:#e4e4e7;text-align:center">Le tout est plus grand que la somme des parties.</div>
+    <div></div>
+  </div>
+  <div id="carte-root" style="height:calc(100vh - 160px);min-height:520px;border:1px solid rgba(39,39,42,0.8);border-radius:16px;overflow:hidden;background:#0c0c0e"></div>
+</div>
+</sc-if>
 <sc-if value="{{ isTable }}" hint-placeholder-val="{{ true }}">
 <div style="display:flex;align-items:center;justify-content:center;gap:6px;padding:32px 16px 0;flex-wrap:wrap;width:100%">
   <sc-for list="{{ filterChips }}" as="c" hint-placeholder-count="6">
@@ -236,7 +285,7 @@ input:focus,textarea:focus{outline:none;border-color:#52525b !important}
   </sc-for>
   <span style="width:1px;height:18px;background:rgba(39,39,42,0.8);margin:0 8px"></span>
   <sc-for list="{{ projChips }}" as="c" hint-placeholder-count="6">
-    <button onClick="{{ c.onClick }}" title="Projection" style="padding:5px 11px;border-radius:99px;font-size:12px;cursor:pointer;color:{{ c.color }};background:{{ c.bg }};border:1px solid {{ c.border }};display:flex;gap:6px;align-items:center"><span style="width:{{ c.dotW }};height:6px;border-radius:99px;background:{{ c.dot }}"></span>{{ c.label }} <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#fafafa">{{ c.count }}</span></button>
+    <button onClick="{{ c.onClick }}" title="Projection" style="padding:5px 11px;border-radius:99px;font-size:12px;cursor:pointer;color:{{ c.color }};background:{{ c.bg }};border:1px solid {{ c.border }};display:flex;gap:6px;align-items:center"><span style="width:{{ c.dotW }};height:6px;border-radius:99px;background:{{ c.dot }}"></span>{{ c.label }} <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#fafafa">{{ c.count }}</span><span style="width:{{ c.vitalW }};height:6px;border-radius:99px;background:#fafafa;box-shadow:0 0 5px rgba(250,250,250,0.6)"></span></button>
   </sc-for>
   <span style="width:1px;height:18px;background:rgba(39,39,42,0.8);margin:0 8px"></span>
   <sc-for list="{{ timeChips }}" as="c" hint-placeholder-count="3">
@@ -258,6 +307,12 @@ input:focus,textarea:focus{outline:none;border-color:#52525b !important}
   <sc-for list="{{ cosmosChips }}" as="c" hint-placeholder-count="5">
     <button onClick="{{ c.onClick }}" style="padding:5px 11px;border-radius:99px;font-size:12px;cursor:pointer;color:{{ c.color }};background:{{ c.bg }};border:1px solid {{ c.border }};display:flex;gap:6px;align-items:center"><span style="width:{{ c.dotW }};height:6px;border-radius:99px;background:{{ c.dot }}"></span>{{ c.label }} <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#fafafa">{{ c.count }}</span></button>
   </sc-for>
+</div>
+<div style="display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 16px 0;flex-wrap:wrap;width:100%">
+  <sc-for list="{{ tagChips }}" as="c" hint-placeholder-count="3">
+    <button onClick="{{ c.onClick }}" style="padding:5px 11px;border-radius:99px;font-size:12px;cursor:pointer;color:{{ c.color }};background:{{ c.bg }};border:1px solid {{ c.border }};display:flex;gap:6px;align-items:center"><span style="width:{{ c.dotW }};height:6px;border-radius:99px;background:{{ c.dot }}"></span>{{ c.label }} <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#fafafa">{{ c.count }}</span></button>
+  </sc-for>
+  <button onClick="{{ openTags }}" title="Lentilles : ce qu'un mini-cosmos touche, à travers les cosmos" style="padding:5px 11px;border-radius:99px;font-size:12px;cursor:pointer;color:#71717a;background:transparent;border:1px dashed #3f3f46" style-hover="color:#f4f4f5;border-color:#71717a">+ lentille</button>
 </div>
 
 <div style="display:flex;flex-direction:column;gap:14px;padding:32px 16px 32px;width:100%">
@@ -302,8 +357,8 @@ input:focus,textarea:focus{outline:none;border-color:#52525b !important}
         </sc-if>
         <sc-for list="{{ g.rows }}" as="r" hint-placeholder-count="3">
           <div onClick="{{ r.open }}" draggable="true" onDragStart="{{ r.dragStart }}" onDragOver="{{ r.dragOver }}" onDrop="{{ r.drop }}" onDragEnd="{{ r.dragEnd }}" style="display:grid;grid-template-columns:24px minmax(150px,1.2fr) minmax(170px,1.5fr) minmax(130px,1.1fr) minmax(130px,1.3fr) minmax(130px,1.3fr) minmax(150px,1.4fr) minmax(150px,1.4fr) minmax(220px,1.5fr) minmax(80px,0.5fr) minmax(120px,0.7fr) minmax(150px,0.8fr);align-items:center;padding:11px 14px;border-bottom:1px solid rgba(39,39,42,0.35);border-top:{{ r.blockTop }};opacity:{{ r.dragOpacity }};cursor:pointer;font-size:12.5px;font-weight:500;color:#a1a1aa;background:{{ r.rowBg }}" style-hover="background:rgba(39,39,42,0.35)">
-            <span title="Glisser pour réordonner" style="font-family:'JetBrains Mono',monospace;font-size:13px;color:#3f3f46;letter-spacing:-2px;user-select:none;cursor:grab">⋮⋮</span>
-            <span style="color:{{ r.nameColor }};font-weight:600;font-size:13px;padding-right:10px">{{ r.name }}</span>
+            <span onClick="{{ r.cyclePoids }}" title="{{ r.poidsTitle }}" style="width:10px;height:10px;border-radius:99px;flex:none;background:{{ r.poidsBg }};border:1.5px solid {{ r.poidsBorder }};box-shadow:{{ r.poidsGlow }};cursor:pointer;margin:0 3px"></span>
+            <span style="color:{{ r.nameColor }};font-weight:600;font-size:13px;padding-right:10px">{{ r.name }}<sc-if value="{{ r.hasProps }}" hint-placeholder-val="{{ false }}"><span title="propositions d'agents en attente" style="margin-left:8px;padding:1px 7px;border-radius:99px;font-size:10.5px;font-weight:600;color:#c084fc;background:rgba(192,132,252,0.12);border:1px solid rgba(192,132,252,0.35);white-space:nowrap;vertical-align:middle">✦ {{ r.propCount }}</span></sc-if><sc-for list="{{ r.tagPills }}" as="t" hint-placeholder-count="1"><span onClick="{{ t.onClick }}" title="{{ t.title }}" style="margin-left:6px;padding:1px 7px;border-radius:99px;font-size:10.5px;font-weight:600;color:{{ t.color }};background:{{ t.bg }};border:1px solid {{ t.border }};white-space:nowrap;vertical-align:middle;cursor:pointer">{{ t.label }}</span></sc-for></span>
             <span style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#d4d4d8;padding-right:10px">{{ r.objectif }}</span>
             <span style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#d4d4d8;padding-right:10px;white-space:pre-wrap">{{ r.actuel }}</span>
             <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#fbbf24;padding-right:10px">{{ r.alerte }}</span>
@@ -315,7 +370,7 @@ input:focus,textarea:focus{outline:none;border-color:#52525b !important}
               <sc-if value="{{ r.notSasPending }}" hint-placeholder-val="{{ true }}"><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#71717a;background:rgba(113,113,122,0.12);padding:2px 6px;border-radius:6px;flex:none;min-width:44px;text-align:center">{{ r.stepsLabel }}</span><span style="color:#d4d4d8">{{ r.action }}</span></sc-if>
             </span>
             <span><span style="padding:3px 9px;border-radius:99px;font-size:11px;font-weight:600;color:{{ r.statutColor }};background:{{ r.statutBg }}">{{ r.statut }}</span></span>
-            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:{{ r.clotureColor }};padding-right:10px">{{ r.clotureShort }}</span>
+            <span style="display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:11px;color:{{ r.clotureColor }};padding-right:10px"><sc-if value="{{ r.clotureIsSas }}" hint-placeholder-val="{{ false }}"><span title="fin du test d'entrée — l'échéance finale est dans le volet" style="font-size:10.5px;color:#818cf8;background:rgba(99,102,241,0.12);padding:2px 6px;border-radius:6px;flex:none">SAS</span></sc-if>{{ r.clotureShort }}</span>
             <span style="display:flex;align-items:center;gap:10px;padding-right:4px">
               <sc-if value="{{ r.isDated }}" hint-placeholder-val="{{ true }}">
                 <span style="flex:1;max-width:90px;height:4px;border-radius:2px;background:#27272a;overflow:hidden"><span style="display:block;height:100%;border-radius:2px;background:{{ r.projColor }};width:{{ r.projPct }}"></span></span>
@@ -345,6 +400,19 @@ input:focus,textarea:focus{outline:none;border-color:#52525b !important}
       <button onClick="{{ detail.ai.run }}" style="background:#818cf8;color:#09090b;border:none;padding:8px 13px;border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;opacity:{{ detail.ai.btnOpacity }};white-space:nowrap" style-hover="background:#a5b4fc">{{ detail.ai.btnLabel }}</button>
     </div>
     <div style="flex:1;overflow-y:auto;padding:18px 20px;display:flex;flex-direction:column;gap:18px">
+      <sc-if value="{{ detail.hasAgentProps }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:0.09em;color:#c084fc">Propositions d'agents · {{ detail.agentPropsCount }}</div>
+          <sc-for list="{{ detail.agentProps }}" as="p" hint-placeholder-count="1">
+            <div style="display:flex;flex-direction:column;gap:8px;padding:12px 14px;border-radius:12px;border:1px solid rgba(192,132,252,0.35);background:rgba(192,132,252,0.06)">
+              <div style="font-size:11px;font-weight:600;color:#c084fc">✦ {{ p.agent }}</div>
+              <sc-for list="{{ p.lines }}" as="l" hint-placeholder-count="2"><div style="font-size:12.5px;line-height:1.5"><span style="color:#71717a">{{ l.label }} · </span><span style="color:#f4f4f5">{{ l.value }}</span></div></sc-for>
+              <sc-if value="{{ p.hasMotif }}" hint-placeholder-val="{{ false }}"><div style="font-size:12px;color:#a1a1aa;line-height:1.5;font-style:italic">{{ p.motif }}</div></sc-if>
+              <div style="display:flex;gap:6px"><button onClick="{{ p.accept }}" style="background:#fafafa;color:#09090b;border:none;padding:5px 12px;border-radius:8px;font-size:11.5px;font-weight:600;cursor:pointer" style-hover="background:#e4e4e7">Accepter</button><button onClick="{{ p.refuse }}" style="background:transparent;border:1px solid #27272a;color:#a1a1aa;padding:4px 11px;border-radius:8px;font-size:11.5px;cursor:pointer" style-hover="color:#fb7185;border-color:#3f3f46">Refuser</button></div>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
       <sc-if value="{{ detail.ai.idle }}" hint-placeholder-val="{{ true }}">
         <div style="font-size:12px;color:#71717a;line-height:1.65">L'assistant lit le nom, l'objectif et tout ce que tu as écrit sur ce mini-cosmos. Il ne répète rien : il propose les entropies que tu n'as pas vues, un SAS borné, les étapes manquantes, des seuils plus mesurables — et signale ce qui cloche.<br><br><span style="color:#52525b">Rien n'est écrit sans que tu cliques « Utiliser ».</span></div>
       </sc-if>
@@ -399,7 +467,7 @@ input:focus,textarea:focus{outline:none;border-color:#52525b !important}
       <div style="flex:1;display:flex;flex-direction:column;gap:6px">
         <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#71717a;text-transform:uppercase;letter-spacing:0.08em">{{ detail.cosmos }} · {{ detail.id }}</div>
         <sc-if value="{{ detail.notEditing }}" hint-placeholder-val="{{ true }}">
-          <div style="font-size:18px;font-weight:700;letter-spacing:-0.01em;color:#fafafa">{{ detail.name }}</div>
+          <div style="font-size:18px;font-weight:700;letter-spacing:-0.01em;color:#fafafa"><span onClick="{{ detail.cyclePoids }}" title="{{ detail.poidsTitle }}" style="display:inline-block;width:11px;height:11px;border-radius:99px;vertical-align:middle;margin-right:10px;background:{{ detail.poidsBg }};border:1.5px solid {{ detail.poidsBorder }};box-shadow:{{ detail.poidsGlow }};cursor:pointer"></span>{{ detail.name }}<sc-for list="{{ detail.tagPillsAll }}" as="t" hint-placeholder-count="1"><span style="margin-left:8px;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;color:{{ t.color }};background:{{ t.bg }};border:1px solid {{ t.border }};vertical-align:middle;white-space:nowrap">{{ t.label }}</span></sc-for></div>
         </sc-if>
         <sc-if value="{{ detail.editing }}" hint-placeholder-val="{{ false }}">
           <input value="{{ detail.raw.name }}" onChange="{{ detail.edit.name }}" style="background:#09090b;border:1px solid #27272a;border-radius:10px;padding:8px 12px;font-size:16px;font-weight:700;color:#fafafa;letter-spacing:-0.01em">
@@ -434,7 +502,8 @@ input:focus,textarea:focus{outline:none;border-color:#52525b !important}
         </div>
         <sc-if value="{{ detail.isDated }}" hint-placeholder-val="{{ true }}">
           <div style="height:6px;border-radius:3px;background:#27272a;overflow:hidden"><div style="height:100%;border-radius:3px;background:{{ detail.projColor }};width:{{ detail.projPct }}"></div></div>
-          <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#52525b">{{ detail.projRange }} · tension à {{ detail.alertDays }} j</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#52525b">{{ detail.projRange }} · {{ detail.projPreavisLabel }}</div>
+          <sc-if value="{{ detail.projIsSas }}" hint-placeholder-val="{{ false }}"><div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#818cf8">{{ detail.projThen }}</div></sc-if>
         </sc-if>
         <sc-if value="{{ detail.isPermanent }}" hint-placeholder-val="{{ false }}"><div style="font-size:11.5px;color:#52525b">objectif continu, sans échéance</div></sc-if>
       </div>
@@ -447,7 +516,10 @@ input:focus,textarea:focus{outline:none;border-color:#52525b !important}
             <span style="color:#52525b">entropie</span><span style="color:#d4d4d8">{{ detail.entropie }}</span>
             <span style="color:#52525b">réponse</span><span style="color:#d4d4d8">{{ detail.reponse }}</span>
             <span style="color:#52525b">début</span><span style="color:#d4d4d8">{{ detail.startLabel }}</span>
-            <span style="color:#52525b">clôture</span><span style="color:{{ detail.clotureColor }}">{{ detail.cloture }}</span>
+            <sc-if value="{{ detail.projIsSas }}" hint-placeholder-val="{{ false }}"><span style="color:#818cf8">fin du test</span><span style="color:{{ detail.projColor }}">{{ detail.sasUntilLabel }}</span></sc-if>
+            <span style="color:#52525b">clôture</span><span style="color:{{ detail.clotureColor }}">{{ detail.clotureFinal }}</span>
+            <sc-if value="{{ detail.hasAmont }}" hint-placeholder-val="{{ false }}"><span style="color:#52525b">dépend de</span><span style="display:flex;gap:8px;flex-wrap:wrap"><sc-for list="{{ detail.liensAmont }}" as="l" hint-placeholder-count="1"><span onClick="{{ l.open }}" title="ouvrir" style="color:#d4d4d8;cursor:pointer;border-bottom:1px dotted #52525b">{{ l.name }}</span></sc-for></span></sc-if>
+            <sc-if value="{{ detail.hasAval }}" hint-placeholder-val="{{ false }}"><span style="color:#52525b">alimente</span><span style="display:flex;gap:8px;flex-wrap:wrap"><sc-for list="{{ detail.liensAval }}" as="l" hint-placeholder-count="1"><span onClick="{{ l.open }}" title="ouvrir" style="color:#d4d4d8;cursor:pointer;border-bottom:1px dotted #52525b">{{ l.name }}</span></sc-for></span></sc-if>
           </div>
         </sc-if>
         <sc-if value="{{ detail.editing }}" hint-placeholder-val="{{ false }}">
@@ -455,11 +527,21 @@ input:focus,textarea:focus{outline:none;border-color:#52525b !important}
 
             <div style="display:flex;flex-direction:column;gap:10px"><div style="font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:0.09em;color:#52525b;padding-bottom:6px;border-bottom:1px solid rgba(39,39,42,0.6)">Identité</div>
               <div style="display:flex;flex-direction:column;gap:5px"><label style="font-size:11.5px;font-weight:600;color:#a1a1aa">Cosmos parent</label><div style="display:flex;gap:6px;flex-wrap:wrap"><sc-for list="{{ detail.parentChips }}" as="p" hint-placeholder-count="4"><button onClick="{{ p.onClick }}" style="padding:5px 11px;border-radius:99px;font-size:12px;cursor:pointer;color:{{ p.color }};background:{{ p.bg }};border:1px solid {{ p.border }};display:flex;gap:7px;align-items:center"><span style="width:6px;height:6px;border-radius:99px;background:{{ p.dot }}"></span>{{ p.label }}</button></sc-for></div></div>
+              <div style="display:flex;flex-direction:column;gap:5px"><label style="font-size:11.5px;font-weight:600;color:#a1a1aa">Lentilles <span style="font-weight:400;color:#52525b">ce que ce terrain touche</span></label><div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><sc-for list="{{ detail.tagChips }}" as="c" hint-placeholder-count="2"><button onClick="{{ c.onClick }}" style="padding:4px 10px;border-radius:99px;font-size:11.5px;cursor:pointer;color:{{ c.color }};background:{{ c.bg }};border:1px solid {{ c.border }};display:flex;gap:6px;align-items:center"><span style="width:6px;height:6px;border-radius:99px;background:{{ c.dot }}"></span>{{ c.label }}</button></sc-for><input value="{{ detail.detailNewTag }}" onChange="{{ detail.setDetailNewTag }}" onKeyDown="{{ detail.detailNewTagKey }}" placeholder="+ nouvelle, puis Entrée" style="width:180px;background:#09090b;border:1px dashed #3f3f46;border-radius:99px;padding:4px 10px;font-size:11.5px;color:#f4f4f5"></div></div>
+              <div style="display:flex;flex-direction:column;gap:5px"><label style="font-size:11.5px;font-weight:600;color:#a1a1aa">Poids <span style="font-weight:400;color:#52525b">combien ce terrain pèse</span></label><div style="display:flex;gap:6px;flex-wrap:wrap"><sc-for list="{{ detail.poidsChips }}" as="c" hint-placeholder-count="3"><button onClick="{{ c.onClick }}" style="padding:4px 10px;border-radius:99px;font-size:11.5px;cursor:pointer;color:{{ c.color }};background:{{ c.bg }};border:1px solid {{ c.border }};display:flex;gap:6px;align-items:center"><span style="width:8px;height:8px;border-radius:99px;background:{{ c.dotBg }};border:1.5px solid {{ c.dotBorder }}"></span>{{ c.label }}</button></sc-for></div></div>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px"><div style="display:flex;flex-direction:column;gap:5px"><label style="font-size:11.5px;font-weight:600;color:#a1a1aa">Objectif</label><textarea value="{{ detail.raw.objectif }}" onChange="{{ detail.edit.objectif }}" rows="2" style="background:#09090b;border:1px solid #27272a;border-radius:10px;padding:9px 12px;font-size:12.5px;color:#f4f4f5;resize:vertical;line-height:1.6"></textarea></div><div style="display:flex;flex-direction:column;gap:5px"><label style="font-size:11.5px;font-weight:600;color:#a1a1aa">Valeur actuelle</label><textarea value="{{ detail.raw.actuel }}" onChange="{{ detail.edit.actuel }}" rows="2" placeholder="Où en es-tu aujourd'hui ?" style="background:#09090b;border:1px solid #27272a;border-radius:10px;padding:9px 12px;font-size:12.5px;color:#f4f4f5;resize:vertical;line-height:1.6"></textarea></div></div>
             </div>
             <div style="display:flex;flex-direction:column;gap:10px"><div style="font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:0.09em;color:#52525b;padding-bottom:6px;border-bottom:1px solid rgba(39,39,42,0.6)">Gouvernance</div>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px"><div style="display:flex;flex-direction:column;gap:5px"><label style="font-size:11.5px;font-weight:600;color:#a1a1aa">Entropie</label><textarea value="{{ detail.raw.entropie }}" onChange="{{ detail.edit.entropie }}" rows="2" style="background:#09090b;border:1px solid #27272a;border-radius:10px;padding:9px 12px;font-size:12.5px;color:#f4f4f5;resize:vertical;line-height:1.6"></textarea></div><div style="display:flex;flex-direction:column;gap:5px"><label style="font-size:11.5px;font-weight:600;color:#a1a1aa">Réponse entropie</label><textarea value="{{ detail.raw.reponse }}" onChange="{{ detail.edit.reponse }}" rows="2" style="background:#09090b;border:1px solid #27272a;border-radius:10px;padding:9px 12px;font-size:12.5px;color:#f4f4f5;resize:vertical;line-height:1.6"></textarea></div></div>
-              <div style="display:flex;flex-direction:column;gap:5px"><label style="font-size:11.5px;font-weight:600;color:#818cf8">SAS — test avant admission</label><input value="{{ detail.sasEdit }}" placeholder="vide = entre directement en Actif" onChange="{{ detail.edit.sas }}" style="background:#09090b;border:1px solid #27272a;border-radius:10px;padding:9px 12px;font-size:12.5px;color:#f4f4f5"></div>
+              <div style="display:flex;flex-direction:column;gap:5px"><label style="font-size:11.5px;font-weight:600;color:#818cf8">SAS — test avant admission</label><input value="{{ detail.sasEdit }}" placeholder="vide = entre directement en Actif" onChange="{{ detail.edit.sas }}" style="background:#09090b;border:1px solid #27272a;border-radius:10px;padding:9px 12px;font-size:12.5px;color:#f4f4f5">
+                <sc-if value="{{ detail.hasSas }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:4px">
+                    <span style="font-size:11px;font-weight:600;color:#818cf8;margin-right:2px">Fin du test</span>
+                    <sc-for list="{{ detail.sasChips }}" as="c" hint-placeholder-count="3"><button onClick="{{ c.onClick }}" style="padding:3px 9px;border-radius:99px;font-size:11px;cursor:pointer;color:{{ c.color }};background:{{ c.bg }};border:1px solid {{ c.border }}">{{ c.label }}</button></sc-for>
+                    <input type="date" value="{{ detail.sasUntil }}" onChange="{{ detail.edit.sasUntil }}" style="background:#09090b;border:1px solid {{ detail.sasUntilBorder }};border-radius:8px;padding:4px 8px;font-size:11.5px;color:#f4f4f5;font-family:'JetBrains Mono',monospace;color-scheme:dark">
+                  </div>
+                  <div style="font-size:11px;color:{{ detail.sasHintColor }};line-height:1.5">{{ detail.sasHint }}</div>
+                </sc-if></div>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
             <div style="display:flex;flex-direction:column;gap:5px"><label style="font-size:11.5px;font-weight:600;color:#fbbf24">Alerte</label><input value="{{ detail.raw.alerte }}" onChange="{{ detail.edit.alerte }}" style="background:#09090b;border:1px solid #27272a;border-radius:10px;padding:9px 12px;font-size:12.5px;color:#f4f4f5;font-family:'JetBrains Mono',monospace"></div>
             <div style="display:flex;flex-direction:column;gap:5px"><label style="font-size:11.5px;font-weight:600;color:#fb7185">Kill</label><input value="{{ detail.raw.kill }}" onChange="{{ detail.edit.kill }}" style="background:#09090b;border:1px solid #27272a;border-radius:10px;padding:9px 12px;font-size:12.5px;color:#f4f4f5;font-family:'JetBrains Mono',monospace"></div>
@@ -467,7 +549,14 @@ input:focus,textarea:focus{outline:none;border-color:#52525b !important}
             </div>
             <div style="display:flex;flex-direction:column;gap:10px"><div style="font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:0.09em;color:#52525b;padding-bottom:6px;border-bottom:1px solid rgba(39,39,42,0.6)">Échéance</div>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px"><div style="display:flex;flex-direction:column;gap:5px"><label style="font-size:11.5px;font-weight:600;color:#a1a1aa">Date de début</label><input type="date" value="{{ detail.startDate }}" onChange="{{ detail.edit.startAt }}" style="background:#09090b;border:1px solid #27272a;border-radius:10px;padding:8px 12px;font-size:12.5px;color:#f4f4f5;font-family:'JetBrains Mono',monospace;color-scheme:dark"></div><div style="display:flex;flex-direction:column;gap:5px"><label style="font-size:11.5px;font-weight:600;color:#a1a1aa">Échéance</label><div style="display:flex;gap:6px"><sc-for list="{{ detail.echeanceChips }}" as="t" hint-placeholder-count="2"><button onClick="{{ t.onClick }}" style="padding:5px 11px;border-radius:99px;font-size:12px;font-weight:600;cursor:pointer;color:{{ t.color }};background:{{ t.bg }};border:1px solid {{ t.border }}">{{ t.label }}</button></sc-for></div></div></div>
-              <sc-if value="{{ detail.isDated }}" hint-placeholder-val="{{ true }}">
+              <sc-if value="{{ detail.isMandat }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 14px;border-radius:12px;border:1px solid rgba(39,39,42,0.8);background:rgba(24,24,27,0.35)">
+                <span style="font-size:12.5px;color:#f4f4f5">{{ detail.mandatLabel }}</span>
+                <span style="font-size:11px;color:#71717a;flex:1;min-width:200px">au terme : renouveler si la discipline tient, clôturer ou supprimer sinon</span>
+                <button onClick="{{ detail.renouvelerMandat }}" style="background:#09090b;color:#f4f4f5;border:1px solid #3f3f46;padding:7px 12px;border-radius:10px;font-size:12px;font-weight:600;cursor:pointer" style-hover="border-color:#71717a">Renouveler le mandat · +12 mois</button>
+              </div>
+              </sc-if>
+              <sc-if value="{{ detail.isDatee }}" hint-placeholder-val="{{ true }}">
               <div style="display:flex;flex-direction:column;gap:8px;padding:12px 14px;border-radius:12px;border:1px solid rgba(39,39,42,0.8);background:rgba(24,24,27,0.35)">
                 <div style="display:flex;justify-content:space-between;align-items:center"><label style="font-size:11.5px;font-weight:600;color:#a1a1aa">Date de clôture</label><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#71717a">retenu : <span style="color:#f4f4f5">{{ detail.cloture }}</span></span></div>
                 <div style="display:grid;grid-template-columns:150px 1fr 1fr;gap:8px">
@@ -505,7 +594,7 @@ input:focus,textarea:focus{outline:none;border-color:#52525b !important}
           <sc-if value="{{ detail.hasSas }}" hint-placeholder-val="{{ false }}">
             <div onClick="{{ detail.toggleSas }}" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;border:1px solid rgba(129,140,248,0.45);background:rgba(99,102,241,0.08);cursor:pointer;font-size:12.5px;color:{{ detail.sasColor }};text-decoration:{{ detail.sasDeco }}" style-hover="border-color:#818cf8">
               <span style="width:16px;height:16px;flex:none;border-radius:5px;border:1px solid {{ detail.sasBoxBorder }};background:{{ detail.sasBoxBg }};display:inline-flex;align-items:center;justify-content:center;font-size:10px;color:#09090b;font-weight:700">{{ detail.sasMark }}</span>
-              <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:700;color:#818cf8;letter-spacing:0.06em;flex:none">SAS</span>{{ detail.raw.sas }}
+              <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:700;color:#818cf8;letter-spacing:0.06em;flex:none">SAS</span>{{ detail.raw.sas }}<sc-if value="{{ detail.projIsSas }}" hint-placeholder-val="{{ false }}"><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:{{ detail.projColor }};margin-left:auto;padding-left:10px;white-space:nowrap;text-decoration:none">jusqu'au {{ detail.sasUntilLabel }} · {{ detail.projLabel }}</span></sc-if>
             </div>
           </sc-if>
           <sc-if value="{{ detail.notEditing }}" hint-placeholder-val="{{ true }}">
@@ -533,6 +622,7 @@ input:focus,textarea:focus{outline:none;border-color:#52525b !important}
         <div style="font-size:11.5px;color:#52525b">{{ detail.statutHint }}</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px">
           <sc-if value="{{ detail.canPause }}" hint-placeholder-val="{{ true }}">
+            <sc-if value="{{ detail.isMandat }}" hint-placeholder-val="{{ false }}"><button onClick="{{ detail.renouvelerMandat }}" title="{{ detail.mandatLabel }}" style="padding:6px 12px;border-radius:99px;font-size:12px;font-weight:600;cursor:pointer;color:#f4f4f5;background:rgba(63,63,70,0.55);border:1px solid transparent" style-hover="border-color:#71717a">Renouveler le mandat</button></sc-if>
             <button onClick="{{ detail.togglePause }}" style="padding:6px 12px;border-radius:99px;font-size:12px;font-weight:600;cursor:pointer;color:{{ detail.pauseColor }};background:{{ detail.pauseBg }};border:1px solid transparent">{{ detail.pauseLabel }}</button>
           </sc-if>
           <button onClick="{{ detail.toggleClose }}" style="padding:6px 12px;border-radius:99px;font-size:12px;cursor:pointer;color:#a1a1aa;background:#09090b;border:1px solid #27272a" style-hover="color:#f4f4f5;border-color:#3f3f46">{{ detail.closeLabel }}</button>
@@ -554,6 +644,78 @@ input:focus,textarea:focus{outline:none;border-color:#52525b !important}
   </div>
 </sc-if>
 
+<sc-if value="{{ showTags }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;inset:0;z-index:40;background:rgba(0,0,0,0.65);display:flex;align-items:center;justify-content:center;animation:fadein 150ms ease">
+    <div style="width:580px;max-height:90vh;background:#0c0c0e;border:1px solid rgba(39,39,42,0.9);border-radius:20px;animation:popin 180ms ease;display:flex;flex-direction:column">
+      <div style="display:flex;align-items:flex-start;padding:20px 22px 16px;border-bottom:1px solid rgba(39,39,42,0.8)">
+        <div style="flex:1;display:flex;flex-direction:column;gap:4px"><div style="font-size:17px;font-weight:700;color:#fafafa;letter-spacing:-0.01em">Lentilles</div><div style="font-size:11.5px;color:#71717a">un cosmos, c'est là où une chose habite ; une lentille, c'est ce qu'elle touche, à travers les cosmos</div></div>
+        <button onClick="{{ closeTags }}" style="width:28px;height:28px;border-radius:8px;border:1px solid #27272a;background:#09090b;color:#a1a1aa;cursor:pointer" style-hover="color:#f4f4f5">✕</button>
+      </div>
+      <div style="padding:20px 22px;display:flex;flex-direction:column;gap:16px;overflow-y:auto">
+        <sc-if value="{{ tooManyTags }}" hint-placeholder-val="{{ false }}"><div style="padding:10px 12px;border-radius:10px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.3);font-size:12px;color:#fbbf24;line-height:1.5">{{ tagsCount }} lentilles. Au-delà d'une dizaine, elles redeviennent des dossiers : garde les fils qui traversent vraiment plusieurs cosmos.</div></sc-if>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:0.09em;color:#52525b">Lentilles · {{ tagsCount }}</div>
+          <sc-if value="{{ noTags }}" hint-placeholder-val="{{ false }}"><div style="font-size:12px;color:#52525b">aucune pour l'instant — santé, une personne, l'argent, le temps…</div></sc-if>
+          <sc-for list="{{ tagRows }}" as="t" hint-placeholder-count="2">
+            <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:12px;border:1px solid rgba(39,39,42,0.8);background:#0f0f12">
+              <span style="width:10px;height:10px;border-radius:99px;background:{{ t.color }};flex:none"></span>
+              <sc-if value="{{ t.notRenaming }}" hint-placeholder-val="{{ true }}"><span style="flex:1;font-size:13px;font-weight:600;color:#f4f4f5">{{ t.name }}</span></sc-if>
+              <sc-if value="{{ t.renaming }}" hint-placeholder-val="{{ false }}"><input value="{{ renameTagName }}" onChange="{{ setRenameTagName }}" onKeyDown="{{ t.renameKey }}" autoFocus="{{ true }}" style="flex:1;background:#09090b;border:1px solid #3f3f46;border-radius:8px;padding:5px 9px;font-size:12.5px;color:#f4f4f5"></sc-if>
+              <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#71717a;white-space:nowrap">{{ t.countLabel }}</span>
+              <sc-if value="{{ t.notRenaming }}" hint-placeholder-val="{{ true }}"><button onClick="{{ t.startRename }}" style="background:transparent;border:1px solid #27272a;color:#a1a1aa;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer" style-hover="color:#f4f4f5;border-color:#3f3f46">Renommer</button></sc-if>
+              <sc-if value="{{ t.renaming }}" hint-placeholder-val="{{ false }}"><button onClick="{{ t.saveRename }}" style="background:#fafafa;color:#09090b;border:none;padding:5px 11px;border-radius:8px;font-size:11.5px;font-weight:600;cursor:pointer">OK</button></sc-if>
+              <sc-if value="{{ t.notConfirming }}" hint-placeholder-val="{{ true }}"><button onClick="{{ t.askDelete }}" style="background:transparent;border:1px solid #27272a;color:#a1a1aa;padding:4px 10px;border-radius:8px;font-size:11.5px;cursor:pointer" style-hover="color:#fb7185;border-color:#3f3f46">Supprimer</button></sc-if>
+              <sc-if value="{{ t.confirming }}" hint-placeholder-val="{{ false }}"><span style="font-size:11.5px;color:#fb7185;white-space:nowrap">retirer de {{ t.count }} mini-cosmos ?</span><button onClick="{{ t.doDelete }}" style="background:#fb7185;border:none;color:#09090b;font-weight:600;font-size:11.5px;padding:4px 10px;border-radius:8px;cursor:pointer">Oui</button><button onClick="{{ t.cancelDelete }}" style="background:transparent;border:none;color:#a1a1aa;font-size:11.5px;cursor:pointer">Non</button></sc-if>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;padding:14px;border-radius:12px;border:1px solid rgba(39,39,42,0.8)">
+          <div style="font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:0.09em;color:#52525b">Nouvelle lentille</div>
+          <div style="display:flex;gap:8px;align-items:center"><span style="width:10px;height:10px;border-radius:99px;background:{{ nextTagColor }};flex:none"></span><input value="{{ newTagName }}" onChange="{{ setNewTagName }}" onKeyDown="{{ newTagKey }}" placeholder="santé, Léon, argent…" style="flex:1;background:#09090b;border:1px solid #27272a;border-radius:10px;padding:9px 12px;font-size:13px;color:#f4f4f5"><button onClick="{{ createTag }}" disabled="{{ newTagInvalid }}" style="background:#fafafa;color:#09090b;border:none;padding:8px 15px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;opacity:{{ newTagBtnOpacity }}" style-hover="background:#e4e4e7">Créer</button></div>
+          <sc-if value="{{ hasNewTagError }}" hint-placeholder-val="{{ false }}"><div style="font-size:11.5px;color:#fb7185">{{ newTagError }}</div></sc-if>
+        </div>
+      </div>
+    </div>
+  </div>
+</sc-if>
+<sc-if value="{{ showAgents }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;inset:0;z-index:40;background:rgba(0,0,0,0.65);display:flex;align-items:center;justify-content:center;animation:fadein 150ms ease">
+    <div style="width:600px;max-height:90vh;background:#0c0c0e;border:1px solid rgba(39,39,42,0.9);border-radius:20px;animation:popin 180ms ease;display:flex;flex-direction:column">
+      <div style="display:flex;align-items:flex-start;padding:20px 22px 16px;border-bottom:1px solid rgba(39,39,42,0.8)">
+        <div style="flex:1;display:flex;flex-direction:column;gap:4px"><div style="font-size:17px;font-weight:700;color:#fafafa;letter-spacing:-0.01em">Agents IA</div><div style="font-size:11.5px;color:#71717a">une clé par agent, une seule porte (/api/agent), tout est tracé dans le Journal</div></div>
+        <button onClick="{{ closeAgents }}" style="width:28px;height:28px;border-radius:8px;border:1px solid #27272a;background:#09090b;color:#a1a1aa;cursor:pointer" style-hover="color:#f4f4f5">✕</button>
+      </div>
+      <div style="padding:20px 22px;display:flex;flex-direction:column;gap:16px;overflow-y:auto">
+        <sc-if value="{{ hasNewAgentKey }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:8px;padding:14px;border-radius:12px;border:1px solid rgba(52,211,153,0.4);background:rgba(52,211,153,0.07)">
+            <div style="font-size:11.5px;font-weight:600;color:#34d399">Clé de « {{ newAgentKeyName }} » — copie-la maintenant, elle ne sera plus jamais affichée</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#f4f4f5;word-break:break-all;user-select:all;padding:8px 10px;border-radius:8px;background:#09090b">{{ newAgentKey }}</div>
+            <div style="font-size:11px;color:#71717a;line-height:1.6">L'agent appelle {{ agentEndpoint }} en POST avec l'en-tête Authorization: Bearer &lt;clé&gt; et un corps JSON dont le champ action vaut lire, proposer, modifier ou noter. Un GET sur la même adresse renvoie la documentation.</div>
+            <button onClick="{{ clearNewAgentKey }}" style="align-self:flex-start;background:transparent;border:1px solid #27272a;color:#a1a1aa;padding:4px 11px;border-radius:8px;font-size:11.5px;cursor:pointer" style-hover="color:#f4f4f5;border-color:#3f3f46">J'ai copié la clé</button>
+          </div>
+        </sc-if>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:0.09em;color:#52525b">Agents déclarés · {{ agentsCount }}</div>
+          <sc-if value="{{ noAgents }}" hint-placeholder-val="{{ false }}"><div style="font-size:12px;color:#52525b">aucun agent pour l'instant</div></sc-if>
+          <sc-for list="{{ agents }}" as="a" hint-placeholder-count="2">
+            <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:12px;border:1px solid rgba(39,39,42,0.8);background:#0f0f12">
+              <div style="flex:1;display:flex;flex-direction:column;gap:3px"><span style="font-size:13px;font-weight:600;color:{{ a.color }};text-decoration:{{ a.deco }}">{{ a.name }}</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#71717a">{{ a.level }} · {{ a.lastUsed }}</span></div>
+              <sc-if value="{{ a.isActive }}" hint-placeholder-val="{{ true }}"><button onClick="{{ a.revoke }}" style="background:transparent;border:1px solid #27272a;color:#a1a1aa;padding:4px 11px;border-radius:8px;font-size:11.5px;cursor:pointer" style-hover="color:#fb7185;border-color:#3f3f46">Révoquer</button></sc-if>
+              <sc-if value="{{ a.isRevoked }}" hint-placeholder-val="{{ false }}"><span style="font-size:11px;color:#52525b">révoqué</span></sc-if>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;padding:14px;border-radius:12px;border:1px solid rgba(39,39,42,0.8)">
+          <div style="font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:0.09em;color:#52525b">Nouvel agent</div>
+          <input value="{{ newAgentName }}" onChange="{{ setNewAgentName }}" onKeyDown="{{ newAgentKeyDown }}" placeholder="nom (ex. relecture-du-matin)" style="background:#09090b;border:1px solid #27272a;border-radius:10px;padding:10px 12px;font-size:13px;color:#f4f4f5">
+          <div style="display:flex;gap:6px;flex-wrap:wrap"><sc-for list="{{ agentLevelChips }}" as="c" hint-placeholder-count="2"><button onClick="{{ c.onClick }}" style="padding:5px 11px;border-radius:99px;font-size:12px;cursor:pointer;color:{{ c.color }};background:{{ c.bg }};border:1px solid {{ c.border }}">{{ c.label }}</button></sc-for></div>
+          <div style="font-size:11px;color:#71717a;line-height:1.6">{{ agentLevelHint }}</div>
+          <button onClick="{{ createAgent }}" disabled="{{ newAgentInvalid }}" style="align-self:flex-start;background:#fafafa;color:#09090b;border:none;padding:8px 15px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;opacity:{{ newAgentBtnOpacity }}" style-hover="background:#e4e4e7">Créer et afficher la clé</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</sc-if>
 <sc-if value="{{ showCosmosModal }}" hint-placeholder-val="{{ false }}">
   <div style="position:fixed;inset:0;z-index:40;background:rgba(0,0,0,0.65);display:flex;align-items:center;justify-content:center;animation:fadein 150ms ease">
     <div style="width:560px;background:#0c0c0e;border:1px solid rgba(39,39,42,0.9);border-radius:20px;animation:popin 180ms ease;display:flex;flex-direction:column">
@@ -602,6 +764,16 @@ input:focus,textarea:focus{outline:none;border-color:#52525b !important}
           <div style="display:flex;flex-direction:column;gap:6px">
             <label style="font-size:11.5px;font-weight:600;color:#a1a1aa;display:flex;gap:8px"><span style="font-family:'JetBrains Mono',monospace;color:#52525b">02</span>Nom du mini-cosmos <span style="color:#fb7185">*</span></label>
             <input value="{{ form.name }}" onChange="{{ set.name }}" placeholder="Projet A, Maison, Lecture…" style="background:#09090b;border:1px solid #27272a;border-radius:10px;padding:10px 12px;font-size:13px;color:#f4f4f5">
+            <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding-top:2px">
+              <span style="font-size:11px;color:#52525b;margin-right:2px">lentilles</span>
+              <sc-for list="{{ formTagChips }}" as="c" hint-placeholder-count="2"><button onClick="{{ c.onClick }}" style="padding:4px 10px;border-radius:99px;font-size:11.5px;cursor:pointer;color:{{ c.color }};background:{{ c.bg }};border:1px solid {{ c.border }};display:flex;gap:6px;align-items:center"><span style="width:6px;height:6px;border-radius:99px;background:{{ c.dot }}"></span>{{ c.label }}</button></sc-for>
+              <input value="{{ formNewTag }}" onChange="{{ setFormNewTag }}" onKeyDown="{{ formNewTagKey }}" placeholder="+ nouvelle, puis Entrée" style="width:180px;background:#09090b;border:1px dashed #3f3f46;border-radius:99px;padding:4px 10px;font-size:11.5px;color:#f4f4f5">
+            </div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding-top:2px">
+              <span style="font-size:11px;color:#52525b;margin-right:2px">poids</span>
+              <sc-for list="{{ formPoidsChips }}" as="c" hint-placeholder-count="3"><button onClick="{{ c.onClick }}" style="padding:4px 10px;border-radius:99px;font-size:11.5px;cursor:pointer;color:{{ c.color }};background:{{ c.bg }};border:1px solid {{ c.border }};display:flex;gap:6px;align-items:center"><span style="width:8px;height:8px;border-radius:99px;background:{{ c.dotBg }};border:1.5px solid {{ c.dotBorder }}"></span>{{ c.label }}</button></sc-for>
+              <span style="font-size:11px;color:#52525b">{{ formPoidsHint }}</span>
+            </div>
           </div>
           <div style="display:flex;flex-direction:column;gap:6px">
             <label style="font-size:11.5px;font-weight:600;color:#a1a1aa;display:flex;gap:8px"><span style="font-family:'JetBrains Mono',monospace;color:#52525b">03</span>Objectif</label>
@@ -640,6 +812,16 @@ input:focus,textarea:focus{outline:none;border-color:#52525b !important}
               <span style="color:#71717a">Tant que le SAS n'est pas franchi, le mini-cosmos reste en statut <span style="color:#818cf8;font-weight:600">SAS</span> et le test devient sa première étape. Laisse vide pour entrer directement en <span style="color:#34d399;font-weight:600">Actif</span>.</span>
             </div>
             <textarea value="{{ form.sas }}" onChange="{{ set.sas }}" rows="2" placeholder="ex. 14 jours à 100 €/j avec CPA < 14 € · 3 séances d'essai · 30 jours de pratique" style="background:#09090b;border:1px solid #27272a;border-radius:10px;padding:10px 12px;font-size:13px;color:#f4f4f5;resize:vertical;line-height:1.6"></textarea>
+            <sc-if value="{{ formHasSas }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;gap:8px;padding:10px 12px;border-radius:10px;border:1px solid rgba(99,102,241,0.3);background:rgba(99,102,241,0.06)">
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                  <span style="font-size:11.5px;font-weight:600;color:#818cf8;margin-right:4px">Fin du test</span>
+                  <sc-for list="{{ formSasChips }}" as="c" hint-placeholder-count="3"><button onClick="{{ c.onClick }}" style="padding:4px 10px;border-radius:99px;font-size:11.5px;cursor:pointer;color:{{ c.color }};background:{{ c.bg }};border:1px solid {{ c.border }}">{{ c.label }}</button></sc-for>
+                  <input type="date" value="{{ formSasUntil }}" onChange="{{ setFormSasUntil }}" style="background:#09090b;border:1px solid #27272a;border-radius:8px;padding:5px 8px;font-size:12px;color:#f4f4f5;font-family:'JetBrains Mono',monospace;color-scheme:dark">
+                </div>
+                <div style="font-size:11px;color:{{ formSasHintColor }};line-height:1.5">{{ formSasHint }}</div>
+              </div>
+            </sc-if>
           </div>
           <div style="display:flex;flex-direction:column;gap:6px">
             <label style="font-size:11.5px;font-weight:600;color:#a1a1aa;display:flex;gap:8px"><span style="font-family:'JetBrains Mono',monospace;color:#52525b">10</span>Étapes</label>
@@ -664,7 +846,7 @@ input:focus,textarea:focus{outline:none;border-color:#52525b !important}
             <div style="display:flex;flex-direction:column;gap:6px">
               <label style="font-size:11.5px;font-weight:600;color:#a1a1aa;display:flex;gap:8px"><span style="font-family:'JetBrains Mono',monospace;color:#52525b">12</span>Échéance</label>
               <div style="display:flex;gap:6px;height:37px;align-items:center"><sc-for list="{{ formEcheanceChips }}" as="t" hint-placeholder-count="2"><button onClick="{{ t.onClick }}" style="padding:6px 12px;border-radius:99px;font-size:12px;font-weight:600;cursor:pointer;color:{{ t.color }};background:{{ t.bg }};border:1px solid {{ t.border }}">{{ t.label }}</button></sc-for></div>
-              <div style="font-size:11px;color:#52525b">datée : projection jusqu'à la clôture · permanent : objectif continu, sans fin</div>
+              <div style="font-size:11px;color:#52525b">{{ formEcheanceHint }}</div>
             </div>
           </div>
           <sc-if value="{{ formIsDated }}" hint-placeholder-val="{{ true }}">
@@ -713,46 +895,146 @@ input:focus,textarea:focus{outline:none;border-color:#52525b !important}
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;author&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Toi&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Journal&quot;}}">
 // Le cœur métier vit dans ./cosmos-core.js (chargé au montage) ; les identifiants ci-dessous sont liés à l'import.
-let COLORS, STATUTS, STATUT_STYLE, hasSas, startOf, notStarted, statutOf, migrate, r, SEED, ACTUEL, CLOTURE, TYPES, MOIS_S, lastDay, fmtJM, fmtFR, resolveCloture, clotureLabel, clotureShort, clotureInfo, clotureOptions, clotureSel, PROJ, alertDaysOf, projectionOf, TODAY, isoD, daysAgo, progOf, nextOf, EMPTY_FORM, freshForm, TEMPLATES, chipOff, chipOn;
-const bindCore = m => { ({ COLORS, STATUTS, STATUT_STYLE, hasSas, startOf, notStarted, statutOf, migrate, r, SEED, ACTUEL, CLOTURE, TYPES, MOIS_S, lastDay, fmtJM, fmtFR, resolveCloture, clotureLabel, clotureShort, clotureInfo, clotureOptions, clotureSel, PROJ, alertDaysOf, projectionOf, TODAY, isoD, daysAgo, progOf, nextOf, EMPTY_FORM, freshForm, TEMPLATES, chipOff, chipOn } = m); };
+let COLORS, STATUTS, STATUT_STYLE, hasSas, sasUntilOf, sasPendingOf, isMandat, mandatDepuis, POIDS, POIDS_LABEL, POIDS_ORDER, POIDS_DOT, poidsOf, normTag, tagsOf, tagStyle, inferSasUntil, echeanceEffective, plusDays, plusMonths, startOf, notStarted, statutOf, migrate, r, SEED, ACTUEL, CLOTURE, TYPES, MOIS_S, lastDay, fmtJM, fmtFR, resolveCloture, clotureLabel, clotureShort, clotureInfo, clotureOptions, clotureSel, PROJ, alertDaysOf, projectionOf, TODAY, isoD, daysAgo, progOf, nextOf, EMPTY_FORM, freshForm, TEMPLATES, chipOff, chipOn;
+const bindCore = m => { ({ COLORS, STATUTS, STATUT_STYLE, hasSas, sasUntilOf, sasPendingOf, isMandat, mandatDepuis, POIDS, POIDS_LABEL, POIDS_ORDER, POIDS_DOT, poidsOf, normTag, tagsOf, tagStyle, inferSasUntil, echeanceEffective, plusDays, plusMonths, startOf, notStarted, statutOf, migrate, r, SEED, ACTUEL, CLOTURE, TYPES, MOIS_S, lastDay, fmtJM, fmtFR, resolveCloture, clotureLabel, clotureShort, clotureInfo, clotureOptions, clotureSel, PROJ, alertDaysOf, projectionOf, TODAY, isoD, daysAgo, progOf, nextOf, EMPTY_FORM, freshForm, TEMPLATES, chipOff, chipOn } = m); };
 
 class Component extends DCLogic {
   state = { ready:false, cosmos:[], rows:[], journal:[], filter:'Tous', selected:null,
-    showCosmosModal:false, showMiniModal:false, cosmosName:'', form:null, tab:0, toast:null, clock:'' };
+    showCosmosModal:false, showMiniModal:false, cosmosName:'', form:null, tab:0, toast:null, clock:'',
+    needsLogin:false, loginEmail:'', loginPassword:'', loginError:'', loginBusy:false, propositions:[], agents:[], showAgents:false, newAgentName:'', newAgentDirect:false, newAgentKey:'', newAgentKeyName:'',
+    lentilles:[], tagFilter:'Tous', showTags:false, newTagName:'', newTagError:'', renameTag:null, renameTagName:'', confirmDeleteTag:null, formNewTag:'', detailNewTag:'', carteLens:null };
   // routes : #/tableau · #/tableau/mc-04 (slide-over) · #/modeles · #/statistiques · #/journal
-  ROUTES={table:'tableau',templates:'modeles',stats:'statistiques',journal:'journal'};
-  routeState(){ const m=(location.hash||'').match(/^#\/(tableau|modeles|statistiques|journal)(?:\/(mc-[\w-]+))?/); if(!m) return {};
+  ROUTES={table:'tableau',templates:'modeles',stats:'statistiques',journal:'journal',carte:'carte'};
+  routeState(){ const m=(location.hash||'').match(/^#\/(tableau|modeles|statistiques|journal|carte)(?:\/(mc-[\w-]+))?/); if(!m) return {view:'carte',selected:null};
     const view=Object.keys(this.ROUTES).find(k=>this.ROUTES[k]===m[1]); return {view, selected:m[2]||null}; }
-  syncHash(){ const s=this.state; if(!s.ready) return; const view=s.view||'table'; const want='#/'+this.ROUTES[view]+(view==='table'&&s.selected?'/'+s.selected:'');
+  syncHash(){ const s=this.state; if(!s.ready) return; const view=s.view||'table'; const want='#/'+this.ROUTES[view]+((view==='table'||view==='carte')&&s.selected?'/'+s.selected:'');
     if(location.hash===want){ this._fromHash=false; return; } if(this._fromHash){ this._fromHash=false; return; } history.pushState(null,'',want); }
   // persistance locale — un seul document JSON versionné, même format que l'export
   STORE_KEY='cosmos-app-v1';
-  serialize(){ const s=this.state; return {version:1,exportedAt:new Date().toISOString(),cosmos:s.cosmos,miniCosmos:s.rows,journal:s.journal||[],journalArchive:s.journalArchive||[],view:s.view||'table'}; }
+  serialize(){ const s=this.state; return {version:1,exportedAt:new Date().toISOString(),cosmos:s.cosmos,miniCosmos:s.rows,journal:s.journal||[],journalArchive:s.journalArchive||[],lentilles:s.lentilles||[],view:s.view||'table'}; }
   // le journal vivant garde 12 mois ; le reste part dans journalArchive (conservé dans l'export JSON)
-  archiveOld(){ const s=this.state; const J=s.journal||[]; const cut=new Date(); cut.setFullYear(cut.getFullYear()-1); const c=cut.toISOString();
+  archiveOld(){ if(this.sync) return; const s=this.state; const J=s.journal||[]; const cut=new Date(); cut.setFullYear(cut.getFullYear()-1); const c=cut.toISOString();
     const old=J.filter(e=>e.t<c); if(!old.length) return; this.setState({journal:J.filter(e=>e.t>=c),journalArchive:[...old,...(s.journalArchive||[])]}); }
   load(){ try{ const raw=localStorage.getItem(this.STORE_KEY); if(!raw) return null; const d=JSON.parse(raw); if(d&&d.version===1&&Array.isArray(d.cosmos)&&Array.isArray(d.miniCosmos)) return d; }catch(e){} return null; }
-  persist(){ try{ localStorage.setItem(this.STORE_KEY,JSON.stringify(this.serialize())); }catch(e){} }
+  // en mode base : sauvegarde différentielle regroupée (cosmos-sync.js) ; sinon localStorage
+  persist(){ if(this.sync){ const s=this.state; this.sync.save({cosmos:s.cosmos,lentilles:s.lentilles||[],rows:s.rows,journal:this._replace?[...(s.journal||[]),...(this._replaceArchive||[])]:(s.journal||[]),replace:!!this._replace}); this._replace=false; this._replaceArchive=null; return; }
+    try{ localStorage.setItem(this.STORE_KEY,JSON.stringify(this.serialize())); }catch(e){} }
   componentDidMount(){ this.tick(); this.t = setInterval(()=>this.tick(),30000);
-    this.onHash=()=>{ this._fromHash=true; this.setState(this.routeState()); }; window.addEventListener('hashchange',this.onHash);
-    this.onKey=e=>{ if(e.key!=='Escape') return; const s=this.state; if(s.showCosmosModal||s.showMiniModal) this.setState({showCosmosModal:false,showMiniModal:false}); else if(s.selected&&!s.editing) this.setState({selected:null,confirmDeleteMini:false}); }; window.addEventListener('keydown',this.onKey);
-    import('./cosmos-core.js').then(m=>{ bindCore(m); const d=this.load();
-      const base=d?{cosmos:d.cosmos,rows:migrate(d.miniCosmos),journal:d.journal||this.journalFromRows(d.miniCosmos),view:d.view||'table'}:{cosmos:['ENTREPRISE','FAMILLE','RELATIONS','PERSONNEL'],rows:SEED,journal:this.journalFromRows(SEED),view:'table'};
-      this.setState({...base,journalArchive:(d&&d.journalArchive)||[],form:freshForm(),ready:true,...this.routeState()},()=>this.archiveOld()); })
+    this.onHash=()=>{ this._fromHash=true; const r=this.routeState(); this.setState(r.selected!==this.state.selected?{...r,editing:false,editSnap:null,confirmDeleteMini:false}:r); }; window.addEventListener('hashchange',this.onHash);
+    this.onKey=e=>{ if(e.key!=='Escape') return; const s=this.state; if(s.showCosmosModal||s.showMiniModal||s.showAgents||s.showTags) this.setState({showCosmosModal:false,showMiniModal:false,showAgents:false,showTags:false}); else if(s.selected&&!s.editing) this.setState({selected:null,confirmDeleteMini:false}); }; window.addEventListener('keydown',this.onKey);
+    Promise.all([import('./cosmos-core.js'),import('./cosmos-sync.js')]).then(async ([m,sy])=>{ bindCore(m);
+      // base Supabase si /api/config la déclare (site déployé), sinon localStorage (fichier ouvert en local)
+      let sync=null; try{ sync=await sy.createSync({author:this.props.author??'Toi'}); }catch(e){ console.error('cosmos-sync.js',e); this.flash('Synchronisation indisponible — mode local'); }
+      if(sync){ this.sync=sync; sync.onError(e=>this.flash('Sauvegarde impossible — '+(e&&e.message?e.message:e)));
+        this._onVis=()=>{ if(document.visibilityState==='visible') this.pollDb(); }; document.addEventListener('visibilitychange',this._onVis);
+        sync.onAuth(ev=>{ if(ev==='SIGNED_OUT'&&this.state.ready) this.setState({ready:false,needsLogin:true,dataMenu:false}); });
+        if(await sync.session()) await this.bootDb(); else this.setState({needsLogin:true}); return; }
+      this.bootLocal(); })
       .catch(e=>{ console.error('cosmos-core.js',e); this.setState({bootError:String(e)}); }); }
-  componentDidUpdate(){ const s=this.state; if(!s.ready) return; this.syncHash(); const k=[s.cosmos,s.rows,s.view,s.journal,s.journalArchive]; if(!this.__snap||k.some((v,i)=>v!==this.__snap[i])){ this.__snap=k; this.persist(); } }
-  componentWillUnmount(){ clearInterval(this.t); window.removeEventListener('hashchange',this.onHash); window.removeEventListener('keydown',this.onKey); }
-  exportJson(){ try{ localStorage.setItem(this.STORE_KEY+':lastExport',new Date().toISOString()); }catch(e){} this.setState({lastExport:new Date().toISOString()}); const blob=new Blob([JSON.stringify(this.serialize(),null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='cosmos-'+daysAgo(0)+'.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000); this.flash('Export JSON téléchargé'); }
-  importJson(file){ if(!file) return; const r=new FileReader(); r.onload=()=>{ try{ const d=JSON.parse(r.result); if(!(d&&d.version===1&&Array.isArray(d.cosmos)&&Array.isArray(d.miniCosmos))) throw 0; this.setState({cosmos:d.cosmos,rows:migrate(d.miniCosmos),journal:d.journal||this.journalFromRows(d.miniCosmos),journalArchive:d.journalArchive||[]}); this.logJ({type:'donnees',detail:'Import JSON — '+d.miniCosmos.length+' mini-cosmos, '+d.cosmos.length+' cosmos'}); this.flash(d.miniCosmos.length+' mini-cosmos importés'); }catch(e){ this.flash('Fichier invalide'); } }; r.readAsText(file); }
-  resetData(){ this.setState({cosmos:['ENTREPRISE','FAMILLE','RELATIONS','PERSONNEL'],rows:SEED,journal:this.journalFromRows(SEED),confirmReset:false}); this.logJ({type:'donnees',detail:'Données d\u2019exemple restaurées'}); this.flash('Données d\u2019exemple restaurées'); }
+  bootLocal(){ const d=this.load();
+    const base=d?{cosmos:d.cosmos,lentilles:d.lentilles||[],rows:migrate(d.miniCosmos),journal:d.journal||this.journalFromRows(d.miniCosmos),view:d.view||'table'}:{cosmos:['ENTREPRISE','FAMILLE','RELATIONS','PERSONNEL'],lentilles:[],rows:SEED,journal:this.journalFromRows(SEED),view:'table'};
+    this.setState({...base,journalArchive:(d&&d.journalArchive)||[],form:freshForm(),ready:true,...this.routeState()},()=>this.archiveOld()); }
+  // démarrage en mode base : charge tout ; base vide ⇒ reprend les données de ce navigateur (Phase 1) ou l'exemple
+  async bootDb(){ try{ const d=await this.sync.load(); let base;
+      if(d.empty){ const l=this.load(); if(l){ base={cosmos:l.cosmos,lentilles:l.lentilles||[],rows:migrate(l.miniCosmos),journal:l.journal||this.journalFromRows(l.miniCosmos)}; this._replaceArchive=l.journalArchive||[]; this.flash('Données de ce navigateur reprises dans la base'); }
+        else base={cosmos:['ENTREPRISE','FAMILLE','RELATIONS','PERSONNEL'],lentilles:[],rows:SEED,journal:this.journalFromRows(SEED)}; this._replace=true; }
+      else { base={cosmos:d.cosmos,lentilles:d.lentilles||[],rows:migrate(d.rows),journal:d.journal}; this.sync.prime(base); }
+      this.installAssist();
+      this.setState({...base,view:'table',journalArchive:[],journalArchived:d.journalArchived||0,propositions:d.propositions||[],needsLogin:false,loginError:'',bootError:'',form:freshForm(),ready:true,...this.routeState()});
+      this.loadAgents();
+    }catch(e){ console.error('bootDb',e); this.setState({bootError:String(e&&e.message?e.message:e),needsLogin:false}); } }
+  // l'assistant du volet gauche passe par /api/assist (la clé Anthropic reste côté serveur)
+  installAssist(){ if(window.claude&&window.claude.complete) return; const sync=this.sync; window.claude={complete:req=>sync.assist(req)}; }
+  async loadAgents(){ try{ this.setState({agents:await this.sync.listAgents()}); }catch(e){ console.error('agents',e); } }
+  // ce qui a changé ailleurs (agents, autre appareil) : toutes les 30 s et au retour sur l'onglet
+  async pollDb(){ if(!this.sync||!this.state.ready||this._polling) return; this._polling=true;
+    try{ const d=await this.sync.poll(this.state.rows); if(!d) return;
+      const byId=new Map(d.rows.map(r=>[r.data.id,r]));
+      if(byId.size||d.journal.length){ this.setState(s=>{ const seen=new Set(); const rows=s.rows.map(x=>{ if(byId.has(x.id)){ seen.add(x.id); return byId.get(x.id).data; } return x; }); d.rows.forEach(r=>{ if(!seen.has(r.data.id)) rows.push(r.data); });
+          const have=new Set((s.journal||[]).map(e=>e.id)); const journal=[...d.journal.filter(e=>!have.has(e.id)),...(s.journal||[])].sort((a,b)=>a.t<b.t?1:-1); return {rows,journal}; });
+        d.rows.forEach(r=>this.flash((r.data.name||'Mini-cosmos')+' mis à jour par '+r.updatedBy)); }
+      const before=(this.state.propositions||[]).length; this.setState({propositions:d.propositions});
+      if(d.propositions.length>before){ const p=d.propositions[d.propositions.length-1]; this.flash('Nouvelle proposition de '+p.agent); }
+    }catch(e){ console.error('poll',e); } finally{ this._polling=false; } }
+  async doLogin(){ const s=this.state; if(!(s.loginEmail||'').trim()||!s.loginPassword||s.loginBusy) return; this.setState({loginBusy:true,loginError:''});
+    try{ await this.sync.login(s.loginEmail.trim(),s.loginPassword); this.setState({loginPassword:'',loginBusy:false}); await this.bootDb(); }catch(e){ this.setState({loginBusy:false,loginError:e&&e.message?e.message:String(e)}); } }
+  async logout(){ try{ await this.sync.logout(); }catch(e){} this.setState({ready:false,needsLogin:true,dataMenu:false,selected:null,propositions:[],agents:[]}); }
+  async createAgent(){ const s=this.state; const name=(s.newAgentName||'').trim(); if(!name) return;
+    try{ const key=await this.sync.createAgent(name,!!s.newAgentDirect); this.setState({newAgentKey:key,newAgentKeyName:name,newAgentName:'',newAgentDirect:false}); this.logJ({type:'donnees',detail:'Agent « '+name+' » créé ('+(s.newAgentDirect?'écriture directe':'propositions')+')'}); this.loadAgents(); }
+    catch(e){ this.flash('Création impossible — '+(e&&e.message?e.message:e)); } }
+  async revokeAgent(a){ try{ await this.sync.revokeAgent(a.id); this.logJ({type:'donnees',detail:'Agent « '+a.name+' » révoqué'}); this.flash('Agent '+a.name+' révoqué'); this.loadAgents(); }catch(e){ this.flash('Révocation impossible — '+(e&&e.message?e.message:e)); } }
+  // carte : React Flow chargé à la demande (UMD, sans build) et monté dans #carte-root par une racine React séparée
+  ensureCarte(){ if(this._cartePromise) return this._cartePromise;
+    this._cartePromise=(async()=>{
+      if(!window.jsxRuntime){ const cx=(t,p,k)=>{ const {children,...rest}=p||{}; if(k!==undefined) rest.key=k; return children===undefined?React.createElement(t,rest):Array.isArray(children)?React.createElement(t,rest,...children):React.createElement(t,rest,children); }; window.jsxRuntime={Fragment:React.Fragment,jsx:cx,jsxs:cx}; }
+      const load=src=>new Promise((ok,ko)=>{ const sc=document.createElement('script'); sc.src=src; sc.onload=ok; sc.onerror=()=>ko(new Error('chargement impossible : '+src)); document.head.appendChild(sc); });
+      if(!window.ReactFlow) await load('https://cdn.jsdelivr.net/npm/@xyflow/react@12.11.6/dist/umd/index.js');
+      if(!window.CosmosCarte) await load('./cosmos-carte.js'); })();
+    return this._cartePromise; }
+  syncCarte(){ const s=this.state; const el=document.getElementById('carte-root');
+    if((s.view||'table')!=='carte'||!s.ready||!el){ if(this.carteRoot){ const r=this.carteRoot; this.carteRoot=null; this.carteEl=null; setTimeout(()=>{ try{ r.unmount(); }catch(e){} },0); } return; }
+    if(!window.CosmosCarte){ if(!this._carteLoading){ this._carteLoading=true; this.ensureCarte().then(()=>{ this._carteLoading=false; this.syncCarte(); }).catch(e=>{ this._carteLoading=false; console.error(e); this.flash('Carte indisponible — '+e.message); }); } return; }
+    if(!this.carteRoot||this.carteEl!==el){ if(this.carteRoot){ const r=this.carteRoot; setTimeout(()=>{ try{ r.unmount(); }catch(e){} },0); } this.carteRoot=ReactDOM.createRoot(el); this.carteEl=el; }
+    this.carteRoot.render(React.createElement(window.CosmosCarte,{...this.carteProps(),container:el})); }
+  carteProps(){ const s=this.state;
+    // la carte montre ce qui tourne : ni clôturés, ni en pause (y compris les départs futurs)
+    const rows=s.rows.filter(x=>!x.closed&&statutOf(x)!=='Pause').map((x,i)=>{ const pj=projectionOf(x); const st=statutOf(x);
+      return {id:x.id,name:x.name,cosmos:x.cosmos,poids:poidsOf(x),statut:st,pause:st==='Pause',sas:sasPendingOf(x),zone:pj.zone,zoneColor:pj.color,zoneLabel:pj.zoneLabel,days:pj.permanent?'∞':pj.label,pct:pj.permanent?0:(pj.pct||0),objectif:(x.objectif&&x.objectif!=='—')?x.objectif:'',actuel:(x.actuel&&x.actuel!=='—')?x.actuel:'',tags:tagsOf(x).map(t=>({name:t,color:this.tagColor(t)})),dependDe:Array.isArray(x.dependDe)?x.dependDe:[],position:i}; });
+    return { cosmos:s.cosmos.map((name,i)=>({name,color:COLORS[i%COLORS.length],paused:s.rows.filter(x=>x.cosmos===name&&!x.closed&&statutOf(x)==='Pause').length})), rows, lens:s.carteLens||null,
+      onOpen:id=>this.setState({selected:id,editing:false,confirmDeleteMini:false,aiDetail:null}),
+      onCosmos:name=>this.setState({view:'table',cosmosFilter:name,selected:null}),
+      onConnect:(src,tgt)=>this.addLien(tgt,src), onDeleteEdge:(src,tgt)=>this.removeLien(tgt,src) }; }
+  // liens « dépend de » : stockés sur le mini-cosmos aval (dependDe = identifiants amont), tracés dans le Journal
+  addLien(targetId,sourceId){ const s=this.state; const t=s.rows.find(x=>x.id===targetId), src=s.rows.find(x=>x.id===sourceId); if(!t||!src||targetId===sourceId) return;
+    const cur=Array.isArray(t.dependDe)?t.dependDe:[]; if(cur.includes(sourceId)){ this.flash('Lien déjà présent'); return; }
+    if(Array.isArray(src.dependDe)&&src.dependDe.includes(targetId)){ this.flash('Lien inverse déjà présent : '+src.name+' dépend de '+t.name); return; }
+    this.update(targetId,{dependDe:[...cur,sourceId]},{type:'modification',detail:'Lien : dépend de « '+src.name+' » ('+src.cosmos+')'}); this.flash(t.name+' dépend de '+src.name); }
+  removeLien(targetId,sourceId){ const s=this.state; const t=s.rows.find(x=>x.id===targetId), src=s.rows.find(x=>x.id===sourceId); if(!t) return;
+    const cur=Array.isArray(t.dependDe)?t.dependDe:[]; if(!cur.includes(sourceId)) return;
+    this.update(targetId,{dependDe:cur.filter(id=>id!==sourceId)},{type:'modification',detail:'Lien retiré : ne dépend plus de « '+(src?src.name:sourceId)+' »'}); this.flash('Lien retiré'); }
+  // poids : vital / important / normal — un clic sur le point fait tourner la valeur, tracé dans le Journal
+  cyclePoids(row){ const cur=poidsOf(row); this.setPoids(row,POIDS[(POIDS.indexOf(cur)+1)%POIDS.length]); }
+  setPoids(row,p){ if(poidsOf(row)===p) return; this.update(row.id,{poids:p},{type:'modification',detail:'Poids → '+POIDS_LABEL[p]}); this.flash(row.name+' : '+POIDS_LABEL[p].toLowerCase()); }
+  // lentilles : registre (nom, couleur, ordre) dans state.lentilles ; sur chaque mini-cosmos, tags = noms
+  tagColor(name){ const l=(this.state.lentilles||[]).find(t=>t.name===name); return l?l.color:'#a1a1aa'; }
+  tagPill(name,onClick){ return {label:name,title:'lentille '+name,...tagStyle(this.tagColor(name)),onClick}; }
+  createTag(raw){ const name=normTag(raw); if(!name) return null; const L=this.state.lentilles||[]; const ex=L.find(t=>t.name.toLowerCase()===name.toLowerCase()); if(ex) return ex.name;
+    const color=COLORS[L.length%COLORS.length]; this.setState(st=>({lentilles:[...(st.lentilles||[]),{name,color,position:(st.lentilles||[]).length}]})); this.logJ({type:'donnees',detail:'Lentille « '+name+' » créée'}); return name; }
+  submitNewTag(){ const name=normTag(this.state.newTagName); if(!name) return; if((this.state.lentilles||[]).some(t=>t.name.toLowerCase()===name.toLowerCase())){ this.setState({newTagError:'« '+name+' » existe déjà'}); return; } this.createTag(name); this.setState({newTagName:'',newTagError:''}); this.flash('Lentille '+name+' créée'); }
+  renameTag(oldName,raw){ const name=normTag(raw); if(!name||name===oldName){ this.setState({renameTag:null}); return; }
+    if((this.state.lentilles||[]).some(t=>t.name!==oldName&&t.name.toLowerCase()===name.toLowerCase())){ this.flash('Cette lentille existe déjà'); return; }
+    this.setState(st=>({lentilles:(st.lentilles||[]).map(t=>t.name===oldName?{...t,name}:t),rows:st.rows.map(x=>tagsOf(x).includes(oldName)?{...x,tags:tagsOf(x).map(t=>t===oldName?name:t)}:x),tagFilter:st.tagFilter===oldName?name:st.tagFilter,renameTag:null,renameTagName:''}));
+    this.logJ({type:'donnees',detail:'Lentille renommée : '+oldName+' → '+name}); this.flash('Lentille renommée'); }
+  deleteTag(name){ const n=this.state.rows.filter(x=>tagsOf(x).includes(name)).length;
+    this.setState(st=>({lentilles:(st.lentilles||[]).filter(t=>t.name!==name),rows:st.rows.map(x=>tagsOf(x).includes(name)?{...x,tags:tagsOf(x).filter(t=>t!==name)}:x),tagFilter:st.tagFilter===name?'Tous':st.tagFilter,confirmDeleteTag:null}));
+    this.logJ({type:'donnees',detail:'Lentille « '+name+' » supprimée ('+n+' mini-cosmos)'}); this.flash('Lentille '+name+' supprimée'); }
+  toggleTag(sel,name){ const id=sel.id; this.setState(st=>({rows:st.rows.map(x=>{ if(x.id!==id) return x; const has=tagsOf(x).includes(name); return {...x,tags:has?tagsOf(x).filter(t=>t!==name):[...tagsOf(x),name]}; })})); }
+  // applique un patch (assistant IA ou proposition d'agent) : champs texte remplacés, étapes ajoutées sans doublon
+  applyPatch(sel,p,label){ const patch={}; ['objectif','actuel','entropie','reponse','sas','sasUntil','alerte','kill'].forEach(k=>{ if(p[k]!=null&&p[k]!=='') patch[k]=p[k]; });
+    if(Array.isArray(p.tags)){ const known=new Set((this.state.lentilles||[]).map(t=>t.name)); patch.tags=p.tags.filter(t=>known.has(t)); }
+    if(POIDS.includes(p.poids)) patch.poids=p.poids;
+    if(patch.sasUntil&&!/^\d{4}-\d{2}-\d{2}$/.test(patch.sasUntil)) delete patch.sasUntil;
+    if(patch.sas&&!patch.sasUntil&&!sasUntilOf(sel)) patch.sasUntil=inferSasUntil({...sel,sas:patch.sas});
+    const add=p.etapes||(p.etape!=null?[p.etape]:[]); if(add.length){ const have=new Set(sel.actions.map(a=>a.text)); const fresh=add.filter(t=>t&&!have.has(t)); if(fresh.length) patch.actions=[...sel.actions,...fresh.map(t=>({text:t,done:false}))]; }
+    const fields=Object.keys(patch).map(k=>({objectif:'objectif',actuel:'valeur actuelle',entropie:'entropie',reponse:'réponse',sas:'SAS',sasUntil:'fin du test',alerte:'alerte',kill:'kill',actions:'étapes',tags:'lentilles',poids:'poids'}[k]||k)); if(!fields.length) return false;
+    this.update(sel.id,patch,{type:'modification',detail:label+' : '+fields.join(', ')}); return true; }
+  async decideProposal(p,sel,ok){ if(ok){ if(!this.applyPatch(sel,p.patch||{},'Proposition de '+p.agent+' acceptée')) this.logJ({type:'proposition',mini:sel.name,miniId:sel.id,cosmos:sel.cosmos,detail:'Proposition de '+p.agent+' acceptée (rien à changer)'}); }
+    else this.logJ({type:'proposition',mini:sel.name,miniId:sel.id,cosmos:sel.cosmos,detail:'Proposition de '+p.agent+' refusée'});
+    this.setState(s=>({propositions:(s.propositions||[]).filter(x=>x.id!==p.id)})); this.flash(ok?'Proposition appliquée':'Proposition refusée');
+    try{ await this.sync.decideProposition(p.id,ok?'acceptee':'refusee'); }catch(e){ this.flash('Décision non enregistrée — '+(e&&e.message?e.message:e)); } }
+  componentDidUpdate(){ const s=this.state; if(!s.ready) return; this.syncHash(); const k=[s.cosmos,s.rows,s.view,s.journal,s.journalArchive,s.lentilles]; if(!this.__snap||k.some((v,i)=>v!==this.__snap[i])){ this.__snap=k; this.persist(); } this.syncCarte(); }
+  componentWillUnmount(){ clearInterval(this.t); window.removeEventListener('hashchange',this.onHash); window.removeEventListener('keydown',this.onKey); if(this._onVis) document.removeEventListener('visibilitychange',this._onVis); if(this.carteRoot){ try{ this.carteRoot.unmount(); }catch(e){} this.carteRoot=null; } }
+  async exportJson(){ try{ localStorage.setItem(this.STORE_KEY+':lastExport',new Date().toISOString()); }catch(e){} this.setState({lastExport:new Date().toISOString()}); let doc=this.serialize(); if(this.sync){ try{ doc={...doc,journalArchive:await this.sync.journalArchive()}; }catch(e){ this.flash('Archive du journal non récupérée — '+(e&&e.message?e.message:e)); } } const blob=new Blob([JSON.stringify(doc,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='cosmos-'+daysAgo(0)+'.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000); this.flash('Export JSON téléchargé'); }
+  importJson(file){ if(!file) return; const r=new FileReader(); r.onload=()=>{ try{ const d=JSON.parse(r.result); if(!(d&&d.version===1&&Array.isArray(d.cosmos)&&Array.isArray(d.miniCosmos))) throw 0; this._replace=true; this._replaceArchive=d.journalArchive||[]; this.setState({cosmos:d.cosmos,rows:migrate(d.miniCosmos),journal:d.journal||this.journalFromRows(d.miniCosmos),journalArchive:this.sync?[]:(d.journalArchive||[]),journalArchived:(d.journalArchive||[]).length,propositions:[],lentilles:d.lentilles||[],tagFilter:'Tous'}); this.logJ({type:'donnees',detail:'Import JSON — '+d.miniCosmos.length+' mini-cosmos, '+d.cosmos.length+' cosmos'}); this.flash(d.miniCosmos.length+' mini-cosmos importés'); }catch(e){ this.flash('Fichier invalide'); } }; r.readAsText(file); }
+  resetData(){ this._replace=true; this._replaceArchive=[]; this.setState({cosmos:['ENTREPRISE','FAMILLE','RELATIONS','PERSONNEL'],rows:SEED,journal:this.journalFromRows(SEED),journalArchive:[],journalArchived:0,propositions:[],lentilles:[],tagFilter:'Tous',confirmReset:false}); this.logJ({type:'donnees',detail:'Données d\u2019exemple restaurées'}); this.flash('Données d\u2019exemple restaurées'); }
   // Assistant IA : propositions (entropies, SAS, étapes, seuils) à partir du nom et de l'objectif — rien n'est appliqué sans clic
   async runAI(key,ctx){
     if(!(window.claude&&window.claude.complete)){ this.setState({[key]:{error:'Assistant indisponible dans cet environnement'}}); return; }
     this.setState({[key]:{loading:true}});
     try{
-      const system='Tu es l\u2019assistant de « Cosmos », une application de gouvernance personnelle. Un Cosmos est un grand domaine de vie ; un Mini-cosmos est un terrain précis gouverné à l\u2019intérieur, avec : un objectif ; une entropie (le danger concret qui le guette) ; une réponse à l\u2019entropie (la parade régulière, une action) ; un SAS (test d\u2019entrée borné — petite exposition, durée limitée, critère de réussite — avant d\u2019admettre le terrain) ; des étapes concrètes ; un seuil Alerte (signal de correction) et un seuil Kill (point de non-retour). Tu travailles en RELECTURE : l\u2019utilisateur a déjà écrit son mini-cosmos. Le nom et l\u2019objectif sont ta source de compréhension. Ses entropies, réponses, SAS, étapes et seuils sont le point de départ : ne les répète jamais, propose ce qu\u2019il n\u2019a pas vu, reformule en plus précis ce qui est vague (chiffre, fréquence, durée), et signale toute incohérence entre objectif, seuils et échéance. Réponds en français, concret, court, sans jargon ni conseil générique. Réponds UNIQUEMENT avec un JSON valide, sans texte autour : {"remarque":"…","entropies":[{"entropie":"…","reponse":"…"}],"sas":["…"],"etapes":["…"],"alerte":"…","kill":"…"} — remarque : 1 phrase (ou vide) sur ce qui cloche ou manque ; 3 entropies nouvelles ou affinées ; 2 SAS (bornés : durée, montant, critère) ; jusqu\u2019à 5 étapes manquantes seulement ; alerte et kill : une version plus mesurable des siens, ou une proposition s\u2019ils sont vides. Chaque texte fait au plus 60 caractères.';
+      const system='Tu es l\u2019assistant de « Cosmos », une application de gouvernance personnelle. Un Cosmos est un grand domaine de vie ; un Mini-cosmos est un terrain précis gouverné à l\u2019intérieur, avec : un objectif ; une entropie (le danger concret qui le guette) ; une réponse à l\u2019entropie (la parade régulière, une action) ; un SAS (test d\u2019entrée borné — petite exposition, durée limitée, critère de réussite — avant d\u2019admettre le terrain) ; des étapes concrètes ; un seuil Alerte (signal de correction) et un seuil Kill (point de non-retour) ; un poids (vital, important ou normal) qui dit combien ce terrain pèse : pour un terrain vital, propose des seuils plus stricts et des étapes de sécurité d\u2019abord. Tu travailles en RELECTURE : l\u2019utilisateur a déjà écrit son mini-cosmos. Le nom et l\u2019objectif sont ta source de compréhension. Ses entropies, réponses, SAS, étapes et seuils sont le point de départ : ne les répète jamais, propose ce qu\u2019il n\u2019a pas vu, reformule en plus précis ce qui est vague (chiffre, fréquence, durée), et signale toute incohérence entre objectif, seuils et échéance. Réponds en français, concret, court, sans jargon ni conseil générique. Réponds UNIQUEMENT avec un JSON valide, sans texte autour : {"remarque":"…","entropies":[{"entropie":"…","reponse":"…"}],"sas":["…"],"etapes":["…"],"alerte":"…","kill":"…"} — remarque : 1 phrase (ou vide) sur ce qui cloche ou manque ; 3 entropies nouvelles ou affinées ; 2 SAS (bornés : durée en jours ou date de fin, montant, critère) ; jusqu\u2019à 5 étapes manquantes seulement ; alerte et kill : une version plus mesurable des siens, ou une proposition s\u2019ils sont vides. Chaque texte fait au plus 60 caractères.';
       const v=x=>(x&&x!=='—')?x:'(vide)';
-      const user='Cosmos : '+ctx.cosmos+'\nMini-cosmos : '+ctx.name+'\nObjectif : '+ctx.objectif+'\nValeur actuelle : '+v(ctx.actuel)
+      const user='Cosmos : '+ctx.cosmos+'\nMini-cosmos : '+ctx.name+'\nPoids : '+POIDS_LABEL[ctx.poids||'normal']+'\nObjectif : '+ctx.objectif+'\nValeur actuelle : '+v(ctx.actuel)
         +'\n\nCe que l\u2019utilisateur a déjà écrit :\nEntropie : '+v(ctx.entropie)+'\nRéponse à l\u2019entropie : '+v(ctx.reponse)+'\nSAS : '+v(ctx.sas)+'\nÉtapes : '+((ctx.etapes||[]).length?ctx.etapes.join(' · '):'(aucune)')+'\nAlerte : '+v(ctx.alerte)+'\nKill : '+v(ctx.kill)+'\nClôture : '+(ctx.cloture||'—');
       const txt=await window.claude.complete({system,messages:[{role:'user',content:user}],max_tokens:1200});
       const m=String(txt).match(/\{[\s\S]*\}/); const data=JSON.parse(m?m[0]:txt);
@@ -771,7 +1053,7 @@ class Component extends DCLogic {
       remarque:d?d.remarque:'', hasRemarque:!!(d&&d.remarque), alerte:d?d.alerte:'', kill:d?d.kill:'', useSeuils:()=>d&&apply({alerte:d.alerte,kill:d.kill}),
       applyAll:()=>{ if(!d) return; apply({entropie:d.entropies[0]&&d.entropies[0].entropie,reponse:d.entropies[0]&&d.entropies[0].reponse,sas:d.sas[0],etapes:d.etapes,alerte:d.alerte,kill:d.kill}); } };
   }
-  tick(){ const d=new Date(); this.setState({clock:d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short'})+' · '+d.toTimeString().slice(0,5)}); }
+  tick(){ const d=new Date(); this.setState({clock:d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short'})+' · '+d.toTimeString().slice(0,5)}); if(this.sync&&this.state.ready) this.pollDb(); }
   flash(msg){ this.setState({toast:msg}); clearTimeout(this.tt); this.tt=setTimeout(()=>this.setState({toast:null}),2600); }
   setField(k){ return e=>this.setState(s=>({form:{...s.form,[k]:e.target.value}})); }
   // journal : trace horodatée de toute écriture (humain aujourd'hui, agents IA demain)
@@ -801,15 +1083,19 @@ class Component extends DCLogic {
     const prog = progOf(x); const doneN = x.actions.filter(a=>a.done).length;
     const c = clotureInfo(x.cloture);
     let entropie=x.entropie, reponse=x.reponse; if(reponse==null&&/ → /.test(entropie||'')){ const p=entropie.split(' → '); entropie=p[0]; reponse=p[1]; }
-    const pj=projectionOf(x);
+    const pj=projectionOf(x); const su=pj.sas?echeanceEffective(x).iso:null;
     const sasPending=hasSas(x)&&!x.sasDone;
-    return {...x, statut, entropie, reponse:reponse||'—', prog, action:nextOf(x), stepsLabel:doneN+' / '+x.actions.length, actuel:x.actuel||'—', cloture:c.label, clotureShort:c.short, clotureColor:st[0], nameColor:'#fafafa',
+    const thenLabel=su?(pj.finalPermanent?'puis objectif continu (∞)':'puis échéance finale : '+c.label+(pj.finalDays!=null?' ('+(pj.finalDays<0?'-'+(-pj.finalDays):'+'+pj.finalDays)+' j)':'')):'';
+    return {...x, statut, entropie, reponse:reponse||'—', prog, action:nextOf(x), stepsLabel:doneN+' / '+x.actions.length, actuel:x.actuel||'—', cloture:su?fmtFR(su):c.label, clotureShort:su?fmtFR(su):c.short, clotureIsSas:!!su, clotureFinal:c.label, clotureColor:st[0], nameColor:'#fafafa',
+      poids:poidsOf(x), poidsLabel:POIDS_LABEL[poidsOf(x)], poidsBg:POIDS_DOT[poidsOf(x)].bg, poidsBorder:POIDS_DOT[poidsOf(x)].border, poidsGlow:POIDS_DOT[poidsOf(x)].glow, poidsTitle:'Poids : '+POIDS_LABEL[poidsOf(x)].toLowerCase()+' — cliquer pour changer', cyclePoids:ev=>{ ev.stopPropagation(); this.cyclePoids(x); },
+      tags:tagsOf(x), tagPills:(()=>{ const tg=tagsOf(x); const pills=tg.slice(0,2).map(name=>this.tagPill(name,ev=>{ ev.stopPropagation(); this.setState({tagFilter:name}); })); if(tg.length>2) pills.push({label:'+'+(tg.length-2),title:tg.slice(2).join(', '),color:'#71717a',bg:'transparent',border:'#3f3f46',onClick:ev=>{ ev.stopPropagation(); this.setState({selected:x.id,confirmDeleteMini:false,editing:false,aiDetail:null}); }}); return pills; })(),
+      sasUntil:sasUntilOf(x)||'', sasUntilLabel:sasUntilOf(x)?fmtFR(sasUntilOf(x)):'', projIsSas:!!pj.sas, projPreavis:pj.preavis!=null?pj.preavis:alertDaysOf(x), projPreavisLabel:pj.sas?'bleu tout le temps du test, rouge s\u2019il est dépassé':'tension à '+(pj.preavis!=null?pj.preavis:alertDaysOf(x))+' j', projThen:thenLabel,
       hasSas:hasSas(x), sasPending, notSasPending:!sasPending, sas:x.sas||'',
       statutColor:st[0], statutBg:st[1],
       isPermanent:pj.permanent, isDated:!pj.permanent, projPct:(pj.pct||0)+'%', projColor:pj.color, projLabel:pj.label||'', projDays:pj.permanent?null:pj.days, projZone:pj.zone, projZoneLabel:pj.zoneLabel, alertDays:alertDaysOf(x),
-      projRange:pj.permanent?'':'du '+(startOf(x)||daysAgo(0)).split('-').reverse().join('/')+' au '+c.label,
+      projRange:pj.permanent?'':(su?'test du ':c.mandat?'mandat du ':'du ')+(startOf(x)||daysAgo(0)).split('-').reverse().join('/')+' au '+(su?fmtFR(su):c.mandat?fmtFR(resolveCloture(x.cloture)):c.label),
       startLabel:(startOf(x)||daysAgo(0)).split('-').reverse().join('/'), startDate:startOf(x)||daysAgo(0), notStarted:notStarted(x),
-      alerte:x.alerte, kill:x.kill,
+      alerte:x.alerte, kill:x.kill, propCount:(this.state.propositions||[]).filter(p=>p.miniId===x.id).length, hasProps:(this.state.propositions||[]).some(p=>p.miniId===x.id),
       open:()=>this.setState({selected:x.id,confirmDeleteMini:false,editing:false,aiDetail:null}),
       dragStart:ev=>{ ev.dataTransfer.effectAllowed='move'; ev.dataTransfer.setData('text/plain',x.id); this.setState({drag:{type:'row',id:x.id}}); },
       dragOver:ev=>{ const d=this.state.drag; if(d&&d.type==='row'){ const src=this.state.rows.find(r=>r.id===d.id); if(!src||statutOf(src)!==statut) return; ev.preventDefault(); ev.stopPropagation(); if(this.state.over!==x.id) this.setState({over:x.id}); } },
@@ -823,7 +1109,7 @@ class Component extends DCLogic {
     const s=this.state; if((s.view||'table')!=='journal') return {};
     const J=s.journal||[]; const tf=s.jType||'Tous'; const q=(s.jQuery||'').toLowerCase(); const jp=s.jPeriod||0; const ja=s.jAuthor||'Tous';
     const since=jp?new Date(TODAY.getTime()-(jp-1)*86400000).toISOString():'';
-    const TYPES={creation:['Création','#34d399'],statut:['Statut','#818cf8'],etape:['Étape','#22d3ee'],modification:['Modification','#d4d4d8'],deplacement:['Déplacement','#c084fc'],suppression:['Suppression','#fb7185'],cosmos:['Cosmos','#fafafa'],donnees:['Données','#71717a']};
+    const TYPES={creation:['Création','#34d399'],statut:['Statut','#818cf8'],etape:['Étape','#22d3ee'],modification:['Modification','#d4d4d8'],deplacement:['Déplacement','#c084fc'],suppression:['Suppression','#fb7185'],cosmos:['Cosmos','#fafafa'],donnees:['Données','#71717a'],proposition:['Proposition','#c084fc'],note:['Note','#22d3ee']};
     const list=J.filter(e=>(tf==='Tous'||e.type===tf)&&(!jp||e.t>=since)&&(ja==='Tous'||e.author===ja)&&(!q||[e.mini,e.cosmos,e.detail,e.author].join(' ').toLowerCase().includes(q)));
     const periodChips=[[0,'Tout'],[7,'7 j'],[30,'30 j'],[90,'90 j']].map(([d,label])=>({label,...(jp===d?chipOn:chipOff),onClick:()=>this.setState({jPeriod:d,jPage:0})}));
     const authors=[...new Set(J.map(e=>e.author||'—'))];
@@ -837,7 +1123,7 @@ class Component extends DCLogic {
       let g=groups[groups.length-1]; if(!g||g.day!==d){ g={day:d,label:dayLabel(d),items:[]}; groups.push(g); }
       const ty=TYPES[e.type]||[e.type,'#a1a1aa']; const mid=(e.miniId&&ids.has(e.miniId))?e.miniId:byName.get((e.cosmos||'')+'|'+(e.mini||'')); const linkable=!!mid; g.items.push({...e,time,typeLabel:ty[0],typeColor:ty[1],hasMini:!!e.mini,mini:e.mini||'',cosmos:e.cosmos||'',linkable,miniColor:linkable?'#fafafa':'#a1a1aa',miniCursor:linkable?'pointer':'default',openMini:()=>{ if(linkable) this.setState({view:'table',selected:mid,editing:false}); },authorColor:e.author==='Toi'?'#fafafa':e.author==='Exemple'?'#52525b':'#c084fc'}); });
     groups.forEach(g=>g.count=g.items.length);
-    return {jGroups:groups,jEmpty:groups.length===0,jTypeChips:typeChips,jPeriodChips:periodChips,jAuthorChips:authorChips,jArchived:(s.journalArchive||[]).length,jHasArchive:(s.journalArchive||[]).length>0,jQuery:s.jQuery||'',setJQuery:e=>this.setState({jQuery:e.target.value,jPage:0}),jTotal:J.length,jShown:list.length,
+    return {jGroups:groups,jEmpty:groups.length===0,jTypeChips:typeChips,jPeriodChips:periodChips,jAuthorChips:authorChips,jArchived:this.sync?(s.journalArchived||0):(s.journalArchive||[]).length,jHasArchive:(this.sync?(s.journalArchived||0):(s.journalArchive||[]).length)>0,jQuery:s.jQuery||'',setJQuery:e=>this.setState({jQuery:e.target.value,jPage:0}),jTotal:J.length,jShown:list.length,
       jPageLabel:'Page '+(page+1)+' / '+pages, jRange:list.length?((page*PAGE+1)+'–'+Math.min(list.length,(page+1)*PAGE)):'0', jHasPrev:page>0, jHasNext:page<pages-1, jMultiPage:pages>1,
       jPrev:()=>this.setState({jPage:Math.max(0,page-1)}), jNext:()=>this.setState({jPage:Math.min(pages-1,page+1)}), jFirst:()=>this.setState({jPage:0}), jLast:()=>this.setState({jPage:pages-1}),
       jPrevColor:page>0?'#f4f4f5':'#3f3f46', jNextColor:page<pages-1?'#f4f4f5':'#3f3f46'};
@@ -854,24 +1140,29 @@ class Component extends DCLogic {
     const open=rows.filter(x=>x.statut!=='Clôturé');
     const maxN=Math.max(1,...s.cosmos.map(c=>open.filter(x=>x.cosmos===c).length));
     const repartition=s.cosmos.map((c,i)=>{ const r=open.filter(x=>x.cosmos===c); const pj=r.map(x=>projectionOf(x)); const dated=pj.filter(p=>!p.permanent);
-      return {name:c,color:COLORS[i%COLORS.length],total:r.length,sas:r.filter(x=>x.statut==='SAS').length,pause:r.filter(x=>x.statut==='Pause').length,dated:dated.length,permanent:r.length-dated.length,late:dated.filter(p=>p.zone==='retard').length,soon:dated.filter(p=>p.zone==='tension'||p.zone==='jourj').length,barW:Math.round(r.length/maxN*100)+'%'}; });
-    const isoOf=x=>resolveCloture(x.cloture);
+      return {name:c,color:COLORS[i%COLORS.length],total:r.length,sas:r.filter(x=>x.statut==='SAS').length,pause:r.filter(x=>x.statut==='Pause').length,dated:r.filter(x=>!isMandat(x.cloture)).length,permanent:r.filter(x=>isMandat(x.cloture)).length,late:dated.filter(p=>p.zone==='retard').length,soon:dated.filter(p=>p.zone==='tension'||p.zone==='jourj').length,barW:Math.round(r.length/maxN*100)+'%'}; });
+    const maxT=Math.max(1,...(s.lentilles||[]).map(t=>open.filter(x=>tagsOf(x).includes(t.name)).length));
+    const repartitionTags=(s.lentilles||[]).map(t=>{ const r=open.filter(x=>tagsOf(x).includes(t.name)); const pj=r.map(x=>projectionOf(x)); const dated=pj.filter(p=>!p.permanent);
+      return {name:t.name,color:t.color,total:r.length,sas:r.filter(x=>x.statut==='SAS').length,pause:r.filter(x=>x.statut==='Pause').length,dated:r.filter(x=>!isMandat(x.cloture)).length,permanent:r.filter(x=>isMandat(x.cloture)).length,late:dated.filter(p=>p.zone==='retard').length,soon:dated.filter(p=>p.zone==='tension'||p.zone==='jourj').length,barW:Math.round(r.length/maxT*100)+'%'}; });
+    const isoOf=x=>echeanceEffective(x).iso;
     const horizon=daysAgo(-90); const MOIS=['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'];
     const upcoming=open.map(x=>({x,c:isoOf(x)})).filter(o=>o.c&&o.c<=horizon).sort((a,b)=>a.c<b.c?-1:1);
-    const byMonth={}; upcoming.forEach(({x,c})=>{ const k=c.slice(0,7); (byMonth[k]=byMonth[k]||[]).push({name:x.name,cosmos:x.cosmos,days:Math.round((new Date(c+'T00:00:00')-TODAY)/86400000),color:projectionOf(x).color}); });
+    const byMonth={}; upcoming.forEach(({x,c})=>{ const k=c.slice(0,7); const pj=projectionOf(x); (byMonth[k]=byMonth[k]||[]).push({name:x.name,cosmos:x.cosmos,days:Math.round((new Date(c+'T00:00:00')-TODAY)/86400000),color:pj.color,isSas:!!pj.sas}); });
     const clotures=Object.keys(byMonth).sort().map(k=>({label:MOIS[+k.slice(5,7)-1]+' '+k.slice(0,4),count:byMonth[k].length,items:byMonth[k].map(it=>({...it,daysLabel:it.days<0?'-'+(-it.days)+' j':it.days===0?'J+0':'+'+it.days+' j'}))}));
-    const echeances=open.filter(x=>x.statut!=='Pause').map(x=>({x,p:projectionOf(x)})).filter(o=>!o.p.permanent).sort((a,b)=>a.p.days-b.p.days).map(({x,p})=>({name:x.name,cosmos:x.cosmos,actuel:x.actuel||'—',pct:p.pct+'%',color:p.color,label:p.label,zone:p.zoneLabel,cloture:clotureShort(x.cloture),statut:x.statut,statutColor:STATUT_STYLE[x.statut][0],statutBg:STATUT_STYLE[x.statut][1]}));
+    const echeances=open.filter(x=>x.statut!=='Pause').map(x=>({x,p:projectionOf(x)})).filter(o=>!o.p.permanent).sort((a,b)=>((POIDS_ORDER[poidsOf(a.x)]-POIDS_ORDER[poidsOf(b.x)])||(a.p.days-b.p.days))).map(({x,p})=>({name:x.name,poidsBg:POIDS_DOT[poidsOf(x)].bg,poidsBorder:POIDS_DOT[poidsOf(x)].border,cosmos:x.cosmos,actuel:x.actuel||'—',pct:p.pct+'%',color:p.color,label:p.label,zone:p.zoneLabel,cloture:p.sas?fmtFR(echeanceEffective(x).iso):clotureShort(x.cloture),isSas:!!p.sas,statut:x.statut,statutColor:STATUT_STYLE[x.statut][0],statutBg:STATUT_STYLE[x.statut][1]}));
     const oldest=rows.reduce((a,x)=>x.createdAt&&x.createdAt<a?x.createdAt:a,daysAgo(0)); const spanDays=ALL?Math.max(7,Math.round((TODAY-new Date(oldest+'T00:00:00'))/86400000)):P;
     const stepsDone=count('step',from,end), stepsPerWeek=(stepsDone/(spanDays/7)).toFixed(1);
     const periodChips=[[0,'Tout'],[7,'7 j'],[30,'30 j'],[90,'90 j'],[365,'1 an']].map(([d,label])=>({label,...(P===d?chipOn:chipOff),onClick:()=>this.setState({statsPeriod:d})}));
-    return {activity,repartition,clotures,noClotures:clotures.length===0,echeances,echCount:echeances.length,noEcheances:echeances.length===0,periodChips,periodLabel:ALL?'toute la période':P===365?'12 derniers mois':P+' derniers jours',stepsPerWeek,openCount:open.length,closedCount:rows.length-open.length};
+    return {activity,repartition,repartitionTags,hasTagStats:repartitionTags.length>0,clotures,noClotures:clotures.length===0,echeances,echCount:echeances.length,noEcheances:echeances.length===0,periodChips,periodLabel:ALL?'toute la période':P===365?'12 derniers mois':P+' derniers jours',stepsPerWeek,openCount:open.length,closedCount:rows.length-open.length};
   }
   renderVals(){
-    const s=this.state; if(!s.ready) return {isTable:true, booting:true, bootError:s.bootError||''};
+    const s=this.state; if(!s.ready) return {isTable:!s.needsLogin, booting:!s.needsLogin, needsLogin:!!s.needsLogin, bootError:s.bootError||'', clock:s.clock, lastExportLabel:'', lastExportColor:'transparent',
+      loginEmail:s.loginEmail||'', loginPassword:s.loginPassword||'', loginError:s.loginError||'', hasLoginError:!!s.loginError, loginLabel:s.loginBusy?'Connexion…':'Se connecter', loginBtnOpacity:s.loginBusy?0.5:1,
+      setLoginEmail:e=>this.setState({loginEmail:e.target.value}), setLoginPassword:e=>this.setState({loginPassword:e.target.value}), loginKey:e=>{ if(e.key==='Enter') this.doLogin(); }, doLogin:()=>this.doLogin()};
     const rowsN=s.rows.map(x=>({...x,statut:statutOf(x)}));
     const visible = rowsN.filter(x=>s.filter==='Clôturé'||x.statut!=='Clôturé');
     const tf=s.timeFilter||0;
-    const isoOf=x=>resolveCloture(x.cloture);
+    const isoOf=x=>echeanceEffective(x).iso;
     const daysTo=x=>{ const c=isoOf(x); return c?Math.round((new Date(c+'T00:00:00')-TODAY)/86400000):null; };
     const clotureOpts=clotureOptions();
     const mf=s.monthFilter||'', yf=s.yearFilter||'', qf=(typeof s.quarterFilter==='string'?s.quarterFilter:'');
@@ -887,8 +1178,10 @@ class Component extends DCLogic {
     const selStyle=v=>v?chipOn:chipOff;
     const pf=s.projFilter||'Tous';
     const inProj=x=>pf==='Tous'||projectionOf(x).zone===pf;
-    const filtered = visible.filter(x=>(s.filter==='Tous'||x.statut===s.filter)&&inProj(x)&&inTime(x));
-    const projChips=[['Tous','Tous',null],['ok',PROJ.ok[0],PROJ.ok[1]],['tension',PROJ.tension[0],PROJ.tension[1]],['jourj',PROJ.jourj[0],PROJ.jourj[1]],['retard',PROJ.retard[0],PROJ.retard[1]],['continu',PROJ.continu[0],PROJ.continu[1]]].map(([k,label,dot])=>({label,dot:dot||'transparent',dotW:dot?'6px':'0px',...(pf===k?chipOn:chipOff),count:k==='Tous'?visible.length:visible.filter(x=>projectionOf(x).zone===k).length,onClick:()=>this.setState({projFilter:k})}));
+    const lentilles=s.lentilles||[]; const tgf=s.tagFilter||'Tous'; const inTag=x=>tgf==='Tous'||tagsOf(x).includes(tgf);
+    const filtered = visible.filter(x=>(s.filter==='Tous'||x.statut===s.filter)&&inProj(x)&&inTime(x)&&inTag(x));
+    const tagChips=lentilles.length?['Tous',...lentilles.map(t=>t.name)].map(name=>{ const c=name==='Tous'?null:this.tagColor(name); return {label:name,dot:c||'transparent',dotW:c?'6px':'0px',...(tgf===name?chipOn:chipOff),count:name==='Tous'?visible.length:visible.filter(x=>tagsOf(x).includes(name)).length,onClick:()=>this.setState({tagFilter:name})}; }):[];
+    const projChips=[['Tous','Tous',null],['ok',PROJ.ok[0],PROJ.ok[1]],['sas',PROJ.sas[0],PROJ.sas[1]],['tension',PROJ.tension[0],PROJ.tension[1]],['jourj',PROJ.jourj[0],PROJ.jourj[1]],['retard',PROJ.retard[0],PROJ.retard[1]]].map(([k,label,dot])=>({label,dot:dot||'transparent',dotW:dot?'6px':'0px',...(pf===k?chipOn:chipOff),count:k==='Tous'?visible.length:visible.filter(x=>projectionOf(x).zone===k).length,vitalW:(k==='tension'||k==='jourj'||k==='retard')&&visible.some(x=>poidsOf(x)==='vital'&&projectionOf(x).zone===k)?'6px':'0px',onClick:()=>this.setState({projFilter:k})}));
     const timeChips=[[0,'Tous'],[7,'7 j'],[30,'30 j'],[90,'90 j']].map(([d,label])=>({label,...(tf===d?chipOn:chipOff),
       count:d?visible.filter(x=>{const k=daysTo(x);return k!=null&&k<=d;}).length:visible.length,onClick:()=>this.setState({timeFilter:d})}));
     const cf=s.cosmosFilter||'Tous';
@@ -905,13 +1198,13 @@ class Component extends DCLogic {
       const v=x[k]; return (v==null||v==='—')?'':String(v);
     };
     const sortRows=rows=>{ const r=[...rows]; const statutDir=sort&&sort.key==='statut'&&sort.dir==='desc'?-1:1; const col=sort&&sort.key!=='statut'?sort:null;
-      r.sort((a,b)=>{ const sa=(STATUT_ORDER[a.statut]??9)-(STATUT_ORDER[b.statut]??9); if(sa) return sa*statutDir; if(!col) return 0;
+      r.sort((a,b)=>{ const sa=(STATUT_ORDER[a.statut]??9)-(STATUT_ORDER[b.statut]??9); if(sa) return sa*statutDir; if(!col) return (POIDS_ORDER[a.poids]??2)-(POIDS_ORDER[b.poids]??2);
         const va=sortVal(a,col.key), vb=sortVal(b,col.key); const c=typeof va==='number'&&typeof vb==='number'?va-vb:String(va).localeCompare(String(vb),'fr',{numeric:true,sensitivity:'base'}); return col.dir==='desc'?-c:c; });
       return r.map((x,i)=>({...x,blockTop:i>0&&r[i-1].statut!==x.statut?'1px solid rgba(63,63,70,0.9)':x.dropLine})); };
     const columns=COLS.map(([key,label])=>({key,label,active:sort&&sort.key===key,color:(sort&&sort.key===key)||(key==='statut'&&!sort)?'#fafafa':'#52525b',
       arrow:sort&&sort.key===key?(sort.dir==='asc'?'↑':'↓'):(key==='statut'&&!sort?'↑':''),
       onClick:()=>this.setState(st=>{ const cur=st.sort; if(!cur||cur.key!==key) return {sort:{key,dir:'asc'}}; if(cur.dir==='asc') return {sort:{key,dir:'desc'}}; return {sort:null}; })}));
-    const anyFilterEarly=s.filter!=='Tous'||pf!=='Tous'||cf!=='Tous'||tf||mf||yf||qf;
+    const anyFilterEarly=s.filter!=='Tous'||pf!=='Tous'||cf!=='Tous'||tgf!=='Tous'||tf||mf||yf||qf;
     const groups = s.cosmos.map((name,i)=>({name,i})).filter(g=>cf==='Tous'||g.name===cf).map(({name,i})=>{
       const rows=sortRows(filtered.filter(x=>x.cosmos===name).map(x=>this.decorate(x)));
       const dg=s.drag, isGroupDrag=dg&&dg.type==='group';
@@ -944,36 +1237,55 @@ class Component extends DCLogic {
     const sel = s.rows.find(x=>x.id===s.selected);
     let detail=null;
     if(sel){ const d=this.decorate(sel);
-      const edit={}; ['name','objectif','actuel','sas','entropie','reponse','alerte','kill','cloture','startAt','alertDays'].forEach(k=>{ edit[k]=e=>{ if((k==='cloture'||k==='startAt')&&!e.target.value) return; this.update(sel.id,{[k]:e.target.value}); }; });
-      const isDate=!!resolveCloture(sel.cloture);
+      const edit={}; ['name','objectif','actuel','entropie','reponse','alerte','kill','cloture','startAt','sasUntil','alertDays'].forEach(k=>{ edit[k]=e=>{ if((k==='cloture'||k==='startAt'||k==='sasUntil')&&!e.target.value) return; this.update(sel.id,{[k]:e.target.value}); }; });
+      // un SAS saisi sans date reçoit sa fin de test déduite du texte (ou 14 j), ajustable ensuite
+      edit.sas=e=>{ const v=e.target.value; const patch={sas:v}; if(v.trim()&&v!=='—'&&!sasUntilOf(sel)) patch.sasUntil=inferSasUntil({...sel,sas:v}); this.update(sel.id,patch); };
+      const sasStart=startOf(sel)||daysAgo(0); const sasCur=sasUntilOf(sel)||inferSasUntil(sel); const sasFinal=resolveCloture(sel.cloture);
+      const badSasStart=hasSas(sel)&&sasCur<sasStart, badSasEnd=hasSas(sel)&&!!sasFinal&&sasCur>sasFinal;
+      const sasVals={ sasUntil:sasCur, sasUntilBorder:(badSasStart||badSasEnd)?'#fb7185':'#27272a', sasHintColor:(badSasStart||badSasEnd)?'#fb7185':'#71717a',
+        sasHint:badSasStart?'la fin du test est avant le début ('+fmtFR(sasStart)+')':badSasEnd?'la fin du test dépasse la clôture finale ('+fmtFR(sasFinal)+')':'test du '+fmtFR(sasStart)+' au '+fmtFR(sasCur)+' · '+(sasFinal?'puis échéance finale '+clotureLabel(sel.cloture):'puis objectif continu'),
+        sasChips:[7,14,30].map(n=>{ const v=plusDays(sasStart,n); return {label:n+' j',...(sasCur===v?chipOn:chipOff),onClick:()=>this.update(sel.id,{sasUntil:v})}; }) };
+      const byIdL=new Map(s.rows.map(x=>[x.id,x])); const amont=(Array.isArray(sel.dependDe)?sel.dependDe:[]).map(id=>byIdL.get(id)).filter(Boolean); const aval=s.rows.filter(x=>Array.isArray(x.dependDe)&&x.dependDe.includes(sel.id));
+      const openL=r=>()=>this.setState({selected:r.id,editing:false,confirmDeleteMini:false,aiDetail:null});
+      const lienVals={ liensAmont:amont.map(r=>({name:r.name,open:openL(r)})), hasAmont:amont.length>0, liensAval:aval.map(r=>({name:r.name,open:openL(r)})), hasAval:aval.length>0 };
+      const tagVals={ tagChips:(s.lentilles||[]).map(t=>({label:t.name,dot:t.color,...(tagsOf(sel).includes(t.name)?chipOn:chipOff),onClick:()=>this.toggleTag(sel,t.name)})),
+        tagPillsAll:tagsOf(sel).map(name=>this.tagPill(name,null)), hasTags:tagsOf(sel).length>0,
+        poidsChips:POIDS.map(p=>({label:POIDS_LABEL[p],dotBg:POIDS_DOT[p].bg,dotBorder:POIDS_DOT[p].border,...(poidsOf(sel)===p?chipOn:chipOff),onClick:()=>this.update(sel.id,{poids:p})})),
+        detailNewTag:s.detailNewTag||'', setDetailNewTag:e=>this.setState({detailNewTag:e.target.value}),
+        detailNewTagKey:e=>{ if(e.key!=='Enter') return; e.preventDefault(); const nm=this.createTag(this.state.detailNewTag); if(nm){ if(!tagsOf(sel).includes(nm)) this.toggleTag(sel,nm); this.setState({detailNewTag:''}); } } };
+      const selMandat=isMandat(sel.cloture); const isDate=!!resolveCloture(sel.cloture)&&!selMandat;
       const selStatut=statutOf(sel);
       const allDone=sel.actions.length>0&&sel.actions.every(a=>a.done)&&!sel.closed&&!(hasSas(sel)&&!sel.sasDone);
       const closeIt=()=>{ this.update(sel.id,{closed:true,cloture:daysAgo(0)},{type:'statut',value:'Clôturé',detail:'Statut → Clôturé (date effective '+daysAgo(0)+')'}); this.flash(sel.name+' clôturé'); };
       const reopen=()=>{ this.update(sel.id,{closed:false},{type:'statut',value:selStatut==='Pause'?'Pause':'Actif',detail:'Réouvert'}); this.flash(sel.name+' réouvert'); };
       const togglePause=()=>{ const p=!sel.pause; this.update(sel.id,{pause:p},{type:'statut',value:p?'Pause':statutOf({...sel,pause:false}),detail:p?'Mis en pause':'Repris'}); this.flash(sel.name+(p?' en pause':' repris')); };
       const toggleSas=()=>{ const v=!sel.sasDone; this.update(sel.id,{sasDone:v},{type:'statut',value:v?'Actif':'SAS',detail:v?'SAS franchi → admis dans le cosmos':'SAS rouvert'}); this.flash(v?sel.name+' admis — SAS franchi':sel.name+' de retour en SAS'); };
-      const statutHints={SAS:'en test d\u2019entrée — coche l\u2019étape SAS pour l\u2019admettre dans le cosmos',Actif:'statut calculé automatiquement',Pause:d.notStarted?'démarre le '+d.startLabel+' — en pause jusque-là, puis passe en '+(hasSas(sel)&&!sel.sasDone?'SAS':'Actif')+' tout seul':'en pause — la projection continue de courir',Clôturé:'clôturé le '+d.cloture};
-      const aiD=this.aiVals('aiDetail',{cosmos:sel.cosmos,name:sel.name,objectif:sel.objectif,actuel:sel.actuel,entropie:sel.entropie,reponse:sel.reponse,sas:sel.sas,etapes:sel.actions.map(a=>a.text).filter(Boolean),alerte:sel.alerte,kill:sel.kill,cloture:clotureLabel(sel.cloture)},p=>{ const patch={}; ['entropie','reponse','sas','alerte','kill'].forEach(k=>{ if(p[k]!=null) patch[k]=p[k]; });
-        const add=p.etapes||(p.etape!=null?[p.etape]:[]); if(add.length){ const have=new Set(sel.actions.map(a=>a.text)); patch.actions=[...sel.actions,...add.filter(t=>!have.has(t)).map(t=>({text:t,done:false}))]; }
-        const fields=Object.keys(patch).map(k=>({entropie:'entropie',reponse:'réponse',sas:'SAS',alerte:'alerte',kill:'kill',actions:'étapes'}[k]||k)); this.update(sel.id,patch,{type:'modification',detail:'Proposition IA appliquée : '+fields.join(', ')}); this.flash('Proposition appliquée'); });
-      detail={...d, editing:s.editing, notEditing:!s.editing, edit, raw:sel, allDone, closeIt, toggleSas, ai:aiD,
+      const statutHints={SAS:'en test d\u2019entrée'+(d.sasUntilLabel?' jusqu\u2019au '+d.sasUntilLabel:'')+(d.projIsSas&&d.projDays<0?' — test dépassé : admets-le (coche le SAS), déplace la date ou clôture':' — coche l\u2019étape SAS pour l\u2019admettre dans le cosmos'),Actif:'statut calculé automatiquement',Pause:d.notStarted?'démarre le '+d.startLabel+' — en pause jusque-là, puis passe en '+(hasSas(sel)&&!sel.sasDone?'SAS':'Actif')+' tout seul':'en pause — la projection continue de courir',Clôturé:'clôturé le '+d.cloture};
+      const aiD=this.aiVals('aiDetail',{cosmos:sel.cosmos,name:sel.name,poids:poidsOf(sel),objectif:sel.objectif,actuel:sel.actuel,entropie:sel.entropie,reponse:sel.reponse,sas:sel.sas,etapes:sel.actions.map(a=>a.text).filter(Boolean),alerte:sel.alerte,kill:sel.kill,cloture:clotureLabel(sel.cloture)},p=>{ if(this.applyPatch(sel,p,'Proposition IA appliquée')) this.flash('Proposition appliquée'); });
+      const agentProps=(s.propositions||[]).filter(p=>p.miniId===sel.id).map(p=>({id:p.id,agent:p.agent,motif:p.motif||'',hasMotif:!!p.motif,
+        lines:Object.keys(p.patch||{}).map(k=>({label:{objectif:'Objectif',actuel:'Valeur actuelle',entropie:'Entropie',reponse:'Réponse',sas:'SAS',sasUntil:'Fin du test',alerte:'Alerte',kill:'Kill',etapes:'Étapes',tags:'Lentilles',poids:'Poids'}[k]||k,value:Array.isArray(p.patch[k])?p.patch[k].join(' · '):String(p.patch[k])})),
+        accept:()=>this.decideProposal(p,sel,true), refuse:()=>this.decideProposal(p,sel,false)}));
+      detail={...d, ...sasVals, ...tagVals, ...lienVals, editing:s.editing, notEditing:!s.editing, edit, raw:sel, allDone, closeIt, toggleSas, ai:aiD, agentProps, hasAgentProps:agentProps.length>0, agentPropsCount:agentProps.length,
         statutHint:statutHints[selStatut], sasEdit:hasSas(sel)?sel.sas:'', sasMark:sel.sasDone?'✓':'', sasBoxBg:sel.sasDone?'#818cf8':'#09090b', sasBoxBorder:sel.sasDone?'#818cf8':'#3f3f46', sasColor:sel.sasDone?'#52525b':'#f4f4f5', sasDeco:sel.sasDone?'line-through':'none',
         isClosed:!!sel.closed, notClosed:!sel.closed,
         alertChips:[3,7,15,30].map(n=>({label:n+' j',...(alertDaysOf(sel)===n?chipOn:chipOff),onClick:()=>this.update(sel.id,{alertDays:n})})),
         togglePause, canPause:!sel.closed&&!d.notStarted, pauseLabel:sel.pause?'Reprendre':'Mettre en pause', pauseColor:sel.pause?'#f4f4f5':'#d4a054', pauseBg:sel.pause?'rgba(63,63,70,0.55)':'rgba(212,160,84,0.12)',
         toggleClose:sel.closed?reopen:closeIt, closeLabel:sel.closed?'Réouvrir':'Clôturer',
-        duplicate:()=>{ const copy={...sel,id:'mc-'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),name:sel.name+' (copie)',actions:sel.actions.map(a=>({text:a.text,done:false})),sasDone:false,pause:false,closed:false,startAt:daysAgo(0),cloture:resolveCloture(sel.cloture)?daysAgo(-90):'Permanent',createdAt:daysAgo(0),history:[{t:daysAgo(0),type:'created'}]};
+        duplicate:()=>{ const copy={...sel,id:'mc-'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),name:sel.name+' (copie)',actions:sel.actions.map(a=>({text:a.text,done:false})),sasDone:false,pause:false,closed:false,startAt:daysAgo(0),cloture:isMandat(sel.cloture)?mandatDepuis(daysAgo(0)):(resolveCloture(sel.cloture)?daysAgo(-90):mandatDepuis(daysAgo(0))),createdAt:daysAgo(0),history:[{t:daysAgo(0),type:'created'}]};
+          if(hasSas(sel)){ const s0=startOf(sel)||daysAgo(0), s1=sasUntilOf(sel)||plusDays(s0,14); copy.sasUntil=plusDays(daysAgo(0),Math.max(1,Math.round((new Date(s1+'T00:00:00')-new Date(s0+'T00:00:00'))/86400000))); } else delete copy.sasUntil;
           const i=s.rows.findIndex(x=>x.id===sel.id); this.setState(st=>{ const rows=[...st.rows]; rows.splice(i+1,0,copy); return {rows,selected:copy.id,editing:true,editSnap:JSON.parse(JSON.stringify(copy))}; });
           this.logJ({type:'creation',mini:copy.name,miniId:copy.id,cosmos:copy.cosmos,detail:'Dupliqué depuis « '+sel.name+' » — étapes remises à zéro, échéance à revoir'}); this.flash('Copie créée — ajuste le nom et l\u2019échéance'); },
         parentChips:s.cosmos.map((c,i)=>({label:c,dot:COLORS[i%COLORS.length],...(sel.cosmos===c?chipOn:chipOff),onClick:()=>{ if(c!==sel.cosmos){ this.update(sel.id,{cosmos:c},{type:'deplacement',detail:'Cosmos parent : '+sel.cosmos+' → '+c}); this.flash(sel.name+' → '+c); } }})),
         clotureDate:resolveCloture(sel.cloture)||'', clotureSel:clotureSel(sel.cloture), clotureOpts,
         pickCloture:e=>{ const v=e.target.value; if(v) this.update(sel.id,{cloture:v}); },
-        echeanceChips:[['datee','Datée'],['permanent','∞ Permanent']].map(([k,label])=>({label,...((isDate?'datee':'permanent')===k?chipOn:chipOff),onClick:()=>{ if(k==='permanent'&&isDate) this.update(sel.id,{cloture:'Permanent'},{type:'modification',detail:'Échéance → Permanent'}); if(k==='datee'&&!isDate) this.update(sel.id,{cloture:daysAgo(-90)},{type:'modification',detail:'Échéance → datée ('+fmtFR(daysAgo(-90))+')'}); }})),
+        echeanceChips:[['datee','Datée'],['mandat','Mandat 1 an']].map(([k,label])=>({label,...((selMandat?'mandat':'datee')===k?chipOn:chipOff),onClick:()=>{ if(k==='mandat'&&!selMandat){ const c=mandatDepuis(startOf(sel)); this.update(sel.id,{cloture:c},{type:'modification',detail:'Échéance → mandat d\u2019un an jusqu\u2019au '+fmtFR(resolveCloture(c))}); this.flash(sel.name+' : mandat d\u2019un an'); } if(k==='datee'&&selMandat) this.update(sel.id,{cloture:daysAgo(-90)},{type:'modification',detail:'Échéance → datée ('+fmtFR(daysAgo(-90))+')'}); }})),
+        isMandat:selMandat, isDatee:isDate, mandatLabel:selMandat?'Mandat jusqu\u2019au '+fmtFR(resolveCloture(sel.cloture)):'',
+        renouvelerMandat:()=>{ const end=resolveCloture(sel.cloture)||daysAgo(0); const base=end>daysAgo(0)?end:daysAgo(0); const c='A:'+plusMonths(base,12); this.update(sel.id,{cloture:c},{type:'modification',detail:'Mandat renouvelé jusqu\u2019au '+fmtFR(resolveCloture(c))}); this.flash(sel.name+' : mandat renouvelé jusqu\u2019au '+fmtFR(resolveCloture(c))); },
         toggleEdit:()=>{ if(!s.editing){ this.setState({editing:true,editSnap:JSON.parse(JSON.stringify(sel))}); return; }
-          const snap=s.editSnap||{}; const L={name:'Nom',objectif:'Objectif',actuel:'Valeur actuelle',sas:'SAS',entropie:'Entropie',reponse:'Réponse entropie',alerte:'Alerte',kill:'Kill',startAt:'Début',cloture:'Clôture',alertDays:'Préavis'};
+          const snap=s.editSnap||{}; if(snap.id&&snap.id!==sel.id){ this.setState({editing:false,editSnap:null}); return; } const L={name:'Nom',poids:'Poids',tags:'Lentilles',objectif:'Objectif',actuel:'Valeur actuelle',sas:'SAS',sasUntil:'Fin du test',entropie:'Entropie',reponse:'Réponse entropie',alerte:'Alerte',kill:'Kill',startAt:'Début',cloture:'Clôture',alertDays:'Préavis'};
           const cutS=v=>{ v=String(v??''); return v.length>40?v.slice(0,38)+'…':v; };
-          const fmtV=(k,v)=>k==='cloture'?clotureLabel(v):k==='startAt'?fmtFR(v||''):v;
-          const changes=Object.keys(L).filter(k=>(snap[k]??'')!==(sel[k]??'')).map(k=>({field:L[k],before:fmtV(k,snap[k]),after:fmtV(k,sel[k])}));
+          const fmtV=(k,v)=>k==='cloture'?clotureLabel(v):(k==='startAt'||k==='sasUntil')?fmtFR(v||''):k==='poids'?(POIDS_LABEL[v]||'Normal'):Array.isArray(v)?v.join(', '):v;
+          const changes=Object.keys(L).filter(k=>{ if(k==='poids') return poidsOf(snap)!==poidsOf(sel); const a=snap[k]??'', b=sel[k]??''; return (Array.isArray(a)||Array.isArray(b))?JSON.stringify(a)!==JSON.stringify(b):a!==b; }).map(k=>({field:L[k],before:fmtV(k,snap[k]),after:fmtV(k,sel[k])}));
           const sa=(snap.actions||[]).map(a=>a.text), sb=sel.actions.map(a=>a.text);
           if(JSON.stringify(sa)!==JSON.stringify(sb)) changes.push({field:'Étapes',before:sa.length+' étape(s)',after:sb.length+' étape(s)'});
           if(changes.length) this.logJ({type:'modification',mini:sel.name,miniId:sel.id,cosmos:sel.cosmos,changes,detail:changes.map(c=>c.field+' : « '+cutS(c.before)+' » → « '+cutS(c.after)+' »').join(' · ')});
@@ -993,7 +1305,13 @@ class Component extends DCLogic {
     const dupName=!!(f.cosmos&&f.name.trim()&&s.rows.some(x=>x.cosmos===f.cosmos&&x.name.trim().toLowerCase()===f.name.trim().toLowerCase()));
     const badOrder=f.echeance==='datee'&&!!resolveCloture(f.cloture)&&/^\d{4}-\d{2}-\d{2}$/.test(f.startAt||'')&&resolveCloture(f.cloture)<f.startAt;
     const noGov=!(f.entropie||'').trim()||!(f.reponse||'').trim();
-    const miniInvalid=!f.cosmos||!f.name.trim()||dupName||badOrder||noGov||(f.echeance==='datee'&&!resolveCloture(f.cloture));
+    // SAS daté : la fin du test doit être entre le début et la clôture finale (14 j par défaut)
+    const formStartBase=/^\d{4}-\d{2}-\d{2}$/.test(f.startAt||'')?f.startAt:daysAgo(0);
+    const formHasSas=!!(f.sas||'').trim()&&f.sas!=='—';
+    const formSasUntilEff=/^\d{4}-\d{2}-\d{2}$/.test(f.sasUntil||'')?f.sasUntil:inferSasUntil({sas:f.sas,startAt:formStartBase});
+    const formFinal=f.echeance==='datee'?resolveCloture(f.cloture):(f.echeance==='mandat'?resolveCloture(mandatDepuis(formStartBase)):null);
+    const badSasStart=formHasSas&&formSasUntilEff<formStartBase, badSasEnd=formHasSas&&!!formFinal&&formSasUntilEff>formFinal;
+    const miniInvalid=!f.cosmos||!f.name.trim()||dupName||badOrder||noGov||badSasStart||badSasEnd||(f.echeance==='datee'&&!resolveCloture(f.cloture));
     const cosmosInvalid=!s.cosmosName.trim()||s.cosmos.includes(s.cosmosName.trim().toUpperCase());
     const q=(s.tplQuery||'').toLowerCase();
     const tplGroups=TEMPLATES.map(([domain,items],i)=>{
@@ -1003,7 +1321,7 @@ class Component extends DCLogic {
         createCosmos:()=>{ this.setState(st=>({cosmos:[...st.cosmos,domain]})); this.logJ({type:'cosmos',cosmos:domain,detail:'Cosmos créé depuis les modèles'}); this.flash('Cosmos '+domain+' créé'); },
         items:list.map(t=>({label:t,use:()=>this.setState({showMiniModal:true,tab:0,form:freshForm({name:t,cosmos:exists?domain:''}),aiForm:null})}))};
     }).filter(g=>g.count>0);
-    const anyFilter=s.filter!=='Tous'||pf!=='Tous'||cf!=='Tous'||tf||mf||yf||qf;
+    const anyFilter=s.filter!=='Tous'||pf!=='Tous'||cf!=='Tous'||tgf!=='Tous'||tf||mf||yf||qf;
     const shownGroups=anyFilter?groups.filter(g=>g.count>0):groups;
     const view=s.view||'table';
     return {
@@ -1012,17 +1330,41 @@ class Component extends DCLogic {
         const n=(f)=>all.filter(f).length;
         return [
           {label:'sas',value:n(x=>x.statut==='SAS'),color:'#818cf8'},{label:'actif',value:n(x=>x.statut==='Actif'),color:'#34d399'},{label:'pause',value:n(x=>x.statut==='Pause'),color:'#d4a054'},{label:'clôturé',value:n(x=>x.statut==='Clôturé'),color:'#71717a'},{sep:true},
-          {label:'à l\u2019heure',value:live.filter(x=>projectionOf(x).zone==='ok').length,color:'#34d399'},{label:'tension',value:live.filter(x=>projectionOf(x).zone==='tension').length,color:'#fbbf24'},{label:'jour J',value:live.filter(x=>projectionOf(x).zone==='jourj').length,color:'#fafafa'},{label:'retard',value:live.filter(x=>projectionOf(x).zone==='retard').length,color:'#fb7185'},{label:'continus',value:live.filter(x=>projectionOf(x).zone==='continu').length,color:'#71717a'}
-        ].map(k=>({...k,isSep:!!k.sep,notSep:!k.sep})); })(), cosmosChips, timeChips,
+          {label:'à l\u2019heure',value:live.filter(x=>projectionOf(x).zone==='ok').length,color:'#34d399'},{label:'tension',value:live.filter(x=>projectionOf(x).zone==='tension').length,color:'#fbbf24'},{label:'jour J',value:live.filter(x=>projectionOf(x).zone==='jourj').length,color:'#fafafa'},{label:'retard',value:live.filter(x=>projectionOf(x).zone==='retard').length,color:'#fb7185'},{label:'mandats',value:live.filter(x=>isMandat(x.cloture)).length,color:'#71717a'}
+        ].map(k=>({...k,isSep:!!k.sep,notSep:!k.sep})); })(), cosmosChips, timeChips, tagChips,
+      showTags:!!s.showTags, openTags:()=>this.setState({showTags:true,dataMenu:false,newTagName:'',newTagError:'',renameTag:null,confirmDeleteTag:null}), closeTags:()=>this.setState({showTags:false,renameTag:null,confirmDeleteTag:null}),
+      tagRows:lentilles.map(t=>{ const count=s.rows.filter(x=>tagsOf(x).includes(t.name)).length; const renaming=s.renameTag===t.name, confirming=s.confirmDeleteTag===t.name;
+        return {name:t.name,color:t.color,count,countLabel:count+' mini-cosmos',renaming,notRenaming:!renaming,confirming,notConfirming:!confirming,
+          startRename:()=>this.setState({renameTag:t.name,renameTagName:t.name,confirmDeleteTag:null}), saveRename:()=>this.renameTag(t.name,this.state.renameTagName),
+          renameKey:e=>{ if(e.key==='Enter') this.renameTag(t.name,this.state.renameTagName); if(e.key==='Escape') this.setState({renameTag:null}); },
+          askDelete:()=>this.setState({confirmDeleteTag:t.name,renameTag:null}), cancelDelete:()=>this.setState({confirmDeleteTag:null}), doDelete:()=>this.deleteTag(t.name)}; }),
+      renameTagName:s.renameTagName||'', setRenameTagName:e=>this.setState({renameTagName:e.target.value}),
+      tagsCount:lentilles.length, noTags:!lentilles.length, tooManyTags:lentilles.length>10, nextTagColor:COLORS[lentilles.length%COLORS.length],
+      newTagName:s.newTagName||'', setNewTagName:e=>this.setState({newTagName:e.target.value,newTagError:''}), newTagKey:e=>{ if(e.key==='Enter') this.submitNewTag(); },
+      createTag:()=>this.submitNewTag(), newTagInvalid:!normTag(s.newTagName), newTagBtnOpacity:normTag(s.newTagName)?1:0.4, newTagError:s.newTagError||'', hasNewTagError:!!s.newTagError,
+      tagsHint:lentilles.length?lentilles.length+' lentille'+(lentilles.length>1?'s':'')+' · '+lentilles.map(t=>t.name).join(', '):'aucune — santé, une personne, l\u2019argent…',
       monthGroups, quarterGroups, yearOptions, monthFilter:mf, yearFilter:yf, quarterFilter:qf, quarterStyle:selStyle(qf), setQuarter:e=>this.setState({quarterFilter:e.target.value,monthFilter:''}),
       monthStyle:selStyle(mf), yearStyle:selStyle(yf),
       setMonth:e=>this.setState({monthFilter:e.target.value,quarterFilter:''}), setYear:e=>this.setState({yearFilter:e.target.value}),
       isTable:view==='table', isTemplates:view==='templates', isStats:view==='stats', isJournal:view==='journal',
       tabJournal:{color:view==='journal'?'#fafafa':'#a1a1aa',bg:view==='journal'?'rgba(39,39,42,0.55)':'transparent',border:view==='journal'?'rgba(63,63,70,0.8)':'transparent',onClick:()=>this.setState({view:'journal'})},
+      tabCarte:{color:view==='carte'?'#fafafa':'#a1a1aa',bg:view==='carte'?'rgba(39,39,42,0.55)':'transparent',border:view==='carte'?'rgba(63,63,70,0.8)':'transparent'}, isCarte:view==='carte',
+      hasCarteLens:lentilles.length>0, carteLensChips:lentilles.length?['Tous',...lentilles.map(t=>t.name)].map(name=>{ const c=name==='Tous'?null:this.tagColor(name); const on=(s.carteLens||'Tous')===name; return {label:name,dot:c||'transparent',dotW:c?'6px':'0px',...(on?chipOn:chipOff),onClick:()=>this.setState({carteLens:name==='Tous'?null:name})}; }):[],
       ...this.journalVals(),
       exportJson:()=>this.exportJson(), importJson:e=>{ this.importJson(e.target.files&&e.target.files[0]); e.target.value=''; }, importRef:this.importRef||(this.importRef=React.createRef()), openImport:()=>this.importRef.current&&this.importRef.current.click(),
       confirmReset:!!s.confirmReset, askReset:()=>this.setState({confirmReset:true}), cancelReset:()=>this.setState({confirmReset:false}), resetData:()=>this.resetData(),
       dataMenu:!!s.dataMenu, toggleDataMenu:()=>this.setState(st=>({dataMenu:!st.dataMenu,confirmReset:false})),
+      isDb:!!this.sync, storageTitle:this.sync?'Données · synchronisées dans ta base':'Données · sauvegardées localement', storageHint:this.sync?('connecté · '+(this.sync.email()||'')):'ce navigateur seulement',
+      logout:()=>this.logout(), openAgents:()=>this.setState({showAgents:true,dataMenu:false,newAgentKey:'',newAgentKeyName:''}), closeAgents:()=>this.setState({showAgents:false,newAgentKey:'',newAgentKeyName:''}), showAgents:!!s.showAgents,
+      agentsHint:(()=>{ const n=(s.agents||[]).filter(a=>a.actif).length; return n?n+' agent'+(n>1?'s':'')+' actif'+(n>1?'s':''):'aucun agent — crée une clé par agent'; })(),
+      pendingCount:(s.propositions||[]).length, hasPending:(s.propositions||[]).length>0, openPending:()=>{ const p=(s.propositions||[])[0]; if(p) this.setState({view:'table',selected:p.miniId,editing:false,confirmDeleteMini:false}); },
+      agents:(s.agents||[]).map(a=>({id:a.id,name:a.name,level:a.ecriture_directe?'écriture directe':'propositions',lastUsed:a.last_used_at?'utilisé le '+fmtFR(a.last_used_at.slice(0,10)):'jamais utilisé',isActive:!!a.actif,isRevoked:!a.actif,color:a.actif?'#f4f4f5':'#52525b',deco:a.actif?'none':'line-through',revoke:()=>this.revokeAgent(a)})),
+      agentsCount:(s.agents||[]).length, noAgents:!(s.agents||[]).length,
+      newAgentName:s.newAgentName||'', setNewAgentName:e=>this.setState({newAgentName:e.target.value}), newAgentKeyDown:e=>{ if(e.key==='Enter') this.createAgent(); },
+      agentLevelChips:[[false,'Propositions (recommandé)'],[true,'Écriture directe']].map(([v,label])=>({label,...(!!s.newAgentDirect===v?chipOn:chipOff),onClick:()=>this.setState({newAgentDirect:v})})),
+      agentLevelHint:s.newAgentDirect?'Modifie directement les mini-cosmos, sans validation. Chaque écriture est tracée dans le Journal avec le nom de l\u2019agent.':'Ne modifie rien : ses propositions apparaissent dans le volet Assistant du mini-cosmos, à accepter ou refuser.',
+      createAgent:()=>this.createAgent(), newAgentInvalid:!(s.newAgentName||'').trim(), newAgentBtnOpacity:(s.newAgentName||'').trim()?1:0.4,
+      newAgentKey:s.newAgentKey||'', newAgentKeyName:s.newAgentKeyName||'', hasNewAgentKey:!!s.newAgentKey, clearNewAgentKey:()=>this.setState({newAgentKey:'',newAgentKeyName:''}), agentEndpoint:location.origin+'/api/agent',
       lastExportLabel:(()=>{ let t=s.lastExport; if(!t){ try{ t=localStorage.getItem(this.STORE_KEY+':lastExport'); }catch(e){} } if(!t) return 'jamais exporté'; const d=Math.round((TODAY-new Date(t.slice(0,10)+'T00:00:00'))/86400000); return d<=0?'exporté aujourd\u2019hui':'dernier export il y a '+d+' j'; })(),
       lastExportColor:(()=>{ let t=s.lastExport; if(!t){ try{ t=localStorage.getItem(this.STORE_KEY+':lastExport'); }catch(e){} } if(!t) return '#fb7185'; const d=Math.round((TODAY-new Date(t.slice(0,10)+'T00:00:00'))/86400000); return d>14?'#fbbf24':'#52525b'; })(),
       tabStats:{color:view==='stats'?'#fafafa':'#a1a1aa',bg:view==='stats'?'rgba(39,39,42,0.55)':'transparent',border:view==='stats'?'rgba(63,63,70,0.8)':'transparent',onClick:()=>this.setState({view:'stats'})},
@@ -1034,7 +1376,7 @@ class Component extends DCLogic {
       detail, closeDetail:()=>this.setState({selected:null,confirmDeleteMini:false,editing:false}),
       confirmDeleteMini:!!s.confirmDeleteMini, footerIdle:!s.confirmDeleteMini,
       askDeleteMini:()=>this.setState({confirmDeleteMini:true}), cancelDeleteMini:()=>this.setState({confirmDeleteMini:false}),
-      doDeleteMini:()=>{ if(sel){ this.setState(st=>({rows:st.rows.filter(x=>x.id!==sel.id)})); this.logJ({type:'suppression',mini:sel.name,cosmos:sel.cosmos,detail:'Mini-cosmos supprimé'}); this.flash(sel.name+' supprimé'); } this.setState({selected:null,confirmDeleteMini:false,editing:false}); },
+      doDeleteMini:()=>{ if(sel){ this.setState(st=>({rows:st.rows.filter(x=>x.id!==sel.id).map(x=>Array.isArray(x.dependDe)&&x.dependDe.includes(sel.id)?{...x,dependDe:x.dependDe.filter(id=>id!==sel.id)}:x)})); this.logJ({type:'suppression',mini:sel.name,cosmos:sel.cosmos,detail:'Mini-cosmos supprimé'}); this.flash(sel.name+' supprimé'); } this.setState({selected:null,confirmDeleteMini:false,editing:false}); },
       showCosmosModal:s.showCosmosModal, showMiniModal:s.showMiniModal,
       openCosmos:()=>this.setState({showCosmosModal:true,cosmosName:''}),
       openMini:()=>this.setState({showMiniModal:true,tab:0,form:freshForm(),aiForm:null}),
@@ -1045,19 +1387,28 @@ class Component extends DCLogic {
       saveCosmos:()=>{ const n=s.cosmosName.trim().toUpperCase(); if(!n) return; this.setState(st=>({cosmos:[...st.cosmos,n],showCosmosModal:false})); this.logJ({type:'cosmos',cosmos:n,detail:'Cosmos créé'}); this.flash('Cosmos '+n+' créé'); },
       form:f, set, tabs, tab0:s.tab===0, tab1:s.tab===1, tab2:s.tab===2, tab3:s.tab===3, notLastTab:s.tab<3, nextTab:()=>this.setState({tab:Math.min(3,s.tab+1)}),
       parentChips:s.cosmos.map((c,i)=>({label:c,dot:COLORS[i%COLORS.length],...(f.cosmos===c?chipOn:chipOff),onClick:()=>this.setState(st=>({form:{...st.form,cosmos:c}}))})),
-      formEcheanceChips:[['datee','Datée'],['permanent','∞ Permanent (continu)']].map(([k,label])=>({label,...(f.echeance===k?chipOn:chipOff),onClick:()=>this.setState(st=>({form:{...st.form,echeance:k}}))})),
-      formIsDated:f.echeance==='datee', formAlertChips:[3,7,15,30].map(n=>({label:n+' j',...(+f.alertDays===n?chipOn:chipOff),onClick:()=>this.setState(st=>({form:{...st.form,alertDays:n}}))})), formStartsLater:!!(f.startAt&&f.startAt>daysAgo(0)), formStartLabel:(f.startAt||daysAgo(0)).split('-').reverse().join('/'),
+      formEcheanceChips:[['datee','Datée'],['mandat','Mandat 1 an']].map(([k,label])=>({label,...(f.echeance===k?chipOn:chipOff),onClick:()=>this.setState(st=>({form:{...st.form,echeance:k}}))})),
+      formIsDated:f.echeance==='datee', formIsMandat:f.echeance==='mandat', formEcheanceHint:f.echeance==='mandat'?'mandat d\u2019un an jusqu\u2019au '+fmtFR(resolveCloture(mandatDepuis(formStartBase)))+' · renouvelé dans le volet si la discipline tient, supprimé sinon':'datée : projection jusqu\u2019à la clôture · mandat : objectif continu revu au bout d\u2019un an, comme un bilan', formAlertChips:[3,7,15,30].map(n=>({label:n+' j',...(+f.alertDays===n?chipOn:chipOff),onClick:()=>this.setState(st=>({form:{...st.form,alertDays:n}}))})), formStartsLater:!!(f.startAt&&f.startAt>daysAgo(0)), formStartLabel:(f.startAt||daysAgo(0)).split('-').reverse().join('/'),
       formClotureDate:resolveCloture(f.cloture)||'', formClotureSel:clotureSel(f.cloture), formClotureLabel:clotureLabel(f.cloture), clotureOpts,
       pickFormCloture:e=>{ const v=e.target.value; if(v) this.setState(st=>({form:{...st.form,cloture:v}})); },
       formActions:f.actions.map((v,i)=>({n:i+1,value:v,onChange:e=>this.setState(st=>{const a=[...st.form.actions];a[i]=e.target.value;return {form:{...st.form,actions:a}};})})),
       formAddStep:()=>this.setState(st=>({form:{...st.form,actions:[...st.form.actions,'']}})),
       miniInvalid, miniBtnOpacity:miniInvalid?0.4:1,
-      formHint:miniInvalid?(!f.cosmos||!f.name.trim()?'cosmos parent et nom requis (Identité)':dupName?'« '+f.name.trim()+' » existe déjà dans '+f.cosmos:noGov?'entropie et réponse requises (Gouvernance) — un terrain sans danger identifié n\u2019est pas gouverné':badOrder?'la clôture est avant la date de début (Échéance)':'une échéance datée a besoin d\u2019une date (Échéance)'):'prêt à créer dans '+f.cosmos, formHintColor:miniInvalid?(dupName||badOrder?'#fb7185':'#52525b'):'#34d399',
-      saveMini:()=>{ if(miniInvalid) return; const acts=f.actions.filter(a=>a.trim());
-        const row={cosmos:f.cosmos,name:f.name.trim(),objectif:f.objectif||'—',actuel:f.actuel||'—',sas:f.sas||'—',entropie:f.entropie||'—',reponse:f.reponse||'—',alerte:f.alerte||'—',kill:f.kill||'—',
-          pause:false, closed:false, sasDone:false, startAt:/^\d{4}-\d{2}-\d{2}$/.test(f.startAt||'')?f.startAt:daysAgo(0), alertDays:alertDaysOf({alertDays:f.alertDays}), cloture:f.echeance==='permanent'?'Permanent':f.cloture,
+      formHint:miniInvalid?(!f.cosmos||!f.name.trim()?'cosmos parent et nom requis (Identité)':dupName?'« '+f.name.trim()+' » existe déjà dans '+f.cosmos:noGov?'entropie et réponse requises (Gouvernance) — un terrain sans danger identifié n\u2019est pas gouverné':badOrder?'la clôture est avant la date de début (Échéance)':badSasStart?'la fin du test est avant la date de début (Gouvernance)':badSasEnd?'la fin du test est après la clôture finale (Gouvernance / Échéance)':'une échéance datée a besoin d\u2019une date (Échéance)'):'prêt à créer dans '+f.cosmos, formHintColor:miniInvalid?(dupName||badOrder||badSasStart||badSasEnd?'#fb7185':'#52525b'):'#34d399',
+      formPoidsChips:POIDS.map(p=>({label:POIDS_LABEL[p],dotBg:POIDS_DOT[p].bg,dotBorder:POIDS_DOT[p].border,...((f.poids||'normal')===p?chipOn:chipOff),onClick:()=>this.setState(st=>({form:{...st.form,poids:p}}))})),
+      formPoidsHint:({vital:'ne doit pas dériver : remonte en tête de son cosmos, ses tensions sont signalées en haut',important:'passe avant les normaux',normal:'suit ton ordre manuel'})[f.poids||'normal'],
+      formTagChips:lentilles.map(t=>({label:t.name,dot:t.color,...((f.tags||[]).includes(t.name)?chipOn:chipOff),onClick:()=>this.setState(st=>{ const cur=st.form.tags||[]; return {form:{...st.form,tags:cur.includes(t.name)?cur.filter(x=>x!==t.name):[...cur,t.name]}}; })})),
+      formNewTag:s.formNewTag||'', setFormNewTag:e=>this.setState({formNewTag:e.target.value}),
+      formNewTagKey:e=>{ if(e.key!=='Enter') return; e.preventDefault(); const nm=this.createTag(this.state.formNewTag); if(nm) this.setState(st=>({form:{...st.form,tags:[...new Set([...(st.form.tags||[]),nm])]},formNewTag:''})); },
+      formHasSas, formSasUntil:formSasUntilEff, setFormSasUntil:e=>{ const v=e.target.value; if(v) this.setState(st=>({form:{...st.form,sasUntil:v}})); },
+      formSasChips:[7,14,30].map(n=>{ const v=plusDays(formStartBase,n); return {label:n+' j',...(formSasUntilEff===v?chipOn:chipOff),onClick:()=>this.setState(st=>({form:{...st.form,sasUntil:v}}))}; }),
+      formSasHint:badSasStart?'la fin du test est avant le début ('+fmtFR(formStartBase)+')':badSasEnd?'test du '+fmtFR(formStartBase)+' au '+fmtFR(formSasUntilEff)+' · la clôture finale ('+fmtFR(formFinal)+') est avant : règle-la dans l\u2019onglet Échéance':'test du '+fmtFR(formStartBase)+' au '+fmtFR(formSasUntilEff)+' · '+(f.echeance==='mandat'?'puis mandat jusqu\u2019au '+fmtFR(formFinal):formFinal?'puis échéance finale '+clotureLabel(f.cloture):'puis échéance finale (à dater)'),
+      formSasHintColor:badSasStart?'#fb7185':badSasEnd?'#fbbf24':'#71717a',
+      saveMini:()=>{ if(miniInvalid) return; const acts=f.actions.filter(a=>a.trim()); const startV=/^\d{4}-\d{2}-\d{2}$/.test(f.startAt||'')?f.startAt:daysAgo(0);
+        const row={cosmos:f.cosmos,name:f.name.trim(),objectif:f.objectif||'—',actuel:f.actuel||'—',sas:f.sas||'—',sasUntil:formHasSas?formSasUntilEff:undefined,tags:(f.tags||[]).filter(Boolean),poids:POIDS.includes(f.poids)?f.poids:'normal',entropie:f.entropie||'—',reponse:f.reponse||'—',alerte:f.alerte||'—',kill:f.kill||'—',
+          pause:false, closed:false, sasDone:false, startAt:/^\d{4}-\d{2}-\d{2}$/.test(f.startAt||'')?f.startAt:daysAgo(0), alertDays:alertDaysOf({alertDays:f.alertDays}), cloture:f.echeance==='mandat'?mandatDepuis(startV):f.cloture,
           actions:acts.map(t=>({text:t,done:false})), createdAt:daysAgo(0), history:[{t:daysAgo(0),type:'created'}], id:'mc-'+Date.now().toString(36)+Math.random().toString(36).slice(2,5)};
-        this.setState(st=>({rows:[...st.rows,row],showMiniModal:false})); this.logJ({type:'creation',mini:row.name,miniId:row.id,cosmos:row.cosmos,detail:'Mini-cosmos créé · début '+fmtFR(row.startAt)+' · '+(row.cloture==='Permanent'?'permanent':'échéance '+clotureLabel(row.cloture))+' · '+statutOf(row)}); this.flash(row.name+' créé dans '+row.cosmos); },
+        this.setState(st=>({rows:[...st.rows,row],showMiniModal:false})); this.logJ({type:'creation',mini:row.name,miniId:row.id,cosmos:row.cosmos,detail:'Mini-cosmos créé · début '+fmtFR(row.startAt)+' · '+(isMandat(row.cloture)?'mandat jusqu\u2019au '+fmtFR(resolveCloture(row.cloture)):'échéance '+clotureLabel(row.cloture))+(row.sasUntil?' · test jusqu\u2019au '+fmtFR(row.sasUntil):'')+(row.tags.length?' · lentilles : '+row.tags.join(', '):'')+(row.poids!=='normal'?' · poids '+POIDS_LABEL[row.poids].toLowerCase():'')+' · '+statutOf(row)}); this.flash(row.name+' créé dans '+row.cosmos); },
       toast:s.toast
     };
   }

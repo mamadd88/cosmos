@@ -5,7 +5,7 @@ Modèle figé au 2026-09-04. Le JSON exporté par l'application (`version: 1`) s
 ## Concepts (rappel)
 - **Cosmos** : grand domaine de vie (pièce). **Mini-cosmos** : terrain gouverné à l'intérieur (meuble).
 - **Statut** — calculé, sauf deux drapeaux manuels : `Clôturé` (closed) > `Pause` (pause manuelle, ou date de début future) > `SAS` (champ SAS rempli et non franchi) > `Actif`.
-- **Échéance** — soit une date (précise, fin de mois, fin de trimestre, fin d'année), soit `Permanent` (objectif continu). Remplace l'ancien « type d'objectif ».
+- **Échéance** — soit une date (précise, fin de mois, fin de trimestre, fin d'année), soit un **mandat d'un an** (`A:AAAA-MM-JJ`, objectif continu revu au terme puis renouvelé ou supprimé). `Permanent` n'existe plus : converti en mandat à la migration.
 - **Projection** — calculée : avancement dans le temps entre début et échéance ; zone `ok | tension | jourj | retard | continu | termine`, la tension démarrant `alert_days` jours avant l'échéance.
 - **SAS** — test d'entrée borné ; c'est la première étape du mini-cosmos tant qu'il n'est pas franchi.
 
@@ -140,3 +140,31 @@ SQLite : `enum` → `text` + `check (col in (...))`, `uuid` → `text`, `timesta
 | `journal[]`, `journalArchive[]` `{id, t, author, type, mini, miniId, cosmos, detail, changes}` | `journal` |
 
 Champs hérités à ignorer à l'import : `statut` (recalculé), `etat`, `type`, `maintenance`.
+
+---
+
+## Ce qui est en base aujourd'hui (Supabase, migration `20260904013000_init.sql`)
+
+Le modèle ci-dessus reste la référence conceptuelle. L'implémentation retenue pour aller vite sans réécrire l'app diffère sur un point : **un mini-cosmos = une ligne dont `data` (jsonb) contient l'objet complet de l'app** (le format de l'export JSON), avec des **colonnes générées** (`name`, `cosmos`, `objectif`, `valeur_actuelle`, `entropie`, `reponse_entropie`, `seuil_alerte`, `seuil_kill`, `sas`, `sas_done`, `pause`, `closed`, `start_at`, `cloture`) pour requêter en SQL. Les étapes sont exposées par la vue `etapes` (déplie `data->'actions'`) ; l'historique compact (`history[]`) reste dans `data`.
+
+| Table / vue | Rôle |
+|---|---|
+| `cosmos` | domaines de vie : `(user_id, name)` clé, `position` |
+| `mini_cosmos` | une ligne par mini-cosmos : `id` (celui de l'app), `data` jsonb, `position`, colonnes générées (dont `sas_until`, fin du test d'entrée, et `poids` : vital / important / normal), `updated_at`, `updated_by` (« Toi » ou nom d'agent) |
+| `etapes` (vue) | `mini_cosmos_id`, `position`, `texte`, `done` |
+| `journal` | trace de toute écriture : `t` (horodatage de l'auteur), `created_at` (serveur), `author`, `type` (+ `proposition`, `note`), `mini_id` sans FK, `changes` jsonb |
+| `agents` | une clé par agent : `key_hash` (SHA-256, jamais la clé), `ecriture_directe`, `actif`, `last_used_at` |
+| `lentilles` | registre des tags par utilisateur : `(user_id, name)` clé, `color`, `position` ; sur chaque mini-cosmos, `data->'tags'` = liste de noms |
+| `propositions` | suggestions d'agents : `patch` jsonb (objectif, actuel, entropie, reponse, sas, alerte, kill, etapes), `motif`, `statut` en_attente / acceptee / refusee |
+
+Toutes les tables portent `user_id` et une politique RLS `user_id = auth.uid()` ; `anon` n'a aucun accès.
+
+**Fonctions côté app** (droits de l'utilisateur connecté) : `charger_etat()` (tout l'état en un appel, journal des 12 derniers mois), `sync_etat(...)` (sauvegarde différentielle en une transaction, ou remplacement complet à l'import), `creer_agent(nom, ecriture_directe)` (renvoie la clé une seule fois).
+
+**Fonctions agents** (`security definer`, exécutables uniquement par `service_role`, donc par `/api/agent`) : `agent_verifier(hash)`, `agent_lire`, `agent_proposer`, `agent_modifier` (exige `ecriture_directe`, applique le patch, ajoute les étapes sans doublon, trace `changes`), `agent_noter`. Champs autorisés dans un patch : `objectif, actuel, entropie, reponse, sas, sasUntil (AAAA-MM-JJ), alerte, kill, etapes, tags` (noms de lentilles existantes, la liste remplace la précédente).
+
+**Liens** : `data->'dependDe'` = liste d'identifiants de mini-cosmos amont (« ce terrain dépend de »). Une flèche de la carte va de l'amont vers l'aval. Supprimer un mini-cosmos retire les références qui pointaient vers lui.
+
+**SAS daté** (migration `20260904030000_sas_until.sql`) : `data->>'sasUntil'` = fin du test. Règle de déduction quand elle manque (app et SQL, fonction `sas_until_deduit`) : date explicite « (30/09) » dans le texte du SAS, sinon « 14 jours » / « 2 semaines » / « 1 mois » depuis le début, sinon 14 jours. L'échéance effective d'un mini-cosmos (`echeanceEffective` dans `cosmos-core.js`) est cette date tant que le SAS n'est pas franchi, puis la clôture.
+
+Passer un jour au modèle entièrement normalisé (tables `etapes`, `evenements`) est une migration SQL pure à partir de `data`, sans changer le format d'échange de l'app.

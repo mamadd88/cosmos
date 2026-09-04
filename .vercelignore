@@ -1,0 +1,11 @@
+.git
+.claude
+.vercel
+node_modules
+uploads
+export
+supabase
+scripts
+*.md
+.env*
+.DS_Store

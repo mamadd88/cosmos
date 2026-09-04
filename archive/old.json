@@ -1,0 +1,779 @@
+
+{
+  "version": 1,
+  "exportedAt": "2026-09-04T01:38:44.543Z",
+  "cosmos": [
+    "ENTREPRISE",
+    "FAMILLE",
+    "RELATIONS",
+    "PERSONNEL",
+    "SANTÉ",
+    "DMM"
+  ],
+  "miniCosmos": [
+    {
+      "sas": "",
+      "tensionDays": 3,
+      "alerte": "Madré 100e",
+      "createdAt": "2026-09-03",
+      "objectif": "Donner 100€ Madré",
+      "actuel": "0",
+      "statut": "Actif",
+      "id": "mc-5f46c260-3d0e-4464-8382-e7ed4f12bf9e",
+      "entropie": "Payer en retard",
+      "kill": "Madré 100e",
+      "cloture": "2026-09-07",
+      "actions": [
+        {
+          "done": false,
+          "text": "zzzz",
+          "isSas": true
+        },
+        {
+          "text": "Carole argent ",
+          "isSas": false,
+          "done": false
+        },
+        {
+          "text": "Envoyer l'argent ",
+          "done": false,
+          "isSas": false
+        }
+      ],
+      "history": [
+        {
+          "t": "2026-09-03",
+          "type": "created"
+        },
+        {
+          "t": "2026-09-03",
+          "value": "Actif",
+          "type": "statut"
+        }
+      ],
+      "cosmos": "FAMILLE",
+      "type": "Maintenance",
+      "name": "Madré 100€",
+      "reponse": "Payer avant le 5 du mois"
+    },
+    {
+      "name": "Cigarette",
+      "createdAt": "2026-09-03",
+      "cosmos": "SANTÉ",
+      "type": "Conquête",
+      "objectif": "Ne pas fumer",
+      "id": "mc-bdaa6533-a8d5-4791-bf64-9cda0d2790df",
+      "kill": "Fumer",
+      "statut": "Actif",
+      "actuel": "0",
+      "cloture": "Permanent",
+      "actions": [],
+      "entropie": "Fumeur",
+      "reponse": "Cigarette Électronique",
+      "sas": "—",
+      "history": [
+        {
+          "t": "2026-09-03",
+          "type": "created"
+        }
+      ],
+      "tensionDays": 7,
+      "alerte": "Soirée , être avec un fumeur "
+    },
+    {
+      "history": [
+        {
+          "type": "created",
+          "t": "2026-09-03"
+        }
+      ],
+      "reponse": "Panaché",
+      "actuel": "0",
+      "id": "mc-943a98af-955e-4ac5-96d1-a3815aa006f1",
+      "tensionDays": 7,
+      "statut": "Actif",
+      "actions": [],
+      "cloture": "Permanent",
+      "entropie": "Présence alcool",
+      "cosmos": "SANTÉ",
+      "objectif": "Ne pas Boire d'alcool",
+      "sas": "—",
+      "kill": "Boire de l'alcool Fort",
+      "alerte": "Soirée, être avec des gens qui boit",
+      "type": "Conquête",
+      "createdAt": "2026-09-03",
+      "name": "Alcool"
+    },
+    {
+      "id": "mc-5dbea847-1423-4c76-a338-38a857c8e5c9",
+      "objectif": "Dentition propre",
+      "alerte": "Aucun rendez vous en 3 mois",
+      "sas": "—",
+      "createdAt": "2026-09-03",
+      "cosmos": "SANTÉ",
+      "name": "Dentition",
+      "reponse": "Rendez vous chez le dentiste",
+      "tensionDays": 7,
+      "history": [
+        {
+          "type": "created",
+          "t": "2026-09-03"
+        }
+      ],
+      "type": "Conquête",
+      "kill": "Rendez vous après 6 mois",
+      "statut": "Actif",
+      "actions": [
+        {
+          "text": "Rendez vous dentiste ",
+          "done": false
+        },
+        {
+          "text": "Détartrage dents",
+          "done": false
+        },
+        {
+          "text": "Blanchiment dents",
+          "done": false
+        }
+      ],
+      "cloture": "Fin déc. 2026 (31 déc.)",
+      "actuel": "Mauvaise dentition",
+      "entropie": "Ne pas aller chez le dentiste"
+    },
+    {
+      "actuel": "Lunette cassé",
+      "statut": "Actif",
+      "entropie": "Laisser trainer lunette",
+      "kill": "Visibilité null",
+      "type": "Conquête",
+      "name": "Lunette de vue",
+      "cosmos": "SANTÉ",
+      "history": [
+        {
+          "t": "2026-09-03",
+          "type": "created"
+        },
+        {
+          "t": "2026-09-03",
+          "type": "step"
+        },
+        {
+          "type": "unstep",
+          "t": "2026-09-03"
+        }
+      ],
+      "reponse": "Boitier lunette, prendre soin lunette",
+      "sas": "—",
+      "alerte": "Rayure",
+      "objectif": "Avoir lunette fonctionnel",
+      "tensionDays": 7,
+      "id": "mc-1cf7693a-94d0-4a07-8fde-14f9d6f36710",
+      "createdAt": "2026-09-03",
+      "cloture": "Fin déc. 2026 (31 déc.)",
+      "actions": [
+        {
+          "done": false,
+          "text": "Rendez vous ophtalmo"
+        },
+        {
+          "text": "commander lunette ",
+          "done": false
+        }
+      ]
+    },
+    {
+      "tensionDays": 7,
+      "objectif": "10kg de muscle",
+      "id": "mc-4ebad0fc-f1bf-4483-ab84-7b743bdb03b2",
+      "sas": "—",
+      "type": "Conquête",
+      "name": "Musculation",
+      "actuel": "0",
+      "statut": "Actif",
+      "kill": "2 semaine sans sport",
+      "cosmos": "SANTÉ",
+      "history": [
+        {
+          "type": "created",
+          "t": "2026-09-03"
+        },
+        {
+          "type": "statut",
+          "t": "2026-09-03",
+          "value": "Actif"
+        }
+      ],
+      "createdAt": "2026-09-03",
+      "alerte": "Sauter une journée de sport",
+      "reponse": "5 séance sport minimum de 3à minite",
+      "actions": [
+        {
+          "done": false,
+          "text": "2kg"
+        },
+        {
+          "done": false,
+          "text": "5kg"
+        },
+        {
+          "text": "7kg",
+          "done": false
+        },
+        {
+          "done": false,
+          "text": "1àkg"
+        }
+      ],
+      "cloture": "Fin déc. 2026 (31 déc.)",
+      "entropie": "Fixer le Kill (savoir abandonner ou pivoter avant l'acharnement stérile).\n"
+    },
+    {
+      "type": "Conquête",
+      "name": "Réserve d'argent",
+      "alerte": "0 suivi d'agent en une semaine",
+      "sas": "—",
+      "id": "mc-4aa01ace-e338-403c-ae8b-0b863cc3b2b9",
+      "entropie": "Ne gagner d'argent et ne pas le suivre",
+      "createdAt": "2026-09-03",
+      "kill": "—",
+      "tensionDays": 7,
+      "objectif": "5K€ reserve d'argent",
+      "cloture": "2026-12-31",
+      "actions": [
+        {
+          "done": false,
+          "text": "500€ reserve d'argent ",
+          "isSas": false
+        },
+        {
+          "done": false,
+          "isSas": false,
+          "text": "1000€ reserve d'argent "
+        },
+        {
+          "done": false,
+          "isSas": false,
+          "text": "2000€ reserve d'argent "
+        },
+        {
+          "text": "3000€ reserve d'argent ",
+          "isSas": false,
+          "done": false
+        },
+        {
+          "isSas": false,
+          "done": false,
+          "text": "4000€ reserve d'argent "
+        }
+      ],
+      "actuel": "0",
+      "statut": "Actif",
+      "history": [
+        {
+          "type": "created",
+          "t": "2026-09-03"
+        },
+        {
+          "type": "step",
+          "t": "2026-09-03"
+        },
+        {
+          "type": "unstep",
+          "t": "2026-09-03"
+        },
+        {
+          "type": "step",
+          "t": "2026-09-03"
+        },
+        {
+          "t": "2026-09-03",
+          "type": "unstep"
+        }
+      ],
+      "cosmos": "PERSONNEL",
+      "reponse": "Virement automatique irréversible vers un compte dédié sans carte bancaire associée, programmé le jour même de la paie."
+    },
+    {
+      "objectif": "Réveil sans crise",
+      "alerte": "Se coucher tard",
+      "createdAt": "2026-09-03",
+      "tensionDays": 7,
+      "history": [
+        {
+          "t": "2026-09-03",
+          "type": "created"
+        },
+        {
+          "type": "statut",
+          "t": "2026-09-03",
+          "value": "Actif"
+        }
+      ],
+      "name": "Matin Léon",
+      "type": "Conquête",
+      "reponse": "Réveil fixe à 6h30",
+      "statut": "Actif",
+      "actuel": "Crise",
+      "kill": "Une crise dans la semaine",
+      "cosmos": "FAMILLE",
+      "cloture": "Permanent",
+      "actions": [],
+      "sas": "—",
+      "entropie": "Ne pas être réveillé 1h avant lui",
+      "id": "mc-71afa605-37cc-4cba-a177-e03f9dc5a8b0"
+    },
+    {
+      "name": "Robotics",
+      "createdAt": "2026-09-03",
+      "actions": [
+        {
+          "isSas": true,
+          "done": false,
+          "text": "Réaliser le montage et la programmation basique d'un kit Arduino starter (LED clignotante + capteur de distance). d'ici décembre"
+        },
+        {
+          "text": "Vidéo youtube",
+          "done": false,
+          "isSas": false
+        }
+      ],
+      "cloture": "Fin déc. 2027 (31 déc.)",
+      "type": "Conquête",
+      "statut": "Actif",
+      "actuel": "Aucune connaissance",
+      "history": [
+        {
+          "t": "2026-09-03",
+          "type": "created"
+        },
+        {
+          "value": "Actif",
+          "type": "statut",
+          "t": "2026-09-03"
+        },
+        {
+          "type": "statut",
+          "t": "2026-09-03",
+          "value": "Draft"
+        },
+        {
+          "value": "Actif",
+          "t": "2026-09-03",
+          "type": "statut"
+        }
+      ],
+      "id": "mc-6ad0738e-becb-48f0-825d-02d59e6f025c",
+      "kill": "0 connaissance acquise pendant 6 mois",
+      "cosmos": "DMM",
+      "objectif": "Maitriser Robotics",
+      "reponse": "Règle des 80/20 : 20% de théorie sur le module, 80% de manipulation directe. Si le code ne tourne pas, interdiction de regarder une nouvelle vidéo avant d'avoir isolé l'erreur matérielle ou logicielle.",
+      "tensionDays": 7,
+      "entropie": "Rien apprendre",
+      "alerte": "0 connaissance acquise pendant 1 mois",
+      "sas": "—"
+    },
+    {
+      "entropie": " La paralysie par l'analyse technique : se noyer dans la théorie des composants et des protocoles radio sans jamais manipuler de matériel physique.",
+      "cloture": "Fin déc. 2027 (31 déc.)",
+      "actions": [
+        {
+          "text": "Réaliser le montage et le premier vol stationnaire d'un simulateur de vol sur PC avec une télécommande compatible en 48 heures.",
+          "done": false,
+          "isSas": true
+        },
+        {
+          "done": false,
+          "text": "Vidéo youtube",
+          "isSas": false
+        }
+      ],
+      "sas": "—",
+      "tensionDays": 7,
+      "reponse": "Règle des 80/20 : 20% de théorie, 80% de pratique immédiate. Si le concept est flou, passer à la soudure ou au test logiciel sans attendre une compréhension totale.",
+      "createdAt": "2026-09-03",
+      "alerte": "0 connaissance acquise pendant 1 mois",
+      "history": [
+        {
+          "t": "2026-09-03",
+          "type": "created"
+        },
+        {
+          "type": "statut",
+          "t": "2026-09-03",
+          "value": "Actif"
+        }
+      ],
+      "type": "Conquête",
+      "id": "mc-74165e9a-1b53-4953-b609-7e2788c1b06e",
+      "cosmos": "DMM",
+      "name": "Drone",
+      "kill": "0 connaissance acquise pendant 6 mois",
+      "actuel": "Aucune connaissance",
+      "objectif": "Maitriser fabrication , conduite",
+      "statut": "Actif"
+    }
+  ],
+  "journal": [
+    {
+      "cosmos": "DMM",
+      "author": "mouhamadou fall",
+      "t": "2026-09-03T17:33:27.259Z",
+      "type": "modification",
+      "mini": "Robotics",
+      "detail": "Réponse entropie, Étapes modifiés",
+      "id": "log-70d973b1-bedf-40ab-bce4-1ab7d99fbc7f"
+    },
+    {
+      "author": "mouhamadou fall",
+      "cosmos": "SANTÉ",
+      "detail": "Entropie, Réponse entropie modifiés",
+      "t": "2026-09-03T17:32:04.547Z",
+      "type": "modification",
+      "id": "log-4d74859f-3a7f-4ebc-8430-76c7271da83c",
+      "mini": "Musculation"
+    },
+    {
+      "id": "log-f0ecc7e7-dd36-4b2e-8c44-d7f5bdde3e95",
+      "t": "2026-09-03T11:59:47.030Z",
+      "detail": "Clôture, Seuil de tension modifiés",
+      "mini": "Madré 100€",
+      "cosmos": "FAMILLE",
+      "author": "mouhamadou fall",
+      "type": "modification"
+    },
+    {
+      "t": "2026-09-03T10:23:18.323Z",
+      "type": "statut",
+      "mini": "Drone",
+      "id": "log-6320e139-5a9b-44ef-883d-c1e8f430a1a8",
+      "detail": "Statut → Actif",
+      "author": "mouhamadou fall",
+      "cosmos": "DMM"
+    },
+    {
+      "mini": "Robotics",
+      "type": "statut",
+      "id": "log-deb17941-9958-4070-aa1a-89cc0cf97119",
+      "detail": "Statut → Actif",
+      "cosmos": "DMM",
+      "author": "mouhamadou fall",
+      "t": "2026-09-03T10:23:15.689Z"
+    },
+    {
+      "cosmos": "PERSONNEL",
+      "author": "mouhamadou fall",
+      "detail": "Étape décochée : 100",
+      "t": "2026-09-03T10:04:51.907Z",
+      "type": "etape",
+      "id": "log-c09f0239-bff7-40b1-8bc1-f066e9f1fb86",
+      "mini": "Réserve d'argent"
+    },
+    {
+      "author": "mouhamadou fall",
+      "cosmos": "PERSONNEL",
+      "t": "2026-09-03T10:04:51.277Z",
+      "detail": "Étape cochée : 100",
+      "id": "log-2828a406-0c92-40d1-95c6-97f6fa4900d1",
+      "type": "etape",
+      "mini": "Réserve d'argent"
+    },
+    {
+      "type": "etape",
+      "mini": "Réserve d'argent",
+      "t": "2026-09-03T10:04:50.137Z",
+      "detail": "Étape décochée : 100",
+      "id": "log-d2d75890-724a-4ac0-b886-49824170d281",
+      "cosmos": "PERSONNEL",
+      "author": "mouhamadou fall"
+    },
+    {
+      "mini": "Réserve d'argent",
+      "type": "etape",
+      "id": "log-6f652b70-c53c-4dca-abf5-aabcc4bb91eb",
+      "t": "2026-09-03T10:04:49.447Z",
+      "detail": "Étape cochée : 100",
+      "author": "mouhamadou fall",
+      "cosmos": "PERSONNEL"
+    },
+    {
+      "miniId": "mc-74165e9a-1b53-4953-b609-7e2788c1b06e",
+      "cosmos": "DMM",
+      "id": "log-28ab0309-7360-4643-9a2a-475db1539ecc",
+      "author": "mouhamadou fall",
+      "detail": "Mini-cosmos créé · Draft",
+      "t": "2026-09-03T08:10:01.094Z",
+      "mini": "Drone",
+      "type": "creation"
+    },
+    {
+      "type": "statut",
+      "cosmos": "DMM",
+      "author": "mouhamadou fall",
+      "t": "2026-09-03T08:02:03.457Z",
+      "mini": "Robotics",
+      "detail": "Statut → Draft",
+      "id": "log-d5416114-5fb3-4588-9a5c-9921d3c33314"
+    },
+    {
+      "type": "statut",
+      "mini": "Robotics",
+      "t": "2026-09-03T08:00:32.296Z",
+      "id": "log-e7bf3a87-cad7-4d56-9181-8f48ae3696bf",
+      "detail": "Statut → Actif",
+      "cosmos": "DMM",
+      "author": "mouhamadou fall"
+    },
+    {
+      "miniId": "mc-6ad0738e-becb-48f0-825d-02d59e6f025c",
+      "detail": "Mini-cosmos créé · Draft",
+      "t": "2026-09-03T08:00:16.130Z",
+      "type": "creation",
+      "mini": "Robotics",
+      "author": "mouhamadou fall",
+      "cosmos": "DMM",
+      "id": "log-939dfa0f-9a9d-4590-ab5b-e9b6d73a1e00"
+    },
+    {
+      "id": "log-6e37ce8f-5ec8-498b-a561-329ef2586249",
+      "cosmos": "DMM",
+      "author": "mouhamadou fall",
+      "detail": "Cosmos créé",
+      "t": "2026-09-03T07:58:27.447Z",
+      "type": "cosmos"
+    },
+    {
+      "mini": "Matin Léon",
+      "id": "log-cc15833f-5c21-4400-8eab-5f7051ecb788",
+      "type": "statut",
+      "t": "2026-09-03T07:45:31.142Z",
+      "detail": "Statut → Actif",
+      "cosmos": "FAMILLE",
+      "author": "mouhamadou fall"
+    },
+    {
+      "mini": "Matin Léon",
+      "type": "creation",
+      "id": "log-4451db55-7ba5-428b-9596-49df7504d205",
+      "miniId": "mc-71afa605-37cc-4cba-a177-e03f9dc5a8b0",
+      "detail": "Mini-cosmos créé · Conquête · Draft",
+      "author": "mouhamadou fall",
+      "cosmos": "FAMILLE",
+      "t": "2026-09-03T07:45:20.902Z"
+    },
+    {
+      "author": "mouhamadou fall",
+      "cosmos": "SANTÉ",
+      "id": "log-124da3c7-f323-485c-b572-ead731409f46",
+      "detail": "Type objectif → Conquête",
+      "t": "2026-09-03T07:33:51.828Z",
+      "mini": "Cigarette",
+      "type": "modification"
+    },
+    {
+      "detail": "Type objectif → Conquête",
+      "author": "mouhamadou fall",
+      "cosmos": "SANTÉ",
+      "type": "modification",
+      "mini": "Alcool",
+      "t": "2026-09-03T07:33:12.684Z",
+      "id": "log-0212bda4-4968-478f-a1de-e75f43d9550a"
+    },
+    {
+      "type": "etape",
+      "detail": "Étape décochée : ",
+      "mini": "Lunette de vue",
+      "author": "mouhamadou fall",
+      "cosmos": "SANTÉ",
+      "t": "2026-09-03T07:32:48.817Z",
+      "id": "log-ecdea409-1070-430d-8cf1-303113115b97"
+    },
+    {
+      "author": "mouhamadou fall",
+      "cosmos": "SANTÉ",
+      "detail": "Étape cochée : ",
+      "id": "log-4c61cbc1-9758-436c-8e48-3a15fd44b578",
+      "mini": "Lunette de vue",
+      "type": "etape",
+      "t": "2026-09-03T07:32:48.194Z"
+    },
+    {
+      "t": "2026-09-03T07:30:33.567Z",
+      "author": "mouhamadou fall",
+      "cosmos": "SANTÉ",
+      "type": "modification",
+      "id": "log-97f2bf02-8a38-46b1-a306-8a80ca7c8038",
+      "mini": "Musculation",
+      "detail": "Type objectif → Conquête"
+    },
+    {
+      "t": "2026-09-03T07:30:02.910Z",
+      "id": "log-1d62fc0a-ff82-42be-a620-3eec0a5575d1",
+      "type": "modification",
+      "mini": "Lunette de vue",
+      "author": "mouhamadou fall",
+      "cosmos": "SANTÉ",
+      "detail": "Type objectif → Conquête"
+    },
+    {
+      "id": "log-75a26e78-392d-4d6d-909a-4ef4d0238608",
+      "author": "mouhamadou fall",
+      "cosmos": "SANTÉ",
+      "detail": "Type objectif → Conquête",
+      "t": "2026-09-03T07:29:54.722Z",
+      "mini": "Dentition",
+      "type": "modification"
+    },
+    {
+      "mini": "Alcool",
+      "id": "log-9b16d9d4-45bd-48cc-82eb-ed7fc01d786a",
+      "type": "modification",
+      "detail": "Réponse entropie modifié",
+      "t": "2026-09-03T07:23:53.398Z",
+      "author": "mouhamadou fall",
+      "cosmos": "SANTÉ"
+    },
+    {
+      "id": "log-4aa743f1-bb9b-4f3e-96d3-adcc22ddb663",
+      "t": "2026-09-03T06:50:29.544Z",
+      "author": "mouhamadou fall",
+      "cosmos": "PERSONNEL",
+      "mini": "Réserve d'argent",
+      "detail": "Mini-cosmos créé · Conquête · Actif",
+      "type": "creation",
+      "miniId": "mc-4aa01ace-e338-403c-ae8b-0b863cc3b2b9"
+    },
+    {
+      "mini": "Musculation",
+      "id": "log-8ee37630-8fb2-4852-8097-fdb8a0a11166",
+      "type": "statut",
+      "t": "2026-09-03T06:47:37.831Z",
+      "detail": "Statut → Actif",
+      "cosmos": "SANTÉ",
+      "author": "mouhamadou fall"
+    },
+    {
+      "author": "mouhamadou fall",
+      "cosmos": "SANTÉ",
+      "detail": "Mini-cosmos créé · Maintenance · Draft",
+      "id": "log-ab9348af-3cb4-452f-a5f4-22ea43b7e0bf",
+      "miniId": "mc-4ebad0fc-f1bf-4483-ab84-7b743bdb03b2",
+      "t": "2026-09-03T06:47:22.435Z",
+      "mini": "Musculation",
+      "type": "creation"
+    },
+    {
+      "author": "mouhamadou fall",
+      "cosmos": "SANTÉ",
+      "detail": "Force, Réponse entropie modifiés",
+      "t": "2026-09-03T06:44:30.025Z",
+      "id": "log-091d3f15-4399-46d3-931c-80598c273c59",
+      "type": "modification",
+      "mini": "Lunette de vue"
+    },
+    {
+      "t": "2026-09-03T06:44:06.205Z",
+      "type": "creation",
+      "miniId": "mc-1cf7693a-94d0-4a07-8fde-14f9d6f36710",
+      "id": "log-0950b103-cfb0-4e97-9a8f-aed40fc6127f",
+      "mini": "Lunette de vue",
+      "author": "mouhamadou fall",
+      "cosmos": "SANTÉ",
+      "detail": "Mini-cosmos créé · Maintenance · Actif"
+    },
+    {
+      "t": "2026-09-03T06:38:00.775Z",
+      "cosmos": "SANTÉ",
+      "author": "mouhamadou fall",
+      "detail": "Force modifié",
+      "id": "log-fdf21803-f2cb-42db-a8c5-26cc2670bf84",
+      "type": "modification",
+      "mini": "Cigarette"
+    },
+    {
+      "type": "modification",
+      "mini": "Dentition",
+      "detail": "Type objectif → Maintenance",
+      "author": "mouhamadou fall",
+      "cosmos": "SANTÉ",
+      "id": "log-6d93d804-0e2e-4119-88f2-b0e749d17247",
+      "t": "2026-09-03T06:28:12.892Z"
+    },
+    {
+      "type": "creation",
+      "detail": "Mini-cosmos créé · Conquête · Actif",
+      "mini": "Dentition",
+      "author": "mouhamadou fall",
+      "cosmos": "SANTÉ",
+      "miniId": "mc-5dbea847-1423-4c76-a338-38a857c8e5c9",
+      "t": "2026-09-03T06:22:42.490Z",
+      "id": "log-dbc77186-c8e1-47aa-8385-0f071e90f429"
+    },
+    {
+      "mini": "Alcool",
+      "detail": "Mini-cosmos créé · Maintenance · Actif",
+      "id": "log-8beae57a-b577-45fa-920f-088b01aa9e66",
+      "author": "mouhamadou fall",
+      "cosmos": "SANTÉ",
+      "type": "creation",
+      "miniId": "mc-943a98af-955e-4ac5-96d1-a3815aa006f1",
+      "t": "2026-09-03T06:17:10.523Z"
+    },
+    {
+      "mini": "Madré 100€",
+      "id": "log-28665169-abf6-476b-b2fd-fe5e2c7c317f",
+      "t": "2026-09-03T06:15:05.861Z",
+      "type": "modification",
+      "detail": "Type objectif → Maintenance",
+      "cosmos": "FAMILLE",
+      "author": "mouhamadou fall"
+    },
+    {
+      "type": "creation",
+      "detail": "Mini-cosmos créé · Maintenance · Actif",
+      "mini": "Cigarette",
+      "cosmos": "SANTÉ",
+      "author": "mouhamadou fall",
+      "miniId": "mc-bdaa6533-a8d5-4791-bf64-9cda0d2790df",
+      "t": "2026-09-03T06:12:44.153Z",
+      "id": "log-eacfc4f9-2dc1-4f23-bb16-c4008a29f037"
+    },
+    {
+      "id": "log-48a8f0b2-5b36-4ca7-956b-66da5b62c3c9",
+      "t": "2026-09-03T06:09:59.798Z",
+      "cosmos": "SANTÉ",
+      "author": "mouhamadou fall",
+      "type": "cosmos",
+      "detail": "Cosmos créé"
+    },
+    {
+      "id": "log-295c3043-a4ac-4788-9d41-a3e81cdc2303",
+      "t": "2026-09-03T06:08:10.348Z",
+      "mini": "Madré 100€",
+      "type": "statut",
+      "cosmos": "FAMILLE",
+      "author": "mouhamadou fall",
+      "detail": "Statut → Actif"
+    },
+    {
+      "type": "modification",
+      "mini": "Madré 100€",
+      "detail": "Nom, Objectif, Valeur actuelle, SAS, Force, Entropie, Réponse entropie, Clôture modifiés",
+      "t": "2026-09-03T06:07:57.324Z",
+      "cosmos": "FAMILLE",
+      "author": "mouhamadou fall",
+      "id": "log-65cf95ff-faf5-4005-84a7-065b5c93dd2b"
+    },
+    {
+      "miniId": "mc-5f46c260-3d0e-4464-8382-e7ed4f12bf9e",
+      "cosmos": "FAMILLE",
+      "author": "mouhamadou fall",
+      "id": "log-747b9bc9-55c0-4f3f-ba0a-96a285c34d46",
+      "detail": "Mini-cosmos créé · Conquête · Draft",
+      "t": "2026-09-03T04:29:49.399Z",
+      "mini": "Madré 100e",
+      "type": "creation"
+    }
+  ],
+  "view": "table"
+}
