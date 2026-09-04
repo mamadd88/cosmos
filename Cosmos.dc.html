@@ -269,13 +269,10 @@ input:focus,textarea:focus{outline:none;border-color:#52525b !important}
   </div>
 </sc-if>
 <sc-if value="{{ isCarte }}" hint-placeholder-val="{{ false }}">
-<div style="display:flex;flex-direction:column;gap:10px;padding:14px 16px 16px;width:100%">
-  <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px;padding:6px 0 2px">
-    <div style="display:flex;justify-content:flex-start;gap:6px;flex-wrap:wrap"><sc-if value="{{ hasCarteLens }}" hint-placeholder-val="{{ false }}"><sc-for list="{{ carteLensChips }}" as="c" hint-placeholder-count="2"><button onClick="{{ c.onClick }}" style="padding:5px 11px;border-radius:99px;font-size:12px;cursor:pointer;color:{{ c.color }};background:{{ c.bg }};border:1px solid {{ c.border }};display:flex;gap:6px;align-items:center"><span style="width:{{ c.dotW }};height:6px;border-radius:99px;background:{{ c.dot }}"></span>{{ c.label }}</button></sc-for></sc-if></div>
-    <div style="font-size:15px;font-weight:500;letter-spacing:0.02em;color:#e4e4e7;text-align:center">Le tout est plus grand que la somme des parties.</div>
-    <div></div>
-  </div>
-  <div id="carte-root" style="height:calc(100vh - 160px);min-height:520px;border:1px solid rgba(39,39,42,0.8);border-radius:16px;overflow:hidden;background:#0c0c0e"></div>
+<div style="display:flex;flex-direction:column;gap:10px;padding:14px 16px 16px;flex:1;min-height:0">
+  <sc-if value="{{ hasCarteLens }}" hint-placeholder-val="{{ false }}"><div style="display:flex;justify-content:center;gap:6px;flex-wrap:wrap;padding:2px 0"><sc-for list="{{ carteLensChips }}" as="c" hint-placeholder-count="2"><button onClick="{{ c.onClick }}" style="padding:5px 11px;border-radius:99px;font-size:12px;cursor:pointer;color:{{ c.color }};background:{{ c.bg }};border:1px solid {{ c.border }};display:flex;gap:6px;align-items:center"><span style="width:{{ c.dotW }};height:6px;border-radius:99px;background:{{ c.dot }}"></span>{{ c.label }}</button></sc-for></div></sc-if>
+  <div id="carte-root" style="height:calc(100vh - 200px);min-height:480px;border:1px solid rgba(39,39,42,0.8);border-radius:16px;overflow:hidden;background:#0c0c0e"></div>
+  <div style="font-size:15px;font-weight:500;letter-spacing:0.02em;color:#e4e4e7;text-align:center;padding:6px 0 2px">Le tout, c'est l'ensemble interconnecté, organisé, structuré.</div>
 </div>
 </sc-if>
 <sc-if value="{{ isTable }}" hint-placeholder-val="{{ true }}">
