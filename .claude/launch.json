@@ -6,6 +6,12 @@
       "runtimeExecutable": "npx",
       "runtimeArgs": ["vercel", "dev", "--listen", "8123", "--yes"],
       "port": 8123
+    },
+    {
+      "name": "cosmos-statique",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "8124", "--bind", "127.0.0.1"],
+      "port": 8124
     }
   ]
 }

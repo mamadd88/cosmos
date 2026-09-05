@@ -149,7 +149,7 @@ Le modèle ci-dessus reste la référence conceptuelle. L'implémentation retenu
 
 | Table / vue | Rôle |
 |---|---|
-| `cosmos` | domaines de vie : `(user_id, name)` clé, `position` |
+| `cosmos` | domaines de vie : `(user_id, name)` clé, `position`, `repere` (la règle du jeu de la pièce, une phrase ; lue par les agents, écrite par l'utilisateur) |
 | `mini_cosmos` | une ligne par mini-cosmos : `id` (celui de l'app), `data` jsonb, `position`, colonnes générées (dont `sas_until`, fin du test d'entrée, et `poids` : vital / important / normal), `updated_at`, `updated_by` (« Toi » ou nom d'agent) |
 | `etapes` (vue) | `mini_cosmos_id`, `position`, `texte`, `done` |
 | `journal` | trace de toute écriture : `t` (horodatage de l'auteur), `created_at` (serveur), `author`, `type` (+ `proposition`, `note`), `mini_id` sans FK, `changes` jsonb |
@@ -163,7 +163,7 @@ Toutes les tables portent `user_id` et une politique RLS `user_id = auth.uid()` 
 
 **Fonctions agents** (`security definer`, exécutables uniquement par `service_role`, donc par `/api/agent`) : `agent_verifier(hash)`, `agent_lire`, `agent_proposer`, `agent_modifier` (exige `ecriture_directe`, applique le patch, ajoute les étapes sans doublon, trace `changes`), `agent_noter`. Champs autorisés dans un patch : `objectif, actuel, entropie, reponse, sas, sasUntil (AAAA-MM-JJ), alerte, kill, etapes, tags` (noms de lentilles existantes, la liste remplace la précédente).
 
-**Liens** : `data->'dependDe'` = liste d'identifiants de mini-cosmos amont (« ce terrain dépend de »). Une flèche de la carte va de l'amont vers l'aval. Supprimer un mini-cosmos retire les références qui pointaient vers lui.
+**Liens** : `data->'dependDe'` = liste d'identifiants de mini-cosmos amont (« ce terrain dépend de »). Plus affiché depuis le retrait de la carte (les lentilles font les liens) ; le champ reste toléré dans les données. Supprimer un mini-cosmos retire les références qui pointaient vers lui.
 
 **SAS daté** (migration `20260904030000_sas_until.sql`) : `data->>'sasUntil'` = fin du test. Règle de déduction quand elle manque (app et SQL, fonction `sas_until_deduit`) : date explicite « (30/09) » dans le texte du SAS, sinon « 14 jours » / « 2 semaines » / « 1 mois » depuis le début, sinon 14 jours. L'échéance effective d'un mini-cosmos (`echeanceEffective` dans `cosmos-core.js`) est cette date tant que le SAS n'est pas franchi, puis la clôture.
 

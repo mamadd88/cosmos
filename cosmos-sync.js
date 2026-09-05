@@ -34,17 +34,19 @@ export async function createSync({ author = 'Toi' } = {}) {
     const minis = data.miniCosmos || [];
     cache.rows = new Map(minis.map((r, i) => [r.id, { json: rowKey(r.data), position: i, savedAt: r.updated_at }]));
     cache.cosmosJson = JSON.stringify(data.cosmos || []);
+    cache.reperesJson = JSON.stringify(data.reperes || {});
     cache.lentillesJson = JSON.stringify(data.lentilles || []);
     cache.journalIds = new Set((data.journal || []).map(j => j.id));
     cache.lastPoll = data.now;
     const rows = minis.map(r => r.data);
-    return { cosmos: data.cosmos || [], lentilles: data.lentilles || [], rows, journal: (data.journal || []).map(jEntry), journalArchived: data.journalArchived || 0,
+    return { cosmos: data.cosmos || [], reperes: data.reperes || {}, lentilles: data.lentilles || [], rows, journal: (data.journal || []).map(jEntry), journalArchived: data.journalArchived || 0,
       propositions: (data.propositions || []).map(pEntry), empty: !(data.cosmos || []).length && !rows.length };
   }
   // Après migration côté app : considère l'état courant comme sauvegardé (les migrations sont rejouées à chaque chargement)
   function prime(state) {
     state.rows.forEach((x, i) => { const p = cache.rows.get(x.id); cache.rows.set(x.id, { json: rowKey(x), position: i, savedAt: p ? p.savedAt : null }); });
     cache.cosmosJson = JSON.stringify(state.cosmos);
+    cache.reperesJson = JSON.stringify(state.reperes || {});
     cache.lentillesJson = JSON.stringify(state.lentilles || []);
     (state.journal || []).forEach(e => cache.journalIds.add(e.id));
   }
@@ -78,11 +80,13 @@ export async function createSync({ author = 'Toi' } = {}) {
     const journalPayload = (s.journal || []).filter(e => !cache.journalIds.has(e.id));
     const lentillesJson = JSON.stringify(s.lentilles || []);
     const lentillesPayload = lentillesJson !== cache.lentillesJson ? (s.lentilles || []) : null;
+    const reperesJson = JSON.stringify(s.reperes || {});
+    const reperesPayload = reperesJson !== cache.reperesJson ? (s.reperes || {}) : null;   // carte complète { cosmos : repère }
     const replace = !!s.replace;
-    if (!replace && !rowsPayload.length && !deleted.length && !cosmosPayload && !journalPayload.length && !lentillesPayload) return;
+    if (!replace && !rowsPayload.length && !deleted.length && !cosmosPayload && !journalPayload.length && !lentillesPayload && !reperesPayload) return;
     const args = replace
-      ? { p_cosmos: s.cosmos, p_rows: s.rows.map((x, i) => ({ id: x.id, data: x, position: i })), p_deleted: [], p_journal: s.journal || [], p_replace: true, p_author: author, p_lentilles: s.lentilles || [] }
-      : { p_cosmos: cosmosPayload, p_rows: rowsPayload, p_deleted: deleted, p_journal: journalPayload, p_replace: false, p_author: author, p_lentilles: lentillesPayload };
+      ? { p_cosmos: s.cosmos, p_rows: s.rows.map((x, i) => ({ id: x.id, data: x, position: i })), p_deleted: [], p_journal: s.journal || [], p_replace: true, p_author: author, p_lentilles: s.lentilles || [], p_reperes: s.reperes || {} }
+      : { p_cosmos: cosmosPayload, p_rows: rowsPayload, p_deleted: deleted, p_journal: journalPayload, p_replace: false, p_author: author, p_lentilles: lentillesPayload, p_reperes: reperesPayload };
     const { data, error } = await db.rpc('sync_etat', args);
     if (error) throw error;
     const at = data && data.savedAt;
@@ -91,6 +95,7 @@ export async function createSync({ author = 'Toi' } = {}) {
     deleted.forEach(id => cache.rows.delete(id));
     cache.cosmosJson = cosmosJson;
     cache.lentillesJson = lentillesJson;
+    cache.reperesJson = reperesJson;
     (replace ? (s.journal || []) : journalPayload).forEach(e => cache.journalIds.add(e.id));
     if (at && (!cache.lastPoll || at > cache.lastPoll)) cache.lastPoll = at;
   }

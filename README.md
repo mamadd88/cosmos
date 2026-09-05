@@ -6,9 +6,8 @@ Application de gouvernance personnelle. Un **Cosmos** est un grand domaine de vi
 
 ## Fichiers
 
-- `Cosmos.dc.html` — l'interface (Tableau, Modèles, Statistiques, Journal). S'ouvre dans un navigateur.
+- `Cosmos.dc.html` — l'interface (Cosmos, Échéances, Modèles, Journal). S'ouvre dans un navigateur.
 - `cosmos-core.js` — le cœur métier, sans UI : statuts calculés, projection, système de dates, migration, données d'exemple, modèles.
-- `cosmos-carte.js` — la page Cosmos (React Flow chargé à la demande, sans build) : pièces, terrains, lentilles.
 - `cosmos-sync.js` — synchronisation avec la base (chargement, sauvegarde différentielle, relève de ce que les agents ont changé). Sans base configurée, l'app reste en localStorage.
 - `support.js` — runtime nécessaire à `Cosmos.dc.html`.
 - `api/` — fonctions serveur (Vercel) : `config.js` (configuration publique), `assist.js` (assistant IA), `agent.js` (porte des agents IA).
@@ -17,22 +16,14 @@ Application de gouvernance personnelle. Un **Cosmos** est un grand domaine de vi
 
 ## Pages (routes)
 
-`#/carte` (onglet **Cosmos**, vue d'arrivée) · `#/carte/<id>` · `#/tableau` · `#/tableau/<id>` (ouvre un mini-cosmos) · `#/modeles` · `#/statistiques` · `#/journal`
+`#/cosmos` (onglet **Cosmos**, vue d'arrivée) · `#/cosmos/<id>` (ouvre un mini-cosmos) · `#/echeances` · `#/modeles` · `#/journal` — les anciens `#/carte`, `#/tableau`, `#/statistiques` et `#/lentilles` mènent à `#/cosmos`
 
 ## Principes
 
 - Le statut est calculé (SAS → Actif) ; seuls Pause et Clôturé sont manuels.
-- Une échéance est une date (précise, fin de mois / trimestre / année) ou un **mandat d'un an** pour un objectif continu : au terme, tu le renouvelles si la discipline tient (bouton dans le volet, tracé dans le Journal), sinon tu clôtures ou tu supprimes. Plus rien n'est « permanent » : tout terrain a une date et un contour sur la carte. Les anciens exports avec « Permanent » sont convertis à l'import.
-- Un cosmos, c'est là où une chose habite ; une **lentille** (tag), c'est ce qu'elle touche, à travers les cosmos (santé, une personne, l'argent…). Les lentilles se créent dans le formulaire, dans le volet ou dans la fenêtre Lentilles (menu Données ou puce « + lentille ») ; elles s'affichent en pastilles après le nom, filtrent le tableau et ont leur répartition dans les statistiques. Une dizaine au plus, sinon elles redeviennent des dossiers.
-- La **Carte** (onglet Cosmos, première page à l'arrivée) dessine les pièces et leurs terrains : le point dit le poids, le contour dit la date (vert tenue, bleu test en cours, ambre tension, rouge retard), et les lentilles, bien visibles sur chaque carte, disent ce qui relie les terrains à travers les pièces. Une lentille allumée en haut n'éclaire que ce flux. Clic sur une carte : le volet ; clic sur une pièce : le tableau filtré. Les mini-cosmos en pause ou clôturés n'y figurent pas ; la carte s'ouvre là où tu l'as laissée.
-- Chaque mini-cosmos a un **poids** : vital, important ou normal (défaut), choisi à la création et modifiable dans le volet ou d'un clic sur le point devant le nom. Structurel, pas un état : il fait remonter les vitaux puis les importants en tête de leur cosmos, place les vitaux en premier dans les échéances, allume un point sur Tension / Jour J / Retard quand un vital y est, et hiérarchise les propositions de l'assistant et des agents.
-- Un SAS porte sa propre date de fin (7 / 14 / 30 j ou date libre, 14 j par défaut). Tant qu'il n'est pas franchi, la ligne vit au rythme du test : colonne Clôture avec badge SAS, jauge et filtres sur cette date. Un test n'a que deux états : bleu tant qu'il dure, rouge s'il est dépassé, jamais d'ambre. SAS coché : tout bascule vers l'échéance finale. Test dépassé : rouge, et c'est toi qui tranches (admettre, déplacer la date, clôturer).
-- La projection alerte sur le temps ; la valeur actuelle face aux seuils se juge à l'œil — jamais de corrélation automatique.
-- L'assistant IA (volet gauche d'un mini-cosmos) relit ce que tu as écrit et propose ; rien n'est appliqué sans clic, tout est tracé dans le Journal.
-- Les agents IA passent par **une seule porte** (`/api/agent`), chacun avec sa propre clé ; par défaut ils **proposent**, et seuls les agents que tu autorises un par un **écrivent directement**. Jamais de clé `service_role` donnée à un agent.
-
-## Données
-
+- Une échéance est une date (précise, fin de mois / trimestre / année) ou un **mandat d'un an** pour un objectif continu : au terme, tu le renouvelles si la discipline tient (bouton dans le volet, tracé dans le Journal), sinon tu clôtures ou tu supprimes. Plus rien n'est « permanent » : tout terrain a une date et une zone de projection. Les anciens exports avec « Permanent » sont convertis à l'import.
+- Un cosmos, c'est là où une chose habite ; une **lentille** (tag), c'est ce qu'elle touche, à travers les cosmos (santé, une personne, l'argent…). Les lentilles se créent dans le formulaire, dans le volet ou dans la fenêtre Lentilles (menu Données ou puce « + lentille ») ; elles s'affichent en pastilles après le nom, filtrent la page Cosmos. Une dizaine au plus, sinon elles redeviennent des dossiers.
+- Une page, un axe de lecture. **Cosmos** (page d'arrivée) : le travail par pièce — le tableau en sections, dans l'ordre des cosmos, qui est l'ordre domino : chaque pièce porte son numéro (1, 2, 3…), calculé depuis sa position et repris partout où elle est nommée, et la règle de lecture est écrite sous la page : « Si un cosmos tombe, il entraîne le suivant. » En tête, un bandeau de KPI est la ligne Total de la bande : mini-cosmos ouverts, SAS, pause, datés, mandats, tension, retard — mêmes mots, mêmes couleurs, calculés sur tout le système sans tenir compte des filtres. Repliées, les sections forment le tableau de bord : une ligne par pièce, mêmes colonnes pour toutes (thermomètre, SAS, pause, datés, mandats, tension, retard, zéros compris), les points de poids et l'alerte. Chaque pièce porte aussi un **repère**, sa règle du jeu en une phrase, éditable d'un clic dans la bande et lu par les agents comme description de la catégorie. **Échéances** : le temps — tout ce qui a une date, de la plus proche à la plus lointaine, SAS et mandats compris, avec les filtres de zone, délai, trimestre, mois et année. **Journal** : l'historique, avec l'activité de la période en tête. Sur Cosmos, chaque section est un accordéon : un clic sur l'en-tête la replie ou la déplie, l'état est mémorisé dans le navigateur, « Tout ouvrir » et « Tout fermer » agissent d'un coup, et l'ordre des sections se change par glisser-déposer ou avec les boutons ↑ ↓.
 - **En ligne** : base Supabase (projet `cosmos`), un seul utilisateur, connexion par email + mot de passe. Chaque changement est sauvegardé en différentiel dans une transaction ; ce que les agents écrivent est relevé toutes les 30 s et au retour sur l'onglet.
 - **En local** (fichier ouvert sans serveur) : sauvegarde automatique dans le navigateur. À la première connexion sur une base vide, les données locales de ce navigateur sont reprises.
 - Menu Données (icône base, en haut à droite) : exporter / importer un JSON, restaurer l'exemple, gérer les agents IA, se déconnecter. Le journal garde 12 mois « vivants » à l'écran ; l'export inclut l'archive complète.
