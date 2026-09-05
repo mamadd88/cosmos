@@ -7,6 +7,7 @@
 <script src="./support.js"></script>
 </head>
 <body>
+<div id="cosmos-chargement" style="position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:#09090b;color:#a1a1aa;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:13px;letter-spacing:0.12em;text-transform:uppercase">Chargement…</div>
 <x-dc>
 <helmet>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -215,7 +216,7 @@ input:focus,textarea:focus{outline:none;border-color:#52525b !important}
 </sc-if>
 
 <sc-if value="{{ booting }}" hint-placeholder-val="{{ false }}">
-  <div style="padding:60px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:12px;color:#52525b">chargement du cœur métier… <span style="color:#fb7185">{{ bootError }}</span></div>
+  <div style="padding:60px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:0.12em;text-transform:uppercase;color:#a1a1aa">Chargement… <span style="color:#fb7185;text-transform:none;letter-spacing:0">{{ bootError }}</span></div>
 </sc-if>
 <sc-if value="{{ needsLogin }}" hint-placeholder-val="{{ false }}">
   <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:60px 16px">
@@ -974,7 +975,7 @@ class Component extends DCLogic {
     else this.logJ({type:'proposition',mini:sel.name,miniId:sel.id,cosmos:sel.cosmos,detail:'Proposition de '+p.agent+' refusée'});
     this.setState(s=>({propositions:(s.propositions||[]).filter(x=>x.id!==p.id)})); this.flash(ok?'Proposition appliquée':'Proposition refusée');
     try{ await this.sync.decideProposition(p.id,ok?'acceptee':'refusee'); }catch(e){ this.flash('Décision non enregistrée — '+(e&&e.message?e.message:e)); } }
-  componentDidUpdate(){ const s=this.state; if(!s.ready) return; this.syncHash(); const k=[s.cosmos,s.reperes,s.rows,s.view,s.journal,s.journalArchive,s.lentilles]; if(!this.__snap||k.some((v,i)=>v!==this.__snap[i])){ this.__snap=k; this.persist(); } }
+  componentDidUpdate(){ const s=this.state; const voile=document.getElementById('cosmos-chargement'); if(voile&&(s.ready||s.needsLogin||s.bootError)) voile.remove(); if(!s.ready) return; this.syncHash(); const k=[s.cosmos,s.reperes,s.rows,s.view,s.journal,s.journalArchive,s.lentilles]; if(!this.__snap||k.some((v,i)=>v!==this.__snap[i])){ this.__snap=k; this.persist(); } }
   componentWillUnmount(){ clearInterval(this.t); window.removeEventListener('hashchange',this.onHash); window.removeEventListener('keydown',this.onKey); if(this._onVis) document.removeEventListener('visibilitychange',this._onVis); }
   async exportJson(){ try{ localStorage.setItem(this.STORE_KEY+':lastExport',new Date().toISOString()); }catch(e){} this.setState({lastExport:new Date().toISOString()}); let doc=this.serialize(); if(this.sync){ try{ doc={...doc,journalArchive:await this.sync.journalArchive()}; }catch(e){ this.flash('Archive du journal non récupérée — '+(e&&e.message?e.message:e)); } } const blob=new Blob([JSON.stringify(doc,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='cosmos-'+daysAgo(0)+'.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000); this.flash('Export JSON téléchargé'); }
   importJson(file){ if(!file) return; const r=new FileReader(); r.onload=()=>{ try{ const d=JSON.parse(r.result); if(!(d&&d.version===1&&Array.isArray(d.cosmos)&&Array.isArray(d.miniCosmos))) throw 0; this._replace=true; this._replaceArchive=d.journalArchive||[]; this.setState({cosmos:d.cosmos,reperes:d.reperes||{},rows:migrate(d.miniCosmos),journal:d.journal||this.journalFromRows(d.miniCosmos),journalArchive:this.sync?[]:(d.journalArchive||[]),journalArchived:(d.journalArchive||[]).length,propositions:[],lentilles:d.lentilles||[],tagFilter:'Tous'}); this.logJ({type:'donnees',detail:'Import JSON — '+d.miniCosmos.length+' mini-cosmos, '+d.cosmos.length+' cosmos'}); this.flash(d.miniCosmos.length+' mini-cosmos importés'); }catch(e){ this.flash('Fichier invalide'); } }; r.readAsText(file); }
@@ -1131,7 +1132,9 @@ class Component extends DCLogic {
     return {jActivity:activity.map(m=>({...m,title:m.label+' · '+periodLabel+' · '+m.deltaLabel})),jStepsPerWeek:(count('step',from,end)/(spanDays/7)).toFixed(1),jPeriodLabel:periodLabel};
   }
   renderVals(){
-    const s=this.state; if(!s.ready) return {isTable:!s.needsLogin, booting:!s.needsLogin, needsLogin:!!s.needsLogin, bootError:s.bootError||'', clock:s.clock, lastExportLabel:'', lastExportColor:'transparent',
+    const s=this.state; const TAB_OFF={color:'#a1a1aa',bg:'transparent',border:'transparent'};
+    if(!s.ready) return {isTable:false, booting:!s.needsLogin, needsLogin:!!s.needsLogin, bootError:s.bootError||'', clock:s.clock, lastExportLabel:'', lastExportColor:'transparent',
+      tabTable:TAB_OFF, tabEch:TAB_OFF, tabTpl:TAB_OFF, tabJournal:TAB_OFF,
       loginEmail:s.loginEmail||'', loginPassword:s.loginPassword||'', loginError:s.loginError||'', hasLoginError:!!s.loginError, loginLabel:s.loginBusy?'Connexion…':'Se connecter', loginBtnOpacity:s.loginBusy?0.5:1,
       setLoginEmail:e=>this.setState({loginEmail:e.target.value}), setLoginPassword:e=>this.setState({loginPassword:e.target.value}), loginKey:e=>{ if(e.key==='Enter') this.doLogin(); }, doLogin:()=>this.doLogin()};
     const rowsN=s.rows.map(x=>({...x,statut:statutOf(x)}));
