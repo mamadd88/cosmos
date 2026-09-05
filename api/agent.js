@@ -7,7 +7,7 @@ const CHAMPS = { objectif: '…', actuel: '…', entropie: '…', reponse: '…'
 const DOC = {
   description: 'Porte des agents IA de Cosmos. Authentification : Authorization: Bearer <clé d’agent>. Corps JSON : {"action": "...", ...}. Les identifiants mini_id sont ceux renvoyés par « lire » (champ id).',
   actions: {
-    lire:     { corps: {}, resultat: 'agent, cosmos, reperes (la règle du jeu de chaque cosmos, en une phrase — lecture seule), lentilles, miniCosmos (objets complets), propositionsEnAttente, journalRecent' },
+    lire:     { corps: {}, resultat: 'agent, cosmos, reperes (la règle du jeu de chaque cosmos, en une phrase — lecture seule), etageDe (l’étage de chaque cosmos : ethos, logos ou pathos, dans cet ordre de chute), etages (le repère de chaque étage), titresDe (les titres qui séparent les terrains de chaque cosmos ; le champ « titre » d’un mini-cosmos dit sous lequel il est rangé), lentilles, miniCosmos (objets complets), propositionsEnAttente, journalRecent' },
     proposer: { corps: { mini_id: 'mc-…', patch: CHAMPS, motif: 'pourquoi (facultatif)' }, resultat: 'propositionId — rien n’est modifié tant que l’utilisateur n’accepte pas dans l’app' },
     modifier: { corps: { mini_id: 'mc-…', patch: CHAMPS, detail: 'texte pour le journal (facultatif)' }, resultat: 'objet mis à jour — réservé aux agents avec écriture directe ; toujours tracé' },
     noter:    { corps: { detail: 'texte', mini_id: 'mc-… (facultatif)' }, resultat: 'entrée de journal de type note' },

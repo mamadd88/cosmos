@@ -158,6 +158,9 @@ input:focus,textarea:focus{outline:none;border-color:#52525b !important}
     <sc-for list="{{ yearOptions }}" as="o" hint-placeholder-count="1"><option value="{{ o.value }}">{{ o.label }}</option></sc-for>
   </select>
 </div>
+<div style="display:flex;align-items:center;justify-content:center;padding:14px 16px 0;width:100%">
+  <input value="{{ eQuery }}" onChange="{{ setEQuery }}" placeholder="Rechercher un mini-cosmos, un cosmos, une valeur…" style="width:420px;background:#09090b;border:1px solid #27272a;border-radius:10px;padding:9px 12px;font-size:12.5px;color:#f4f4f5">
+</div>
 <div style="padding:24px 16px 32px;width:min(100%,1180px);margin:0 auto">
   <div style="background:rgba(24,24,27,0.5);backdrop-filter:blur(12px);border:1px solid rgba(39,39,42,0.8);border-radius:16px;overflow:hidden">
     <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:rgba(24,24,27,0.75);border-bottom:1px solid rgba(39,39,42,0.8)"><span style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#fafafa">Échéances · de la plus proche à la plus lointaine</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#71717a">{{ echShown }} sur {{ echCount }} datées</span></div>
@@ -241,7 +244,17 @@ input:focus,textarea:focus{outline:none;border-color:#52525b !important}
     </sc-for>
   </div>
 </div>
-<div style="display:flex;align-items:center;justify-content:center;gap:6px;padding:20px 16px 0;flex-wrap:wrap;width:100%">
+
+<div style="display:flex;flex-direction:column;gap:14px;padding:20px 16px 32px;width:100%">
+<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+  <button onClick="{{ toggleFilters }}" title="{{ filtersTitle }}" style="padding:8px 12px;border-radius:10px;font-size:12.5px;cursor:pointer;color:{{ filtersColor }};background:#09090b;border:1px solid {{ filtersBorder }};display:flex;gap:7px;align-items:center;white-space:nowrap" style-hover="color:#f4f4f5;border-color:#3f3f46"><span style="display:inline-block;font-size:9px;transform:rotate({{ filtersChevron }});transition:transform 150ms ease">▶</span>{{ filtersLabel }}</button>
+  <input value="{{ tQuery }}" onChange="{{ setTQuery }}" placeholder="Rechercher un mini-cosmos, un objectif, une entropie, une étape…" style="width:420px;background:#09090b;border:1px solid #27272a;border-radius:10px;padding:9px 12px;font-size:12.5px;color:#f4f4f5">
+  <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#52525b;margin-left:auto">{{ sectionsHint }}</span>
+  <button onClick="{{ openAll }}" title="Déplier toutes les sections" style="padding:5px 11px;border-radius:99px;font-size:12px;cursor:pointer;color:#a1a1aa;background:transparent;border:1px solid #27272a" style-hover="color:#f4f4f5;border-color:#3f3f46">Tout ouvrir</button>
+  <button onClick="{{ closeAll }}" title="Replier toutes les sections" style="padding:5px 11px;border-radius:99px;font-size:12px;cursor:pointer;color:#a1a1aa;background:transparent;border:1px solid #27272a" style-hover="color:#f4f4f5;border-color:#3f3f46">Tout fermer</button>
+</div>
+<sc-if value="{{ showFilters }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;align-items:center;justify-content:center;gap:6px;padding:0 16px;flex-wrap:wrap;width:100%">
   <sc-for list="{{ filterChips }}" as="c" hint-placeholder-count="6">
     <button onClick="{{ c.onClick }}" style="padding:5px 11px;border-radius:99px;font-size:12px;cursor:pointer;color:{{ c.color }};background:{{ c.bg }};border:1px solid {{ c.border }};display:flex;gap:6px;align-items:center">{{ c.label }} <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#fafafa">{{ c.count }}</span></button>
   </sc-for>
@@ -276,17 +289,20 @@ input:focus,textarea:focus{outline:none;border-color:#52525b !important}
   </sc-for>
   <button onClick="{{ openTags }}" title="Lentilles : ce qu'un mini-cosmos touche, à travers les cosmos" style="padding:5px 11px;border-radius:99px;font-size:12px;cursor:pointer;color:#71717a;background:transparent;border:1px dashed #3f3f46" style-hover="color:#f4f4f5;border-color:#71717a">+ lentille</button>
 </div>
-
-<div style="display:flex;flex-direction:column;gap:14px;padding:24px 16px 32px;width:100%">
-<div style="display:flex;justify-content:flex-end;align-items:center;gap:8px">
-  <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#52525b;margin-right:auto">{{ sectionsHint }}</span>
-  <button onClick="{{ openAll }}" title="Déplier toutes les sections" style="padding:5px 11px;border-radius:99px;font-size:12px;cursor:pointer;color:#a1a1aa;background:transparent;border:1px solid #27272a" style-hover="color:#f4f4f5;border-color:#3f3f46">Tout ouvrir</button>
-  <button onClick="{{ closeAll }}" title="Replier toutes les sections" style="padding:5px 11px;border-radius:99px;font-size:12px;cursor:pointer;color:#a1a1aa;background:transparent;border:1px solid #27272a" style-hover="color:#f4f4f5;border-color:#3f3f46">Tout fermer</button>
-</div>
+</sc-if>
 <sc-if value="{{ noResult }}" hint-placeholder-val="{{ false }}">
   <div style="padding:40px;text-align:center;font-size:12.5px;color:#52525b;border:1px dashed rgba(39,39,42,0.8);border-radius:16px">aucun mini-cosmos ne correspond à ces filtres</div>
 </sc-if>
-<sc-for list="{{ groups }}" as="g" hint-placeholder-count="4">
+<sc-for list="{{ etages }}" as="t" hint-placeholder-count="3">
+<sc-if value="{{ t.show }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;flex-direction:column;gap:14px">
+  <div onDragOver="{{ t.dragOver }}" onDrop="{{ t.drop }}" title="{{ t.sens }}" style="display:flex;flex-direction:column;align-items:center;gap:7px;padding:18px 16px 12px;border-bottom:1px solid rgba(63,63,70,0.9);box-shadow:{{ t.headShadow }}">
+    <div style="font-size:14px;font-weight:800;letter-spacing:0.24em;text-transform:uppercase;color:#fafafa;text-align:center">{{ t.name }}</div>
+    <sc-if value="{{ t.notEditing }}" hint-placeholder-val="{{ true }}"><span onClick="{{ t.startRepere }}" title="{{ t.repereTitle }}" style="font-size:13px;font-weight:700;color:{{ t.repereColor }};text-align:center;cursor:text;max-width:900px;line-height:1.5">{{ t.repereLabel }}</span></sc-if>
+    <sc-if value="{{ t.isEditing }}" hint-placeholder-val="{{ false }}"><input value="{{ t.repereDraft }}" onClick="{{ t.stopIt }}" onChange="{{ t.setRepereDraft }}" onBlur="{{ t.saveRepere }}" onKeyDown="{{ t.repereKey }}" autoFocus="{{ true }}" maxLength="320" placeholder="une phrase, une citation : ce que cet étage doit tenir" style="background:#09090b;border:1px solid #3f3f46;border-radius:8px;padding:6px 12px;font-size:13px;font-weight:700;color:#fafafa;text-align:center;width:min(100%,800px)"></sc-if>
+  </div>
+  <sc-if value="{{ t.empty }}" hint-placeholder-val="{{ false }}"><div onDragOver="{{ t.dragOver }}" onDrop="{{ t.drop }}" style="border:1px dashed {{ t.zoneBorder }};border-radius:16px;padding:16px;text-align:center;font-size:12px;color:#52525b">aucune pièce dans cet étage — glisse une pièce ici, ou crée-la avec « + cosmos »</div></sc-if>
+<sc-for list="{{ t.groups }}" as="g" hint-placeholder-count="4">
   <div onDragOver="{{ g.gDragOver }}" onDrop="{{ g.gDrop }}" style="background:rgba(24,24,27,0.5);backdrop-filter:blur(12px);border:1px solid {{ g.cardBorder }};border-radius:16px;overflow:hidden;opacity:{{ g.cardOpacity }};box-shadow:{{ g.dropShadow }};transition:border-color 150ms ease,opacity 150ms ease">
     <div style="overflow-x:auto">
     <div draggable="true" onDragStart="{{ g.gDragStart }}" onDragEnd="{{ g.gDragEnd }}" onClick="{{ g.toggle }}" title="Cliquer pour replier ou déplier" style="min-width:1180px;display:grid;grid-template-columns:14px 12px 18px 3px minmax(120px,160px) 96px 64px 46px 56px 56px 72px 72px 64px minmax(150px,1fr) auto auto;column-gap:10px;align-items:center;padding:10px 16px;background:rgba(24,24,27,0.75);border-bottom:1px solid {{ g.headBorder }};cursor:pointer;user-select:none">
@@ -319,6 +335,7 @@ input:focus,textarea:focus{outline:none;border-color:#52525b !important}
         <button onClick="{{ g.startEdit }}" title="Renommer le cosmos" style="width:28px;height:28px;border-radius:8px;border:1px solid #27272a;background:#09090b;color:#a1a1aa;cursor:pointer;display:inline-flex;align-items:center;justify-content:center" style-hover="color:#f4f4f5;border-color:#3f3f46"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg></button>
         <button onClick="{{ g.askDelete }}" title="Supprimer le cosmos" style="width:28px;height:28px;border-radius:8px;border:1px solid #27272a;background:#09090b;color:#a1a1aa;cursor:pointer;display:inline-flex;align-items:center;justify-content:center" style-hover="color:#fb7185;border-color:rgba(244,63,94,0.5)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M8 6V4h8v2"></path><path d="M19 6l-1 14H6L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path></svg></button>
       </sc-if>
+      <button onClick="{{ g.addTitre }}" title="Ajouter un titre : une séparation dans cette pièce" style="height:28px;padding:0 9px;border-radius:8px;border:1px solid #27272a;background:#09090b;color:#a1a1aa;cursor:pointer;font-size:11.5px;white-space:nowrap" style-hover="color:#f4f4f5;border-color:#3f3f46">+ titre</button>
       <button onClick="{{ g.addMini }}" style="width:28px;height:28px;border-radius:8px;border:1px solid #27272a;background:#09090b;color:#a1a1aa;cursor:pointer;font-size:14px;line-height:1" style-hover="color:#f4f4f5;border-color:#3f3f46" title="Ajouter un mini-cosmos">+</button>
       </span>
     </div>
@@ -336,6 +353,17 @@ input:focus,textarea:focus{outline:none;border-color:#52525b !important}
           <div style="padding:16px 14px;font-size:12px;color:#52525b">{{ g.emptyLabel }}</div>
         </sc-if>
         <sc-for list="{{ g.rows }}" as="r" hint-placeholder-count="3">
+          <sc-if value="{{ r.isSep }}" hint-placeholder-val="{{ false }}">
+          <div onDragOver="{{ r.sepDragOver }}" onDrop="{{ r.sepDrop }}" style="display:flex;align-items:center;gap:10px;padding:14px 14px 6px;border-bottom:1px solid rgba(39,39,42,0.35);background:{{ r.sepBg }}">
+            <span style="width:24px;flex:none"></span>
+            <sc-if value="{{ r.notEditing }}" hint-placeholder-val="{{ true }}"><span onDoubleClick="{{ r.startEdit }}" title="Double-clic pour renommer" style="font-size:11px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:#e4e4e7;white-space:nowrap">{{ r.name }}</span></sc-if>
+            <sc-if value="{{ r.isEditing }}" hint-placeholder-val="{{ false }}"><input value="{{ r.editName }}" onChange="{{ r.setEditName }}" onBlur="{{ r.saveEdit }}" onKeyDown="{{ r.editKey }}" autoFocus="{{ true }}" maxLength="60" style="background:#09090b;border:1px solid #3f3f46;border-radius:8px;padding:3px 9px;font-size:11px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:#fafafa;width:240px"></sc-if>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#52525b;white-space:nowrap">{{ r.countLabel }}</span>
+            <span style="display:flex;gap:4px;align-items:center"><button onClick="{{ r.up }}" title="Monter le titre" style="width:22px;height:22px;border-radius:6px;border:1px solid #27272a;background:#09090b;color:{{ r.upColor }};cursor:pointer;font-size:11px;line-height:1;display:inline-flex;align-items:center;justify-content:center" style-hover="border-color:#3f3f46;color:#f4f4f5">↑</button><button onClick="{{ r.down }}" title="Descendre le titre" style="width:22px;height:22px;border-radius:6px;border:1px solid #27272a;background:#09090b;color:{{ r.downColor }};cursor:pointer;font-size:11px;line-height:1;display:inline-flex;align-items:center;justify-content:center" style-hover="border-color:#3f3f46;color:#f4f4f5">↓</button><button onClick="{{ r.addUnder }}" title="Ajouter un terrain sous ce titre" style="width:22px;height:22px;border-radius:6px;border:1px solid #27272a;background:#09090b;color:#a1a1aa;cursor:pointer;font-size:11px;line-height:1;display:inline-flex;align-items:center;justify-content:center" style-hover="border-color:#3f3f46;color:#f4f4f5">+</button><button onClick="{{ r.startEdit }}" title="Renommer le titre" style="width:22px;height:22px;border-radius:6px;border:1px solid #27272a;background:#09090b;color:#a1a1aa;cursor:pointer;font-size:11px;line-height:1;display:inline-flex;align-items:center;justify-content:center" style-hover="border-color:#3f3f46;color:#f4f4f5">✎</button><button onClick="{{ r.remove }}" title="Supprimer le titre — les terrains restent, sans titre" style="width:22px;height:22px;border-radius:6px;border:1px solid #27272a;background:#09090b;color:#a1a1aa;cursor:pointer;font-size:11px;line-height:1;display:inline-flex;align-items:center;justify-content:center" style-hover="border-color:#3f3f46;color:#f4f4f5">✕</button></span>
+            <span style="flex:1;height:1px;background:rgba(63,63,70,0.55)"></span>
+          </div>
+          </sc-if>
+          <sc-if value="{{ r.isRow }}" hint-placeholder-val="{{ true }}">
           <div onClick="{{ r.open }}" draggable="true" onDragStart="{{ r.dragStart }}" onDragOver="{{ r.dragOver }}" onDrop="{{ r.drop }}" onDragEnd="{{ r.dragEnd }}" style="display:grid;grid-template-columns:24px minmax(150px,1.2fr) minmax(170px,1.5fr) minmax(130px,1.1fr) minmax(130px,1.3fr) minmax(130px,1.3fr) minmax(150px,1.4fr) minmax(150px,1.4fr) minmax(220px,1.5fr) minmax(80px,0.5fr) minmax(120px,0.7fr) minmax(150px,0.8fr);align-items:center;padding:11px 14px;border-bottom:1px solid rgba(39,39,42,0.35);border-top:{{ r.blockTop }};opacity:{{ r.dragOpacity }};cursor:pointer;font-size:12.5px;font-weight:500;color:#a1a1aa;background:{{ r.rowBg }}" style-hover="background:rgba(39,39,42,0.35)">
             <span onClick="{{ r.cyclePoids }}" title="{{ r.poidsTitle }}" style="width:10px;height:10px;border-radius:99px;flex:none;background:{{ r.poidsBg }};border:1.5px solid {{ r.poidsBorder }};box-shadow:{{ r.poidsGlow }};cursor:pointer;margin:0 3px"></span>
             <span style="color:{{ r.nameColor }};font-weight:600;font-size:13px;padding-right:10px">{{ r.name }}<sc-if value="{{ r.hasProps }}" hint-placeholder-val="{{ false }}"><span title="propositions d'agents en attente" style="margin-left:8px;padding:1px 7px;border-radius:99px;font-size:10.5px;font-weight:600;color:#c084fc;background:rgba(192,132,252,0.12);border:1px solid rgba(192,132,252,0.35);white-space:nowrap;vertical-align:middle">✦ {{ r.propCount }}</span></sc-if><sc-for list="{{ r.tagPills }}" as="t" hint-placeholder-count="1"><span onClick="{{ t.onClick }}" title="{{ t.title }}" style="margin-left:6px;padding:1px 7px;border-radius:99px;font-size:10.5px;font-weight:600;color:{{ t.color }};background:{{ t.bg }};border:1px solid {{ t.border }};white-space:nowrap;vertical-align:middle;cursor:pointer">{{ t.label }}</span></sc-for></span>
@@ -361,11 +389,18 @@ input:focus,textarea:focus{outline:none;border-color:#52525b !important}
               </sc-if>
             </span>
           </div>
+          </sc-if>
         </sc-for>
+        <sc-if value="{{ g.addingTitre }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;align-items:center;gap:10px;padding:12px 14px"><span style="width:24px;flex:none"></span><input value="{{ g.newTitreName }}" onChange="{{ g.setNewTitreName }}" onKeyDown="{{ g.newTitreKey }}" onBlur="{{ g.newTitreBlur }}" autoFocus="{{ true }}" maxLength="60" placeholder="Nom du titre, puis Entrée" style="background:#09090b;border:1px solid #3f3f46;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:#fafafa;width:280px"><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#52525b">une séparation, pas un terrain · Échap pour annuler</span></div>
+        </sc-if>
       </div>
     </div>
     </sc-if>
   </div>
+</sc-for>
+</div>
+</sc-if>
 </sc-for>
 <div style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 0 2px;text-align:center;font-size:13.5px;font-weight:500;letter-spacing:0.02em;color:#fafafa"><div>Si un cosmos tombe, il entraîne le suivant.</div><div>Le tout est plus que la somme de ses parties.</div></div>
 </div>
@@ -447,7 +482,7 @@ input:focus,textarea:focus{outline:none;border-color:#52525b !important}
   <div style="position:fixed;top:0;right:0;bottom:0;width:640px;z-index:31;background:#0c0c0e;border-left:1px solid rgba(39,39,42,0.9);display:flex;flex-direction:column;animation:slidein 200ms ease">
     <div style="display:flex;align-items:flex-start;gap:12px;padding:20px 20px 16px;border-bottom:1px solid rgba(39,39,42,0.8)">
       <div style="flex:1;display:flex;flex-direction:column;gap:6px">
-        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#71717a;text-transform:uppercase;letter-spacing:0.08em">{{ detail.cosmosLabel }} · {{ detail.id }}</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#71717a;text-transform:uppercase;letter-spacing:0.08em">{{ detail.cosmosLabel }}{{ detail.titreCrumb }} · {{ detail.id }}</div>
         <sc-if value="{{ detail.notEditing }}" hint-placeholder-val="{{ true }}">
           <div style="font-size:18px;font-weight:700;letter-spacing:-0.01em;color:#fafafa"><span onClick="{{ detail.cyclePoids }}" title="{{ detail.poidsTitle }}" style="display:inline-block;width:11px;height:11px;border-radius:99px;vertical-align:middle;margin-right:10px;background:{{ detail.poidsBg }};border:1.5px solid {{ detail.poidsBorder }};box-shadow:{{ detail.poidsGlow }};cursor:pointer"></span>{{ detail.name }}<sc-for list="{{ detail.tagPillsAll }}" as="t" hint-placeholder-count="1"><span style="margin-left:8px;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;color:{{ t.color }};background:{{ t.bg }};border:1px solid {{ t.border }};vertical-align:middle;white-space:nowrap">{{ t.label }}</span></sc-for></div>
         </sc-if>
@@ -507,6 +542,7 @@ input:focus,textarea:focus{outline:none;border-color:#52525b !important}
 
             <div style="display:flex;flex-direction:column;gap:10px"><div style="font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:0.09em;color:#52525b;padding-bottom:6px;border-bottom:1px solid rgba(39,39,42,0.6)">Identité</div>
               <div style="display:flex;flex-direction:column;gap:5px"><label style="font-size:11.5px;font-weight:600;color:#a1a1aa">Cosmos parent</label><div style="display:flex;gap:6px;flex-wrap:wrap"><sc-for list="{{ detail.parentChips }}" as="p" hint-placeholder-count="4"><button onClick="{{ p.onClick }}" style="padding:5px 11px;border-radius:99px;font-size:12px;cursor:pointer;color:{{ p.color }};background:{{ p.bg }};border:1px solid {{ p.border }};display:flex;gap:7px;align-items:center"><span style="width:6px;height:6px;border-radius:99px;background:{{ p.dot }}"></span>{{ p.label }}</button></sc-for></div></div>
+              <sc-if value="{{ detail.hasTitres }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:5px"><label style="font-size:11.5px;font-weight:600;color:#a1a1aa">Titre <span style="font-weight:400;color:#52525b">la séparation sous laquelle ce terrain est rangé</span></label><div style="display:flex;gap:6px;flex-wrap:wrap"><sc-for list="{{ detail.titreChips }}" as="c" hint-placeholder-count="3"><button onClick="{{ c.onClick }}" style="padding:5px 11px;border-radius:99px;font-size:12px;cursor:pointer;color:{{ c.color }};background:{{ c.bg }};border:1px solid {{ c.border }}">{{ c.label }}</button></sc-for></div></div></sc-if>
               <div style="display:flex;flex-direction:column;gap:5px"><label style="font-size:11.5px;font-weight:600;color:#a1a1aa">Lentilles <span style="font-weight:400;color:#52525b">ce que ce terrain touche</span></label><div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><sc-for list="{{ detail.tagChips }}" as="c" hint-placeholder-count="2"><button onClick="{{ c.onClick }}" style="padding:4px 10px;border-radius:99px;font-size:11.5px;cursor:pointer;color:{{ c.color }};background:{{ c.bg }};border:1px solid {{ c.border }};display:flex;gap:6px;align-items:center"><span style="width:6px;height:6px;border-radius:99px;background:{{ c.dot }}"></span>{{ c.label }}</button></sc-for><input value="{{ detail.detailNewTag }}" onChange="{{ detail.setDetailNewTag }}" onKeyDown="{{ detail.detailNewTagKey }}" placeholder="+ nouvelle, puis Entrée" style="width:180px;background:#09090b;border:1px dashed #3f3f46;border-radius:99px;padding:4px 10px;font-size:11.5px;color:#f4f4f5"></div></div>
               <div style="display:flex;flex-direction:column;gap:5px"><label style="font-size:11.5px;font-weight:600;color:#a1a1aa">Poids <span style="font-weight:400;color:#52525b">combien ce terrain pèse</span></label><div style="display:flex;gap:6px;flex-wrap:wrap"><sc-for list="{{ detail.poidsChips }}" as="c" hint-placeholder-count="3"><button onClick="{{ c.onClick }}" style="padding:4px 10px;border-radius:99px;font-size:11.5px;cursor:pointer;color:{{ c.color }};background:{{ c.bg }};border:1px solid {{ c.border }};display:flex;gap:6px;align-items:center"><span style="width:8px;height:8px;border-radius:99px;background:{{ c.dotBg }};border:1.5px solid {{ c.dotBorder }}"></span>{{ c.label }}</button></sc-for></div></div>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px"><div style="display:flex;flex-direction:column;gap:5px"><label style="font-size:11.5px;font-weight:600;color:#a1a1aa">Objectif</label><textarea value="{{ detail.raw.objectif }}" onChange="{{ detail.edit.objectif }}" rows="2" style="background:#09090b;border:1px solid #27272a;border-radius:10px;padding:9px 12px;font-size:12.5px;color:#f4f4f5;resize:vertical;line-height:1.6"></textarea></div><div style="display:flex;flex-direction:column;gap:5px"><label style="font-size:11.5px;font-weight:600;color:#a1a1aa">Valeur actuelle</label><textarea value="{{ detail.raw.actuel }}" onChange="{{ detail.edit.actuel }}" rows="2" placeholder="Où en es-tu aujourd'hui ?" style="background:#09090b;border:1px solid #27272a;border-radius:10px;padding:9px 12px;font-size:12.5px;color:#f4f4f5;resize:vertical;line-height:1.6"></textarea></div></div>
@@ -709,6 +745,11 @@ input:focus,textarea:focus{outline:none;border-color:#52525b !important}
           <input value="{{ cosmosName }}" onChange="{{ setCosmosName }}" onKeyDown="{{ cosmosKey }}" autoFocus="{{ true }}" placeholder="ENTREPRISE, FAMILLE, RELATIONS…" style="background:#09090b;border:1px solid #27272a;border-radius:10px;padding:10px 12px;font-size:13px;color:#f4f4f5;text-transform:uppercase;letter-spacing:0.04em">
           <sc-if value="{{ cosmosDup }}" hint-placeholder-val="{{ false }}"><div style="font-size:11.5px;color:#fb7185">ce cosmos existe déjà</div></sc-if>
         </div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <label style="font-size:11.5px;font-weight:600;color:#a1a1aa;display:flex;gap:8px"><span style="font-family:'JetBrains Mono',monospace;color:#52525b">02</span>Étage</label>
+          <div style="display:flex;gap:6px;flex-wrap:wrap"><sc-for list="{{ etageChips }}" as="c" hint-placeholder-count="3"><button onClick="{{ c.onClick }}" style="padding:5px 11px;border-radius:99px;font-size:12px;cursor:pointer;color:{{ c.color }};background:{{ c.bg }};border:1px solid {{ c.border }}">{{ c.label }}</button></sc-for></div>
+          <div style="font-size:11px;color:#71717a">{{ etageHint }}</div>
+        </div>
         <div style="background:#0c0c0e;border:1px solid rgba(39,39,42,0.8);border-radius:12px;padding:12px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#71717a;line-height:1.6">Un cosmos est une pièce. Un mini-cosmos est un meuble.<br>Tu pourras y ajouter des mini-cosmos depuis le tableau ou les modèles.</div>
       </div>
       <div style="display:flex;justify-content:flex-end;gap:8px;padding:14px 22px;border-top:1px solid rgba(39,39,42,0.8)">
@@ -740,6 +781,7 @@ input:focus,textarea:focus{outline:none;border-color:#52525b !important}
                 <button onClick="{{ p.onClick }}" style="padding:5px 11px;border-radius:99px;font-size:12px;cursor:pointer;color:{{ p.color }};background:{{ p.bg }};border:1px solid {{ p.border }};display:flex;gap:7px;align-items:center"><span style="width:6px;height:6px;border-radius:99px;background:{{ p.dot }}"></span>{{ p.label }}</button>
               </sc-for>
             </div>
+              <sc-if value="{{ formHasTitres }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:5px"><label style="font-size:11.5px;font-weight:600;color:#a1a1aa">Titre <span style="font-weight:400;color:#52525b">la séparation sous laquelle ranger ce terrain</span></label><div style="display:flex;gap:6px;flex-wrap:wrap"><sc-for list="{{ formTitreChips }}" as="c" hint-placeholder-count="3"><button onClick="{{ c.onClick }}" style="padding:5px 11px;border-radius:99px;font-size:12px;cursor:pointer;color:{{ c.color }};background:{{ c.bg }};border:1px solid {{ c.border }}">{{ c.label }}</button></sc-for></div></div></sc-if>
           </div>
           <div style="display:flex;flex-direction:column;gap:6px">
             <label style="font-size:11.5px;font-weight:600;color:#a1a1aa;display:flex;gap:8px"><span style="font-family:'JetBrains Mono',monospace;color:#52525b">02</span>Nom du mini-cosmos <span style="color:#fb7185">*</span></label>
@@ -878,8 +920,17 @@ input:focus,textarea:focus{outline:none;border-color:#52525b !important}
 let COLORS, STATUTS, STATUT_STYLE, hasSas, sasUntilOf, sasPendingOf, isMandat, mandatDepuis, POIDS, POIDS_LABEL, POIDS_ORDER, POIDS_DOT, poidsOf, normTag, tagsOf, tagStyle, inferSasUntil, echeanceEffective, plusDays, plusMonths, startOf, notStarted, statutOf, migrate, r, SEED, ACTUEL, CLOTURE, TYPES, MOIS_S, lastDay, fmtJM, fmtFR, resolveCloture, clotureLabel, clotureShort, clotureInfo, clotureOptions, clotureSel, PROJ, alertDaysOf, projectionOf, TODAY, isoD, daysAgo, progOf, nextOf, EMPTY_FORM, freshForm, TEMPLATES, chipOff, chipOn;
 const bindCore = m => { ({ COLORS, STATUTS, STATUT_STYLE, hasSas, sasUntilOf, sasPendingOf, isMandat, mandatDepuis, POIDS, POIDS_LABEL, POIDS_ORDER, POIDS_DOT, poidsOf, normTag, tagsOf, tagStyle, inferSasUntil, echeanceEffective, plusDays, plusMonths, startOf, notStarted, statutOf, migrate, r, SEED, ACTUEL, CLOTURE, TYPES, MOIS_S, lastDay, fmtJM, fmtFR, resolveCloture, clotureLabel, clotureShort, clotureInfo, clotureOptions, clotureSel, PROJ, alertDaysOf, projectionOf, TODAY, isoD, daysAgo, progOf, nextOf, EMPTY_FORM, freshForm, TEMPLATES, chipOff, chipOn } = m); };
 
+// Trois étages fixes, dans l'ordre de chute. Un cosmos appartient à un étage (Logos par défaut) ; l'ordre dans un étage est l'ordre du tableau des cosmos restreint à l'étage.
+const ETAGES=[['ethos','Ethos','E','ce qui porte l’opérateur : s’il tombe, tout tombe'],['logos','Logos','L','ce qu’il fait tourner : la règle et le moteur'],['pathos','Pathos','P','ce pour quoi tout existe : la source des poids']];
+const ETAGE_ORDER={ethos:0,logos:1,pathos:2}, ETAGE_CODE={ethos:'E',logos:'L',pathos:'P'}, ETAGE_LABEL={ethos:'Ethos',logos:'Logos',pathos:'Pathos'};
+const SEED_ETAGES={PERSONNEL:'ethos',FAMILLE:'pathos',RELATIONS:'pathos'};
+const etageDeNom=(E,n)=>{ const e=E&&E[n]; return ETAGE_ORDER[e]!=null?e:'logos'; };
+// insère (ou replace) une pièce en fin de son étage, le tableau des cosmos restant rangé par étage
+const rangerParEtage=(list,E)=>[...(list||[])].map((n,i)=>[n,i]).sort((a,b)=>(ETAGE_ORDER[etageDeNom(E,a[0])]-ETAGE_ORDER[etageDeNom(E,b[0])])||(a[1]-b[1])).map(p=>p[0]);
+const placerEnFinEtage=(list,name,etage,E)=>{ const c=list.filter(n=>n!==name); let at=c.length; for(let k=0;k<c.length;k++){ if(ETAGE_ORDER[etageDeNom(E,c[k])]>ETAGE_ORDER[etage]){ at=k; break; } } c.splice(at,0,name); return c; };
+
 class Component extends DCLogic {
-  state = { ready:false, cosmos:[], reperes:{}, editRepere:null, editRepereText:'', rows:[], journal:[], filter:'Tous', selected:null,
+  state = { ready:false, cosmos:[], reperes:{}, editRepere:null, editRepereText:'', etageDe:{}, etages:{}, editEtage:null, editEtageText:'', newEtage:'logos', titresDe:{}, editTitre:null, editTitreName:'', addTitreFor:null, newTitreName:'', rows:[], journal:[], filter:'Tous', selected:null,
     showCosmosModal:false, showMiniModal:false, cosmosName:'', form:null, tab:0, toast:null, clock:'',
     needsLogin:false, loginEmail:'', loginPassword:'', loginError:'', loginBusy:false, propositions:[], agents:[], showAgents:false, newAgentName:'', newAgentDirect:false, newAgentKey:'', newAgentKeyName:'',
     lentilles:[], tagFilter:'Tous', showTags:false, newTagName:'', newTagError:'', renameTag:null, renameTagName:'', confirmDeleteTag:null, formNewTag:'', detailNewTag:'',
@@ -893,13 +944,13 @@ class Component extends DCLogic {
     if(location.hash===want){ this._fromHash=false; return; } if(this._fromHash){ this._fromHash=false; return; } history.pushState(null,'',want); }
   // persistance locale — un seul document JSON versionné, même format que l'export
   STORE_KEY='cosmos-app-v1';
-  serialize(){ const s=this.state; return {version:1,exportedAt:new Date().toISOString(),cosmos:s.cosmos,miniCosmos:s.rows,journal:s.journal||[],journalArchive:s.journalArchive||[],lentilles:s.lentilles||[],reperes:s.reperes||{},view:s.view||'table'}; }
+  serialize(){ const s=this.state; return {version:1,exportedAt:new Date().toISOString(),cosmos:s.cosmos,miniCosmos:s.rows,journal:s.journal||[],journalArchive:s.journalArchive||[],lentilles:s.lentilles||[],reperes:s.reperes||{},etageDe:s.etageDe||{},etages:s.etages||{},titresDe:s.titresDe||{},view:s.view||'table'}; }
   // le journal vivant garde 12 mois ; le reste part dans journalArchive (conservé dans l'export JSON)
   archiveOld(){ if(this.sync) return; const s=this.state; const J=s.journal||[]; const cut=new Date(); cut.setFullYear(cut.getFullYear()-1); const c=cut.toISOString();
     const old=J.filter(e=>e.t<c); if(!old.length) return; this.setState({journal:J.filter(e=>e.t>=c),journalArchive:[...old,...(s.journalArchive||[])]}); }
   load(){ try{ const raw=localStorage.getItem(this.STORE_KEY); if(!raw) return null; const d=JSON.parse(raw); if(d&&d.version===1&&Array.isArray(d.cosmos)&&Array.isArray(d.miniCosmos)) return d; }catch(e){} return null; }
   // en mode base : sauvegarde différentielle regroupée (cosmos-sync.js) ; sinon localStorage
-  persist(){ if(this.sync){ const s=this.state; this.sync.save({cosmos:s.cosmos,reperes:s.reperes||{},lentilles:s.lentilles||[],rows:s.rows,journal:this._replace?[...(s.journal||[]),...(this._replaceArchive||[])]:(s.journal||[]),replace:!!this._replace}); this._replace=false; this._replaceArchive=null; return; }
+  persist(){ if(this.sync){ const s=this.state; this.sync.save({cosmos:s.cosmos,reperes:s.reperes||{},etageDe:s.etageDe||{},etages:s.etages||{},titresDe:s.titresDe||{},lentilles:s.lentilles||[],rows:s.rows,journal:this._replace?[...(s.journal||[]),...(this._replaceArchive||[])]:(s.journal||[]),replace:!!this._replace}); this._replace=false; this._replaceArchive=null; return; }
     try{ localStorage.setItem(this.STORE_KEY,JSON.stringify(this.serialize())); }catch(e){} }
   componentDidMount(){ this.tick(); this.t = setInterval(()=>this.tick(),30000);
     this.onHash=()=>{ this._fromHash=true; const r=this.routeState(); this.setState(r.selected!==this.state.selected?{...r,editing:false,editSnap:null,confirmDeleteMini:false}:r); }; window.addEventListener('hashchange',this.onHash);
@@ -914,13 +965,15 @@ class Component extends DCLogic {
       this.bootLocal(); })
       .catch(e=>{ console.error('cosmos-core.js',e); this.setState({bootError:String(e)}); }); }
   bootLocal(){ const d=this.load();
-    const base=d?{cosmos:d.cosmos,reperes:d.reperes||{},lentilles:d.lentilles||[],rows:migrate(d.miniCosmos),journal:d.journal||this.journalFromRows(d.miniCosmos),view:d.view||'table'}:{cosmos:['ENTREPRISE','FAMILLE','RELATIONS','PERSONNEL'],reperes:{},lentilles:[],rows:SEED,journal:this.journalFromRows(SEED),view:'table'};
+    const base=d?{cosmos:d.cosmos,reperes:d.reperes||{},etageDe:d.etageDe||{},etages:d.etages||{},titresDe:d.titresDe||{},lentilles:d.lentilles||[],rows:migrate(d.miniCosmos),journal:d.journal||this.journalFromRows(d.miniCosmos),view:d.view||'table'}:{cosmos:['ENTREPRISE','FAMILLE','RELATIONS','PERSONNEL'],reperes:{},etageDe:{...SEED_ETAGES},etages:{},titresDe:{},lentilles:[],rows:SEED,journal:this.journalFromRows(SEED),view:'table'};
+    base.cosmos=rangerParEtage(base.cosmos,base.etageDe);
     this.setState({...base,journalArchive:(d&&d.journalArchive)||[],form:freshForm(),ready:true,...this.routeState()},()=>this.archiveOld()); }
   // démarrage en mode base : charge tout ; base vide ⇒ reprend les données de ce navigateur (Phase 1) ou l'exemple
   async bootDb(){ try{ const d=await this.sync.load(); let base;
-      if(d.empty){ const l=this.load(); if(l){ base={cosmos:l.cosmos,reperes:l.reperes||{},lentilles:l.lentilles||[],rows:migrate(l.miniCosmos),journal:l.journal||this.journalFromRows(l.miniCosmos)}; this._replaceArchive=l.journalArchive||[]; this.flash('Données de ce navigateur reprises dans la base'); }
-        else base={cosmos:['ENTREPRISE','FAMILLE','RELATIONS','PERSONNEL'],reperes:{},lentilles:[],rows:SEED,journal:this.journalFromRows(SEED)}; this._replace=true; }
-      else { base={cosmos:d.cosmos,reperes:d.reperes||{},lentilles:d.lentilles||[],rows:migrate(d.rows),journal:d.journal}; this.sync.prime(base); }
+      if(d.empty){ const l=this.load(); if(l){ base={cosmos:l.cosmos,reperes:l.reperes||{},etageDe:l.etageDe||{},etages:l.etages||{},titresDe:l.titresDe||{},lentilles:l.lentilles||[],rows:migrate(l.miniCosmos),journal:l.journal||this.journalFromRows(l.miniCosmos)}; this._replaceArchive=l.journalArchive||[]; this.flash('Données de ce navigateur reprises dans la base'); }
+        else base={cosmos:['ENTREPRISE','FAMILLE','RELATIONS','PERSONNEL'],reperes:{},etageDe:{...SEED_ETAGES},etages:{},titresDe:{},lentilles:[],rows:SEED,journal:this.journalFromRows(SEED)}; this._replace=true; }
+      else { base={cosmos:d.cosmos,reperes:d.reperes||{},etageDe:d.etageDe||{},etages:d.etages||{},titresDe:d.titresDe||{},lentilles:d.lentilles||[],rows:migrate(d.rows),journal:d.journal}; this.sync.prime(base); }
+      base.cosmos=rangerParEtage(base.cosmos,base.etageDe);
       this.installAssist();
       this.setState({...base,view:'table',journalArchive:[],journalArchived:d.journalArchived||0,propositions:d.propositions||[],needsLogin:false,loginError:'',bootError:'',form:freshForm(),ready:true,...this.routeState()});
       this.loadAgents();
@@ -975,11 +1028,11 @@ class Component extends DCLogic {
     else this.logJ({type:'proposition',mini:sel.name,miniId:sel.id,cosmos:sel.cosmos,detail:'Proposition de '+p.agent+' refusée'});
     this.setState(s=>({propositions:(s.propositions||[]).filter(x=>x.id!==p.id)})); this.flash(ok?'Proposition appliquée':'Proposition refusée');
     try{ await this.sync.decideProposition(p.id,ok?'acceptee':'refusee'); }catch(e){ this.flash('Décision non enregistrée — '+(e&&e.message?e.message:e)); } }
-  componentDidUpdate(){ const s=this.state; const voile=document.getElementById('cosmos-chargement'); if(voile&&(s.ready||s.needsLogin||s.bootError)) voile.remove(); if(!s.ready) return; this.syncHash(); const k=[s.cosmos,s.reperes,s.rows,s.view,s.journal,s.journalArchive,s.lentilles]; if(!this.__snap||k.some((v,i)=>v!==this.__snap[i])){ this.__snap=k; this.persist(); } }
+  componentDidUpdate(){ const s=this.state; const voile=document.getElementById('cosmos-chargement'); if(voile&&(s.ready||s.needsLogin||s.bootError)) voile.remove(); if(!s.ready) return; this.syncHash(); const k=[s.cosmos,s.reperes,s.etageDe,s.etages,s.titresDe,s.rows,s.view,s.journal,s.journalArchive,s.lentilles]; if(!this.__snap||k.some((v,i)=>v!==this.__snap[i])){ this.__snap=k; this.persist(); } }
   componentWillUnmount(){ clearInterval(this.t); window.removeEventListener('hashchange',this.onHash); window.removeEventListener('keydown',this.onKey); if(this._onVis) document.removeEventListener('visibilitychange',this._onVis); }
   async exportJson(){ try{ localStorage.setItem(this.STORE_KEY+':lastExport',new Date().toISOString()); }catch(e){} this.setState({lastExport:new Date().toISOString()}); let doc=this.serialize(); if(this.sync){ try{ doc={...doc,journalArchive:await this.sync.journalArchive()}; }catch(e){ this.flash('Archive du journal non récupérée — '+(e&&e.message?e.message:e)); } } const blob=new Blob([JSON.stringify(doc,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='cosmos-'+daysAgo(0)+'.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000); this.flash('Export JSON téléchargé'); }
-  importJson(file){ if(!file) return; const r=new FileReader(); r.onload=()=>{ try{ const d=JSON.parse(r.result); if(!(d&&d.version===1&&Array.isArray(d.cosmos)&&Array.isArray(d.miniCosmos))) throw 0; this._replace=true; this._replaceArchive=d.journalArchive||[]; this.setState({cosmos:d.cosmos,reperes:d.reperes||{},rows:migrate(d.miniCosmos),journal:d.journal||this.journalFromRows(d.miniCosmos),journalArchive:this.sync?[]:(d.journalArchive||[]),journalArchived:(d.journalArchive||[]).length,propositions:[],lentilles:d.lentilles||[],tagFilter:'Tous'}); this.logJ({type:'donnees',detail:'Import JSON — '+d.miniCosmos.length+' mini-cosmos, '+d.cosmos.length+' cosmos'}); this.flash(d.miniCosmos.length+' mini-cosmos importés'); }catch(e){ this.flash('Fichier invalide'); } }; r.readAsText(file); }
-  resetData(){ this._replace=true; this._replaceArchive=[]; this.setState({cosmos:['ENTREPRISE','FAMILLE','RELATIONS','PERSONNEL'],reperes:{},rows:SEED,journal:this.journalFromRows(SEED),journalArchive:[],journalArchived:0,propositions:[],lentilles:[],tagFilter:'Tous',confirmReset:false}); this.logJ({type:'donnees',detail:'Données d\u2019exemple restaurées'}); this.flash('Données d\u2019exemple restaurées'); }
+  importJson(file){ if(!file) return; const r=new FileReader(); r.onload=()=>{ try{ const d=JSON.parse(r.result); if(!(d&&d.version===1&&Array.isArray(d.cosmos)&&Array.isArray(d.miniCosmos))) throw 0; this._replace=true; this._replaceArchive=d.journalArchive||[]; this.setState({cosmos:rangerParEtage(d.cosmos,d.etageDe||{}),reperes:d.reperes||{},etageDe:d.etageDe||{},etages:d.etages||{},titresDe:d.titresDe||{},rows:migrate(d.miniCosmos),journal:d.journal||this.journalFromRows(d.miniCosmos),journalArchive:this.sync?[]:(d.journalArchive||[]),journalArchived:(d.journalArchive||[]).length,propositions:[],lentilles:d.lentilles||[],tagFilter:'Tous'}); this.logJ({type:'donnees',detail:'Import JSON — '+d.miniCosmos.length+' mini-cosmos, '+d.cosmos.length+' cosmos'}); this.flash(d.miniCosmos.length+' mini-cosmos importés'); }catch(e){ this.flash('Fichier invalide'); } }; r.readAsText(file); }
+  resetData(){ this._replace=true; this._replaceArchive=[]; this.setState({cosmos:['ENTREPRISE','FAMILLE','RELATIONS','PERSONNEL'],reperes:{},etageDe:{...SEED_ETAGES},etages:{},titresDe:{},rows:SEED,journal:this.journalFromRows(SEED),journalArchive:[],journalArchived:0,propositions:[],lentilles:[],tagFilter:'Tous',confirmReset:false}); this.logJ({type:'donnees',detail:'Données d\u2019exemple restaurées'}); this.flash('Données d\u2019exemple restaurées'); }
   // Assistant IA : propositions (entropies, SAS, étapes, seuils) à partir du nom et de l'objectif — rien n'est appliqué sans clic
   async runAI(key,ctx){
     if(!(window.claude&&window.claude.complete)){ this.setState({[key]:{error:'Assistant indisponible dans cet environnement'}}); return; }
@@ -1018,24 +1071,67 @@ class Component extends DCLogic {
       this.logJ({type:map[ev.type]||ev.type,mini:row.name,miniId:row.id,cosmos:row.cosmos,detail:ev.detail||(ev.type==='statut'?'Statut → '+ev.value:'')}); } }
   journalFromRows(rows){ return rows.flatMap(x=>(x.history||[]).filter(e=>e.type!=='etat').map((e,i)=>({id:x.id+'-'+i,t:e.t+'T09:00:00',author:'Exemple',miniId:x.id,type:{created:'creation',statut:'statut',step:'etape'}[e.type]||e.type,mini:x.name,cosmos:x.cosmos,detail:e.type==='statut'?'Statut → '+e.value:e.type==='step'?'Étape cochée':'Mini-cosmos créé'}))).sort((a,b)=>a.t<b.t?1:-1); }
   // drag & drop — lignes (dans ou entre cosmos) et cartes cosmos
+  // titres : des séparations dans une pièce — liste ordonnée par cosmos (titresDe), titre du terrain dans data.titre
+  titresOf(cosmos){ const t=(this.state.titresDe||{})[cosmos]; return Array.isArray(t)?t:[]; }
+  setTitres(cosmos,list){ this.setState(st=>({titresDe:{...(st.titresDe||{}),[cosmos]:list}})); }
+  creerTitre(cosmos,raw){ const name=(raw||'').trim().slice(0,60); if(!name) return false; const L=this.titresOf(cosmos);
+    if(L.some(t=>t.toLowerCase()===name.toLowerCase())){ this.flash('Ce titre existe déjà dans '+cosmos); return false; }
+    this.setTitres(cosmos,[...L,name]); this.logJ({type:'cosmos',cosmos,detail:'Titre « '+name+' » créé'}); this.flash('Titre '+name+' créé — glisse des terrains dessous'); return true; }
+  renommerTitre(cosmos,oldName,raw){ const name=(raw||'').trim().slice(0,60); if(!name||name===oldName) return; const L=this.titresOf(cosmos);
+    if(L.some(t=>t!==oldName&&t.toLowerCase()===name.toLowerCase())){ this.flash('Ce titre existe déjà'); return; }
+    this.setState(st=>({titresDe:{...(st.titresDe||{}),[cosmos]:L.map(t=>t===oldName?name:t)},rows:st.rows.map(x=>x.cosmos===cosmos&&x.titre===oldName?{...x,titre:name}:x)})); this.logJ({type:'cosmos',cosmos,detail:'Titre renommé : '+oldName+' → '+name}); }
+  supprimerTitre(cosmos,name){ const n=this.state.rows.filter(x=>x.cosmos===cosmos&&x.titre===name).length; const L=this.titresOf(cosmos);
+    this.setState(st=>({titresDe:{...(st.titresDe||{}),[cosmos]:L.filter(t=>t!==name)},rows:st.rows.map(x=>{ if(x.cosmos===cosmos&&x.titre===name){ const y={...x}; delete y.titre; return y; } return x; })}));
+    this.logJ({type:'cosmos',cosmos,detail:'Titre « '+name+' » supprimé'+(n?' ('+n+' terrain'+(n>1?'s':'')+' sans titre)':'')}); this.flash('Titre '+name+' supprimé, les terrains restent'); }
+  deplacerTitre(cosmos,name,delta){ const L=[...this.titresOf(cosmos)]; const i=L.indexOf(name), j=i+delta; if(i<0||j<0||j>=L.length) return; L.splice(i,1); L.splice(j,0,name); this.setTitres(cosmos,L); }
+  // ranger un terrain sous un titre de sa pièce, ou l'en sortir (titre vide)
+  rangerSous(id,titre){ const row=this.state.rows.find(x=>x.id===id); if(!row) return; const cur=row.titre||''; if(cur===(titre||'')) return;
+    this.setState(st=>({rows:st.rows.map(x=>{ if(x.id!==id) return x; const y={...x}; if(titre) y.titre=titre; else delete y.titre; return y; })}));
+    this.logJ({type:'deplacement',mini:row.name,miniId:row.id,cosmos:row.cosmos,detail:titre?'Rangé sous « '+titre+' »':'Sorti de « '+cur+' »'}); }
+  // déposée sur la ligne d'un titre : le terrain rejoint la fin de la pièce, sous ce titre
+  deposerSurTitre(dragId,cosmos,titre){ const item0=this.state.rows.find(x=>x.id===dragId); if(!item0) return;
+    this.setState(st=>{ const rows=[...st.rows]; const from=rows.findIndex(x=>x.id===dragId); if(from<0) return {}; const [item]=rows.splice(from,1); const np={...item,cosmos,titre}; const last=rows.map(x=>x.cosmos).lastIndexOf(cosmos); rows.splice(last+1,0,np); return {rows}; });
+    if(item0.cosmos!==cosmos) this.logJ({type:'deplacement',mini:item0.name,miniId:item0.id,cosmos,detail:'Cosmos parent : '+item0.cosmos+' → '+cosmos});
+    if((item0.titre||'')!==titre) this.logJ({type:'deplacement',mini:item0.name,miniId:item0.id,cosmos,detail:'Rangé sous « '+titre+' »'}); }
+  // déposée sur une ligne : elle prend sa place et son titre ; déposée sur la pièce : fin de pièce, sans titre
   moveRow(dragId, targetId, cosmos){
+    const S=this.state; const item0=S.rows.find(x=>x.id===dragId); if(!item0) return; const target=targetId?S.rows.find(x=>x.id===targetId):null;
+    const titre=(target&&target.cosmos===cosmos)?(target.titre||''):'';
     this.setState(s=>{
       const rows=[...s.rows]; const from=rows.findIndex(x=>x.id===dragId); if(from<0) return {};
-      const [item]=rows.splice(from,1); if(item.cosmos!==cosmos) setTimeout(()=>this.logJ({type:'deplacement',mini:item.name,miniId:item.id,cosmos,detail:'Cosmos parent : '+item.cosmos+' → '+cosmos}),0); item.cosmos=cosmos;
+      const [item]=rows.splice(from,1); if(item.cosmos!==cosmos) setTimeout(()=>this.logJ({type:'deplacement',mini:item.name,miniId:item.id,cosmos,detail:'Cosmos parent : '+item.cosmos+' → '+cosmos}),0);
+      const np={...item,cosmos}; if(titre) np.titre=titre; else delete np.titre;
       const to=targetId?rows.findIndex(x=>x.id===targetId):-1;
-      if(to<0){ const last=rows.map(x=>x.cosmos).lastIndexOf(cosmos); rows.splice(last+1,0,item); } else rows.splice(to,0,item);
+      if(to<0){ const last=rows.map(x=>x.cosmos).lastIndexOf(cosmos); rows.splice(last+1,0,np); } else rows.splice(to,0,np);
       return {rows};
     });
+    if(item0.cosmos===cosmos&&(item0.titre||'')!==titre) this.logJ({type:'deplacement',mini:item0.name,miniId:item0.id,cosmos,detail:titre?'Rangé sous « '+titre+' »':'Sorti de « '+item0.titre+' »'});
   }
-  moveGroup(dragName, targetName){
-    this.setState(s=>{ const c=[...s.cosmos]; const from=c.indexOf(dragName), to=c.indexOf(targetName); if(from<0||to<0||from===to) return {}; c.splice(from,1); c.splice(to,0,dragName); return {cosmos:c}; });
-  }
+  etageOf(name){ return etageDeNom(this.state.etageDe,name); }
+  creerCosmos(raw){ const n=(raw||'').trim().toUpperCase(); if(!n||this.state.cosmos.includes(n)) return; const et=this.state.newEtage||'logos';
+    this.setState(st=>{ const E={...(st.etageDe||{}),[n]:et}; return {cosmos:placerEnFinEtage(st.cosmos,n,et,E),etageDe:E,showCosmosModal:false}; });
+    this.logJ({type:'cosmos',cosmos:n,detail:'Cosmos créé · étage '+ETAGE_LABEL[et]}); this.flash('Cosmos '+n+' créé dans '+ETAGE_LABEL[et]); }
+  // déposer une pièce sur une autre : elle prend sa place et son étage (glisser-déposer libre entre étages)
+  moveCosmos(dragName,targetName){ if(dragName===targetName) return; const from=this.etageOf(dragName), to=this.etageOf(targetName);
+    this.setState(s=>{ const c=[...s.cosmos]; const i=c.indexOf(dragName), j=c.indexOf(targetName); if(i<0||j<0) return {}; c.splice(i,1); c.splice(j,0,dragName); return {cosmos:c,etageDe:{...(s.etageDe||{}),[dragName]:to}}; });
+    if(from!==to) this.logJ({type:'cosmos',cosmos:dragName,detail:'Étage : '+ETAGE_LABEL[from]+' → '+ETAGE_LABEL[to]}); }
+  // déposer une pièce sur l'en-tête (ou la zone vide) d'un étage : elle rejoint la fin de cet étage
+  moveCosmosToEtage(name,etage){ const from=this.etageOf(name);
+    this.setState(s=>{ const E={...(s.etageDe||{}),[name]:etage}; return {cosmos:placerEnFinEtage(s.cosmos,name,etage,E),etageDe:E}; });
+    if(from!==etage) this.logJ({type:'cosmos',cosmos:name,detail:'Étage : '+ETAGE_LABEL[from]+' → '+ETAGE_LABEL[etage]}); }
+  // Monter / Descendre : dans son étage seulement
+  moveCosmosBy(name,delta){ this.setState(s=>{ const et=etageDeNom(s.etageDe,name); const inE=s.cosmos.filter(n=>etageDeNom(s.etageDe,n)===et); const k=inE.indexOf(name), m=k+delta; if(k<0||m<0||m>=inE.length) return {};
+      const other=inE[m]; const c=[...s.cosmos]; const i=c.indexOf(name), j=c.indexOf(other); c.splice(i,1); c.splice(j,0,name); return {cosmos:c}; }); }
+  // repère d'un étage : même mécanique que celui d'une pièce
+  saveEtageRepere(etage){ if(this._etageCancel===etage){ this._etageCancel=null; return; } const s=this.state; if(s.editEtage!==etage) return;
+    const t=(s.editEtageText||'').trim().slice(0,320), cur=(s.etages||{})[etage]||'';
+    this.setState(st=>{ const E={...(st.etages||{})}; if(t) E[etage]=t; else delete E[etage]; return {etages:E,editEtage:null,editEtageText:''}; });
+    if(t!==cur) this.logJ({type:'cosmos',cosmos:ETAGE_LABEL[etage],detail:t?'Repère de l’étage '+ETAGE_LABEL[etage]+' : « '+t+' »':'Repère de l’étage '+ETAGE_LABEL[etage]+' effacé'}); }
   // repère d'une pièce : enregistré à Entrée ou en quittant le champ, tracé dans le Journal s'il change ; Échap annule
   saveRepere(name){ if(this._repereCancel===name){ this._repereCancel=null; return; } const s=this.state; if(s.editRepere!==name) return;
     const t=(s.editRepereText||'').trim().slice(0,120), cur=(s.reperes||{})[name]||'';
     this.setState(st=>{ const R={...(st.reperes||{})}; if(t) R[name]=t; else delete R[name]; return {reperes:R,editRepere:null,editRepereText:''}; });
     if(t!==cur) this.logJ({type:'cosmos',cosmos:name,detail:t?'Repère de '+name+' : « '+t+' »':'Repère de '+name+' effacé'}); }
-  moveGroupBy(name,delta){ this.setState(s=>{ const c=[...s.cosmos]; const i=c.indexOf(name), j=i+delta; if(i<0||j<0||j>=c.length) return {}; c.splice(i,1); c.splice(j,0,name); return {cosmos:c}; }); }
   // sections repliées de la page Cosmos : un réglage d'affichage, mémorisé dans ce navigateur (pas en base)
   setPlis(fn){ this.setState(st=>{ const p={cosmos:{...((st.plis||{}).cosmos||{})},lentilles:{...((st.plis||{}).lentilles||{})}}; fn(p); try{ localStorage.setItem('cosmos-plis-v1',JSON.stringify(p)); }catch(e){} return {plis:p}; }); }
   togglePli(kind,name){ this.setPlis(p=>{ if(p[kind][name]) delete p[kind][name]; else p[kind][name]=1; }); }
@@ -1067,7 +1163,7 @@ class Component extends DCLogic {
       dragEnd:()=>this.setState({drag:null,over:null}),
       dropLine:this.state.over===x.id?'2px solid #fafafa':'2px solid transparent',
       rowBg:this.state.over===x.id?'rgba(63,63,70,0.35)':'transparent',
-      dragOpacity:this.state.drag&&this.state.drag.id===x.id?0.4:1 };
+      dragOpacity:this.state.drag&&this.state.drag.id===x.id?0.4:1, isRow:true, isSep:false, titre:x.titre||'' };
   }
   journalVals(){
     const s=this.state; if((s.view||'table')!=='journal') return {};
@@ -1104,9 +1200,10 @@ class Component extends DCLogic {
     const s=this.state; if((s.view||'table')!=='echeances') return {};
     const rows=s.rows.filter(x=>!x.closed).map(x=>({...x,statut:statutOf(x)})).filter(x=>x.statut!=='Pause');
     const live=rows.map(x=>({x,p:projectionOf(x)})).filter(o=>!o.p.permanent);
-    const rankOf=n=>{ const i=s.cosmos.indexOf(n); return i<0?'':(i+1)+' '; };
+    const parE={ethos:[],logos:[],pathos:[]}; s.cosmos.forEach(n=>parE[etageDeNom(s.etageDe,n)].push(n)); const rankOf=n=>{ const e=etageDeNom(s.etageDe,n); const i=parE[e].indexOf(n); return i<0?'':ETAGE_CODE[e]+(i+1)+' '; };
     const T=this.timeFilter(); const tf=T.tf, joursAvant=T.joursAvant, dansDelai=T.inTime, zf=s.echZone||'Tous';
-    const shown=live.filter(o=>(zf==='Tous'||o.p.zone===zf)&&dansDelai(o.x)).sort((a,b)=>(a.p.days-b.p.days)||((POIDS_ORDER[poidsOf(a.x)]??2)-(POIDS_ORDER[poidsOf(b.x)]??2)));
+    const eq=(s.eQuery||'').trim().toLowerCase(); const matchEq=x=>!eq||[x.name,x.cosmos,x.actuel,x.objectif].join(' ').toLowerCase().includes(eq);
+    const shown=live.filter(o=>(zf==='Tous'||o.p.zone===zf)&&dansDelai(o.x)&&matchEq(o.x)).sort((a,b)=>(a.p.days-b.p.days)||((POIDS_ORDER[poidsOf(a.x)]??2)-(POIDS_ORDER[poidsOf(b.x)]??2)));
     const echeances=shown.map(({x,p})=>({name:x.name,poidsBg:POIDS_DOT[poidsOf(x)].bg,poidsBorder:POIDS_DOT[poidsOf(x)].border,cosmos:rankOf(x.cosmos)+x.cosmos,cosmosColor:COLORS[Math.max(0,s.cosmos.indexOf(x.cosmos))%COLORS.length],actuel:x.actuel||'—',pct:(p.pct||0)+'%',color:p.color,label:p.label,cloture:p.sas?fmtFR(echeanceEffective(x).iso):clotureShort(x.cloture),isSas:!!p.sas,statut:x.statut,statutColor:STATUT_STYLE[x.statut][0],statutBg:STATUT_STYLE[x.statut][1],
       open:()=>this.setState({selected:x.id,editing:false,confirmDeleteMini:false,aiDetail:null})}));
     const zones=[['Tous','Tous',null],['ok',PROJ.ok[0],PROJ.ok[1]],['sas',PROJ.sas[0],PROJ.sas[1]],['tension',PROJ.tension[0],PROJ.tension[1]],['jourj',PROJ.jourj[0],PROJ.jourj[1]],['retard',PROJ.retard[0],PROJ.retard[1]]];
@@ -1114,8 +1211,8 @@ class Component extends DCLogic {
     const echZoneChips=zones.map(([k,label,dot])=>({label,dot:dot||'transparent',dotW:dot?'6px':'0px',...(zf===k?chipOn:chipOff),count:k==='Tous'?live.length:n(k),vitalW:(k==='tension'||k==='jourj'||k==='retard')&&live.some(o=>poidsOf(o.x)==='vital'&&o.p.zone===k)?'6px':'0px',onClick:()=>this.setState({echZone:k})}));
     const echTimeChips=[[0,'Tous'],[7,'7 j'],[30,'30 j'],[90,'90 j']].map(([d,label])=>({label,...(tf===d?chipOn:chipOff),count:d?live.filter(o=>{ const k=joursAvant(o.x); return k!=null&&k<=d; }).length:live.length,onClick:()=>this.setState({timeFilter:d})}));
     const echKpis=[{label:'à l’heure',value:n('ok'),color:'#34d399'},{label:'en test',value:n('sas'),color:'#818cf8'},{label:'tension',value:n('tension'),color:'#fbbf24'},{label:'jour J',value:n('jourj'),color:'#fafafa'},{label:'retard',value:n('retard'),color:'#fb7185'},{label:'mandats',value:rows.filter(x=>isMandat(x.cloture)).length,color:'#71717a'}];
-    const anyF=zf!=='Tous'||T.any;
-    return {echeances,echCount:live.length,echShown:shown.length,noEcheances:shown.length===0,echEmptyLabel:anyF?'aucune échéance pour ces filtres':'aucun mini-cosmos actif avec une échéance',echZoneChips,echTimeChips,echKpis};
+    const anyF=zf!=='Tous'||T.any||!!eq;
+    return {eQuery:s.eQuery||'', setEQuery:e=>this.setState({eQuery:e.target.value}), echeances,echCount:live.length,echShown:shown.length,noEcheances:shown.length===0,echEmptyLabel:anyF?'aucune échéance pour ces filtres':'aucun mini-cosmos actif avec une échéance',echZoneChips,echTimeChips,echKpis};
   }
   // en-tête du Journal : l'activité de la période choisie (créés, admis, clôturés, supprimés, étapes cochées), comparée à la période précédente
   activityVals(){
@@ -1157,10 +1254,13 @@ class Component extends DCLogic {
     const lentilles=s.lentilles||[]; const tgf=s.tagFilter||'Tous'; const inTag=x=>tgf==='Tous'||tagsOf(x).includes(tgf);
     const cf=s.cosmosFilter||'Tous';
     // numéro de domino d'une pièce : sa position dans l'ordre des cosmos, calculée, jamais saisie — affichée partout où une pièce est nommée
-    const rankOf=name=>{ const i=s.cosmos.indexOf(name); return i<0?'':String(i+1); }; const withRank=name=>{ const r=rankOf(name); return r?r+' '+name:name; };
+    const etageOf=n=>etageDeNom(s.etageDe,n); const parEtage={ethos:[],logos:[],pathos:[]}; s.cosmos.forEach(n=>parEtage[etageOf(n)].push(n));
+    const rankOf=name=>{ const e=etageOf(name); const i=parEtage[e].indexOf(name); return i<0?'':ETAGE_CODE[e]+(i+1); }; const withRank=name=>{ const r=rankOf(name); return r?r+' '+name:name; };
     const T=this.timeFilter();
+    // recherche : nom, cosmos, objectif, valeur actuelle, entropie, réponse, seuils, SAS, lentilles, étapes
+    const tq=(s.tQuery||'').trim().toLowerCase(); const matchTq=x=>!tq||[x.name,x.cosmos,x.objectif,x.actuel,x.entropie,x.reponse,x.alerte,x.kill,x.sas,...tagsOf(x),...(x.actions||[]).map(a=>a.text)].join(' ').toLowerCase().includes(tq);
     // les lentilles filtrent les lignes ; la puce cosmos choisit la section
-    const filtered = visible.filter(x=>(s.filter==='Tous'||x.statut===s.filter)&&inProj(x)&&T.inTime(x)&&inTag(x));
+    const filtered = visible.filter(x=>(s.filter==='Tous'||x.statut===s.filter)&&inProj(x)&&T.inTime(x)&&inTag(x)&&matchTq(x));
     const tagChips=lentilles.length?['Tous',...lentilles.map(t=>t.name)].map(name=>{ const c=name==='Tous'?null:this.tagColor(name); return {label:name,dot:c||'transparent',dotW:c?'6px':'0px',...(tgf===name?chipOn:chipOff),count:name==='Tous'?visible.length:visible.filter(x=>tagsOf(x).includes(name)).length,onClick:()=>this.setState({tagFilter:name})}; }):[];
     const projChips=[['Tous','Tous',null],['ok',PROJ.ok[0],PROJ.ok[1]],['sas',PROJ.sas[0],PROJ.sas[1]],['tension',PROJ.tension[0],PROJ.tension[1]],['jourj',PROJ.jourj[0],PROJ.jourj[1]],['retard',PROJ.retard[0],PROJ.retard[1]]].map(([k,label,dot])=>({label,dot:dot||'transparent',dotW:dot?'6px':'0px',...(pf===k?chipOn:chipOff),count:k==='Tous'?visible.length:visible.filter(x=>projectionOf(x).zone===k).length,vitalW:(k==='tension'||k==='jourj'||k==='retard')&&visible.some(x=>poidsOf(x)==='vital'&&projectionOf(x).zone===k)?'6px':'0px',onClick:()=>this.setState({projFilter:k})}));
     const cosmosChips=['Tous',...s.cosmos].map((c,i)=>({label:c==='Tous'?c:withRank(c),...(cf===c?chipOn:chipOff),dot:c==='Tous'?'transparent':COLORS[(i-1)%COLORS.length],dotW:c==='Tous'?'0px':'6px',
@@ -1183,7 +1283,7 @@ class Component extends DCLogic {
     const columns=COLS.map(([key,label])=>({key,label,active:sort&&sort.key===key,color:(sort&&sort.key===key)||(key==='statut'&&!sort)?'#fafafa':'#52525b',
       arrow:sort&&sort.key===key?(sort.dir==='asc'?'↑':'↓'):(key==='statut'&&!sort?'↑':''),
       onClick:()=>this.setState(st=>{ const cur=st.sort; if(!cur||cur.key!==key) return {sort:{key,dir:'asc'}}; if(cur.dir==='asc') return {sort:{key,dir:'desc'}}; return {sort:null}; })}));
-    const anyFilterEarly=s.filter!=='Tous'||pf!=='Tous'||cf!=='Tous'||tgf!=='Tous'||T.any;
+    const anyFilterEarly=s.filter!=='Tous'||pf!=='Tous'||cf!=='Tous'||tgf!=='Tous'||T.any||!!tq;
     // plis : ouvert par défaut ; chevron, trait d'en-tête et bascule d'une section
     const plis=s.plis||{}; const isClosed=(kind,name)=>!!((plis[kind]||{})[name]);
     const pliOf=(kind,name)=>{ const open=!isClosed(kind,name); return {open,chevron:open?'90deg':'0deg',headBorder:open?'rgba(39,39,42,0.8)':'transparent',toggle:()=>this.togglePli(kind,name),stopIt:ev=>ev.stopPropagation()}; };
@@ -1207,28 +1307,46 @@ class Component extends DCLogic {
       repereKey:e=>{ if(e.key==='Enter') e.currentTarget.blur(); if(e.key==='Escape'){ this._repereCancel=name; this.setState({editRepere:null,editRepereText:''}); } }}; };
     // page Cosmos : une section par pièce, dans l'ordre des cosmos (l'ordre domino), avec renommage, suppression et glisser-déposer
     const cosmosGroups=()=>s.cosmos.map((name,i)=>({name,i})).filter(g=>cf==='Tous'||g.name===cf).map(({name,i})=>{
-      const all=rowsN.filter(x=>x.cosmos===name); const rows=sortRows(filtered.filter(x=>x.cosmos===name).map(x=>this.decorate(x)));
+      const all=rowsN.filter(x=>x.cosmos===name); const roomRows=filtered.filter(x=>x.cosmos===name).map(x=>this.decorate(x)); const titres=this.titresOf(name); const connus=new Set(titres);
+      const rows=[...sortRows(roomRows.filter(r=>!r.titre||!connus.has(r.titre)))];
+      titres.forEach((t,ti)=>{ const sous=roomRows.filter(r=>r.titre===t); const total=all.filter(x=>x.titre===t&&x.statut!=='Clôturé').length; if(anyFilterEarly&&sous.length===0) return;
+        const editing=!!(s.editTitre&&s.editTitre.cosmos===name&&s.editTitre.name===t); const key='t:'+name+'|'+t;
+        rows.push({isSep:true,isRow:false,id:'sep:'+name+'|'+t,name:t,countLabel:(anyFilterEarly?sous.length+' / '+total:String(total))+' terrain'+(total>1?'s':''),isEditing:editing,notEditing:!editing,editName:editing?(s.editTitreName||''):t,
+          startEdit:ev=>{ ev.stopPropagation(); this.setState({editTitre:{cosmos:name,name:t},editTitreName:t}); },setEditName:e=>this.setState({editTitreName:e.target.value}),
+          saveEdit:()=>{ if(this.state.editTitre&&this.state.editTitre.name===t) this.renommerTitre(name,t,this.state.editTitreName); this.setState({editTitre:null}); },
+          editKey:e=>{ if(e.key==='Enter') e.currentTarget.blur(); if(e.key==='Escape') this.setState({editTitre:null}); },
+          up:()=>this.deplacerTitre(name,t,-1),down:()=>this.deplacerTitre(name,t,1),upColor:ti>0?'#a1a1aa':'#3f3f46',downColor:ti<titres.length-1?'#a1a1aa':'#3f3f46',remove:()=>this.supprimerTitre(name,t),
+          addUnder:()=>this.setState({showMiniModal:true,tab:0,form:freshForm({cosmos:name,titre:t}),aiForm:null}),
+          sepDragOver:ev=>{ const d=this.state.drag; if(!d||d.type!=='row') return; ev.preventDefault(); ev.stopPropagation(); if(this.state.over!==key) this.setState({over:key}); },
+          sepDrop:ev=>{ ev.preventDefault(); ev.stopPropagation(); const d=this.state.drag; if(d&&d.type==='row') this.deposerSurTitre(d.id,name,t); this.setState({drag:null,over:null}); },
+          sepBg:s.over===key?'rgba(63,63,70,0.35)':'transparent'});
+        sortRows(sous).forEach(r=>rows.push(r)); });
+      const nbLignes=roomRows.length;
       const dg=s.drag, isGroupDrag=dg&&dg.type==='group';
-      return {name,color:COLORS[i%COLORS.length],rows,count:rows.length,empty:rows.length===0,emptyLabel:anyFilterEarly?'aucun mini-cosmos pour ce filtre':'aucun mini-cosmos — ajoute-en un avec le bouton +',...bandOf(all),rank:String(i+1),rankTitle:'Domino '+(i+1)+' : si cette pièce tombe, elle entraîne la suivante',...pliOf('cosmos',name),...repereOf(name),
-        moveUp:ev=>{ ev.stopPropagation(); this.moveGroupBy(name,-1); },moveDown:ev=>{ ev.stopPropagation(); this.moveGroupBy(name,1); },upColor:i>0?'#a1a1aa':'#3f3f46',downColor:i<s.cosmos.length-1?'#a1a1aa':'#3f3f46',
+      return {name,color:COLORS[i%COLORS.length],rows,count:nbLignes,empty:nbLignes===0,
+        addingTitre:s.addTitreFor===name,newTitreName:s.addTitreFor===name?(s.newTitreName||''):'',setNewTitreName:e=>this.setState({newTitreName:e.target.value}),
+        addTitre:ev=>{ ev.stopPropagation(); this._titreDone=false; this.setPlis(p=>{ delete p.cosmos[name]; }); this.setState({addTitreFor:name,newTitreName:''}); },
+        newTitreKey:e=>{ if(e.key==='Enter'){ this._titreDone=true; if(this.creerTitre(name,this.state.newTitreName)) this.setState({addTitreFor:null,newTitreName:''}); else this._titreDone=false; } if(e.key==='Escape'){ this._titreDone=true; this.setState({addTitreFor:null,newTitreName:''}); } },
+        newTitreBlur:()=>{ if(this._titreDone) return; const v=(this.state.newTitreName||'').trim(); if(v) this.creerTitre(name,v); this.setState({addTitreFor:null,newTitreName:''}); },emptyLabel:anyFilterEarly?'aucun mini-cosmos pour ce filtre':'aucun mini-cosmos — ajoute-en un avec le bouton +',...bandOf(all),rank:rankOf(name),rankTitle:'Domino '+rankOf(name)+' — '+(parEtage[etageOf(name)].indexOf(name)+1)+'ᵉ de l’étage '+ETAGE_LABEL[etageOf(name)]+' : si cette pièce tombe, elle entraîne la suivante',...pliOf('cosmos',name),...(tq?{open:true,chevron:'90deg',headBorder:'rgba(39,39,42,0.8)'}:{}),...repereOf(name),
+        moveUp:ev=>{ ev.stopPropagation(); this.moveCosmosBy(name,-1); },moveDown:ev=>{ ev.stopPropagation(); this.moveCosmosBy(name,1); },upColor:parEtage[etageOf(name)].indexOf(name)>0?'#a1a1aa':'#3f3f46',downColor:parEtage[etageOf(name)].indexOf(name)<parEtage[etageOf(name)].length-1?'#a1a1aa':'#3f3f46',
         dropShadow:dropShadowOf('group',dg?s.cosmos.indexOf(dg.id):-1,i,'g:'+name),
         gDragStart:ev=>{ ev.dataTransfer.effectAllowed='move'; ev.dataTransfer.setData('text/plain',name); this.setState({drag:{type:'group',id:name}}); },
         gDragOver:ev=>{ const d=this.state.drag; if(!d) return; ev.preventDefault(); const key=(d.type==='group'?'g:':'c:')+name; if(this.state.over!==key) this.setState({over:key}); },
-        gDrop:ev=>{ ev.preventDefault(); const d=this.state.drag; if(d&&d.type==='group') this.moveGroup(d.id,name); else if(d&&d.type==='row') this.moveRow(d.id,null,name); this.setState({drag:null,over:null}); },
+        gDrop:ev=>{ ev.preventDefault(); const d=this.state.drag; if(d&&d.type==='group') this.moveCosmos(d.id,name); else if(d&&d.type==='row') this.moveRow(d.id,null,name); this.setState({drag:null,over:null}); },
         gDragEnd:()=>this.setState({drag:null,over:null}),
         isEditing:s.editCosmos===name, notEditing:s.editCosmos!==name,
         editName:s.editCosmosName??name,
         startEdit:ev=>{ ev.stopPropagation(); this.setState({editCosmos:name,editCosmosName:name,confirmDelete:null}); },
         setEditName:e=>this.setState({editCosmosName:e.target.value}),
         saveEdit:()=>{ const n=(s.editCosmosName||'').trim().toUpperCase(); if(!n||(n!==name&&s.cosmos.includes(n))){ this.setState({editCosmos:null}); return; }
-          this.setState(st=>({cosmos:st.cosmos.map(c=>c===name?n:c),rows:st.rows.map(x=>x.cosmos===name?{...x,cosmos:n}:x),cosmosFilter:st.cosmosFilter===name?n:st.cosmosFilter,editCosmos:null,reperes:(()=>{ const R={...(st.reperes||{})}; if(R[name]!=null){ R[n]=R[name]; delete R[name]; } return R; })()})); if(n!==name){ this.renamePli('cosmos',name,n); this.logJ({type:'cosmos',cosmos:n,detail:'Cosmos renommé : '+name+' → '+n}); this.flash(name+' renommé en '+n); } },
+          this.setState(st=>({cosmos:st.cosmos.map(c=>c===name?n:c),rows:st.rows.map(x=>x.cosmos===name?{...x,cosmos:n}:x),cosmosFilter:st.cosmosFilter===name?n:st.cosmosFilter,editCosmos:null,reperes:(()=>{ const R={...(st.reperes||{})}; if(R[name]!=null){ R[n]=R[name]; delete R[name]; } return R; })(),etageDe:(()=>{ const E={...(st.etageDe||{})}; if(E[name]!=null){ E[n]=E[name]; delete E[name]; } return E; })(),titresDe:(()=>{ const T={...(st.titresDe||{})}; if(T[name]!=null){ T[n]=T[name]; delete T[name]; } return T; })()})); if(n!==name){ this.renamePli('cosmos',name,n); this.logJ({type:'cosmos',cosmos:n,detail:'Cosmos renommé : '+name+' → '+n}); this.flash(name+' renommé en '+n); } },
         cancelEdit:()=>this.setState({editCosmos:null}),
         editKey:e=>{ if(e.key==='Enter') e.currentTarget.blur(); if(e.key==='Escape') this.setState({editCosmos:null}); },
         totalRows:rowsN.filter(x=>x.cosmos===name).length,
         confirmDelete:s.confirmDelete===name, notConfirmDelete:s.confirmDelete!==name,
         askDelete:ev=>{ ev.stopPropagation(); this.setState({confirmDelete:name,editCosmos:null}); },
         cancelDelete:ev=>{ ev.stopPropagation(); this.setState({confirmDelete:null}); },
-        doDelete:ev=>{ ev.stopPropagation(); this.setState(st=>({cosmos:st.cosmos.filter(c=>c!==name),rows:st.rows.filter(x=>x.cosmos!==name),cosmosFilter:st.cosmosFilter===name?'Tous':st.cosmosFilter,confirmDelete:null,reperes:(()=>{ const R={...(st.reperes||{})}; delete R[name]; return R; })()})); this.logJ({type:'cosmos',cosmos:name,detail:'Cosmos supprimé avec '+s.rows.filter(x=>x.cosmos===name).length+' mini-cosmos'}); this.flash('Cosmos '+name+' supprimé'); },
+        doDelete:ev=>{ ev.stopPropagation(); this.setState(st=>({cosmos:st.cosmos.filter(c=>c!==name),rows:st.rows.filter(x=>x.cosmos!==name),cosmosFilter:st.cosmosFilter===name?'Tous':st.cosmosFilter,confirmDelete:null,reperes:(()=>{ const R={...(st.reperes||{})}; delete R[name]; return R; })(),etageDe:(()=>{ const E={...(st.etageDe||{})}; delete E[name]; return E; })(),titresDe:(()=>{ const T={...(st.titresDe||{})}; delete T[name]; return T; })()})); this.logJ({type:'cosmos',cosmos:name,detail:'Cosmos supprimé avec '+s.rows.filter(x=>x.cosmos===name).length+' mini-cosmos'}); this.flash('Cosmos '+name+' supprimé'); },
         cardBorder:s.over==='g:'+name||s.over==='c:'+name?'rgba(161,161,170,0.9)':'rgba(39,39,42,0.8)',
         cardOpacity:isGroupDrag&&dg.id===name?0.4:1,
         addMini:ev=>{ ev.stopPropagation(); this.setState({showMiniModal:true,tab:0,form:freshForm({cosmos:name}),aiForm:null}); }};
@@ -1268,7 +1386,9 @@ class Component extends DCLogic {
       const agentProps=(s.propositions||[]).filter(p=>p.miniId===sel.id).map(p=>({id:p.id,agent:p.agent,motif:p.motif||'',hasMotif:!!p.motif,
         lines:Object.keys(p.patch||{}).map(k=>({label:{objectif:'Objectif',actuel:'Valeur actuelle',entropie:'Entropie',reponse:'Réponse',sas:'SAS',sasUntil:'Fin du test',alerte:'Alerte',kill:'Kill',etapes:'Étapes',tags:'Lentilles',poids:'Poids'}[k]||k,value:Array.isArray(p.patch[k])?p.patch[k].join(' · '):String(p.patch[k])})),
         accept:()=>this.decideProposal(p,sel,true), refuse:()=>this.decideProposal(p,sel,false)}));
-      detail={...d, ...sasVals, ...tagVals, cosmosLabel:withRank(sel.cosmos), editing:s.editing, notEditing:!s.editing, edit, raw:sel, allDone, closeIt, toggleSas, ai:aiD, agentProps, hasAgentProps:agentProps.length>0, agentPropsCount:agentProps.length,
+      const titresSel=this.titresOf(sel.cosmos);
+      detail={...d, ...sasVals, ...tagVals, cosmosLabel:withRank(sel.cosmos), titreCrumb:sel.titre&&titresSel.includes(sel.titre)?' › '+sel.titre:'', hasTitres:titresSel.length>0,
+        titreChips:[{id:'',label:'Aucun'},...titresSel.map(t=>({id:t,label:t}))].map(o=>({label:o.label,...((sel.titre||'')===o.id?chipOn:chipOff),onClick:()=>this.rangerSous(sel.id,o.id)})), editing:s.editing, notEditing:!s.editing, edit, raw:sel, allDone, closeIt, toggleSas, ai:aiD, agentProps, hasAgentProps:agentProps.length>0, agentPropsCount:agentProps.length,
         statutHint:statutHints[selStatut], sasEdit:hasSas(sel)?sel.sas:'', sasMark:sel.sasDone?'✓':'', sasBoxBg:sel.sasDone?'#818cf8':'#09090b', sasBoxBorder:sel.sasDone?'#818cf8':'#3f3f46', sasColor:sel.sasDone?'#52525b':'#f4f4f5', sasDeco:sel.sasDone?'line-through':'none',
         isClosed:!!sel.closed, notClosed:!sel.closed,
         alertChips:[3,7,15,30].map(n=>({label:n+' j',...(alertDaysOf(sel)===n?chipOn:chipOff),onClick:()=>this.update(sel.id,{alertDays:n})})),
@@ -1278,7 +1398,7 @@ class Component extends DCLogic {
           if(hasSas(sel)){ const s0=startOf(sel)||daysAgo(0), s1=sasUntilOf(sel)||plusDays(s0,14); copy.sasUntil=plusDays(daysAgo(0),Math.max(1,Math.round((new Date(s1+'T00:00:00')-new Date(s0+'T00:00:00'))/86400000))); } else delete copy.sasUntil;
           const i=s.rows.findIndex(x=>x.id===sel.id); this.setState(st=>{ const rows=[...st.rows]; rows.splice(i+1,0,copy); return {rows,selected:copy.id,editing:true,editSnap:JSON.parse(JSON.stringify(copy))}; });
           this.logJ({type:'creation',mini:copy.name,miniId:copy.id,cosmos:copy.cosmos,detail:'Dupliqué depuis « '+sel.name+' » — étapes remises à zéro, échéance à revoir'}); this.flash('Copie créée — ajuste le nom et l\u2019échéance'); },
-        parentChips:s.cosmos.map((c,i)=>({label:withRank(c),dot:COLORS[i%COLORS.length],...(sel.cosmos===c?chipOn:chipOff),onClick:()=>{ if(c!==sel.cosmos){ this.update(sel.id,{cosmos:c},{type:'deplacement',detail:'Cosmos parent : '+sel.cosmos+' → '+c}); this.flash(sel.name+' → '+c); } }})),
+        parentChips:s.cosmos.map((c,i)=>({label:withRank(c),dot:COLORS[i%COLORS.length],...(sel.cosmos===c?chipOn:chipOff),onClick:()=>{ if(c!==sel.cosmos){ this.update(sel.id,{cosmos:c,titre:undefined},{type:'deplacement',detail:'Cosmos parent : '+sel.cosmos+' → '+c}); this.flash(sel.name+' → '+c); } }})),
         clotureDate:resolveCloture(sel.cloture)||'', clotureSel:clotureSel(sel.cloture), clotureOpts,
         pickCloture:e=>{ const v=e.target.value; if(v) this.update(sel.id,{cloture:v}); },
         echeanceChips:[['datee','Datée'],['mandat','Mandat 1 an']].map(([k,label])=>({label,...((selMandat?'mandat':'datee')===k?chipOn:chipOff),onClick:()=>{ if(k==='mandat'&&!selMandat){ const c=mandatDepuis(startOf(sel)); this.update(sel.id,{cloture:c},{type:'modification',detail:'Échéance → mandat d\u2019un an jusqu\u2019au '+fmtFR(resolveCloture(c))}); this.flash(sel.name+' : mandat d\u2019un an'); } if(k==='datee'&&selMandat) this.update(sel.id,{cloture:daysAgo(-90)},{type:'modification',detail:'Échéance → datée ('+fmtFR(daysAgo(-90))+')'}); }})),
@@ -1326,6 +1446,18 @@ class Component extends DCLogic {
     }).filter(g=>g.count>0);
     const anyFilter=anyFilterEarly;
     const shownGroups=anyFilter?groups.filter(g=>g.count>0):groups;
+    // les trois étages : en-tête (titre fixe, ligne Total de l'étage, repère éditable), zone de dépôt si vide, puis ses pièces
+    const etagesVals=ETAGES.map(([e,label,code,sens])=>{ const names=parEtage[e]; const groupsE=shownGroups.filter(g=>etageOf(g.name)===e);
+      const t=(s.etages||{})[e]||''; const editing=s.editEtage===e; const key='e:'+e; const dg=s.drag;
+      return {etage:e,name:label,sens,groups:groupsE,empty:names.length===0,show:!(names.length>0&&groupsE.length===0&&anyFilter),
+        repereLabel:t||'+ repère de l’étage',repereColor:t?'#d4d4d8':'#3f3f46',repereTitle:t?t+' — cliquer pour modifier':'ajouter le repère de cet étage : une phrase, une citation',isEditing:editing,notEditing:!editing,repereDraft:editing?(s.editEtageText||''):t,
+        startRepere:ev=>{ ev.stopPropagation(); this._etageCancel=null; this.setState({editEtage:e,editEtageText:t}); },setRepereDraft:ev=>this.setState({editEtageText:ev.target.value}),saveRepere:()=>this.saveEtageRepere(e),stopIt:ev=>ev.stopPropagation(),
+        repereKey:ev=>{ if(ev.key==='Enter') ev.currentTarget.blur(); if(ev.key==='Escape'){ this._etageCancel=e; this.setState({editEtage:null,editEtageText:''}); } },
+        dragOver:ev=>{ const d=this.state.drag; if(!d||d.type!=='group') return; ev.preventDefault(); if(this.state.over!==key) this.setState({over:key}); },
+        drop:ev=>{ ev.preventDefault(); const d=this.state.drag; if(d&&d.type==='group') this.moveCosmosToEtage(d.id,e); this.setState({drag:null,over:null}); },
+        zoneBorder:s.over===key?'#a1a1aa':'#3f3f46',headShadow:(dg&&dg.type==='group'&&s.over===key)?'inset 0 -2px 0 0 #fafafa':'none'}; });
+    const etageChips=ETAGES.map(([e,label])=>({label,...((s.newEtage||'logos')===e?chipOn:chipOff),onClick:()=>this.setState({newEtage:e})}));
+    const etageHint=ETAGES.find(([e])=>e===(s.newEtage||'logos'))[3];
     // cartes KPI de la page Cosmos : la ligne Total de la bande — mêmes colonnes, mêmes couleurs, calculées sur tous les mini-cosmos ouverts, filtres ignorés
     const kpiCards=(()=>{ const b=bandOf(rowsN); const open=rowsN.filter(x=>x.statut!=='Clôturé');
       return [{label:'cosmos',value:String(s.cosmos.length),color:'#fafafa',title:s.cosmos.length+' cosmos, dans l’ordre domino'},
@@ -1334,7 +1466,10 @@ class Component extends DCLogic {
     const view=s.view||'table';
     return {
       kpiCards,
-      clock:s.clock, columns, groups:shownGroups, noResult:anyFilter&&shownGroups.length===0, filterChips, projChips,
+      clock:s.clock, columns, groups:shownGroups, etages:etagesVals, etageChips, etageHint, noResult:anyFilter&&shownGroups.length===0, filterChips, projChips,
+      tQuery:s.tQuery||'', setTQuery:e=>this.setState({tQuery:e.target.value}),
+      showFilters:!!s.showFilters, toggleFilters:()=>this.setState(st=>({showFilters:!st.showFilters})), filtersChevron:s.showFilters?'90deg':'0deg',
+      ...(()=>{ const n=[s.filter!=='Tous',pf!=='Tous',cf!=='Tous',tgf!=='Tous',T.any].filter(Boolean).length; return {filtersLabel:n?'Filtres · '+n:'Filtres',filtersColor:n?'#fafafa':'#a1a1aa',filtersBorder:n?'rgba(161,161,170,0.9)':'#27272a',filtersTitle:s.showFilters?'Cacher les filtres':(n?n+' filtre'+(n>1?'s':'')+' actif'+(n>1?'s':'')+' — cliquer pour les voir':'Afficher les filtres : statut, zone, délai, cosmos, lentille')}; })(),
       sectionsHint, openAll:()=>this.setAllPlis('cosmos',s.cosmos,false), closeAll:()=>this.setAllPlis('cosmos',s.cosmos,true),
       cosmosChips, tagChips,
       showTags:!!s.showTags, openTags:()=>this.setState({showTags:true,dataMenu:false,newTagName:'',newTagError:'',renameTag:null,confirmDeleteTag:null}), closeTags:()=>this.setState({showTags:false,renameTag:null,confirmDeleteTag:null}),
@@ -1386,10 +1521,11 @@ class Component extends DCLogic {
       closeModals:()=>this.setState({showCosmosModal:false,showMiniModal:false}),
       cosmosName:s.cosmosName, setCosmosName:e=>this.setState({cosmosName:e.target.value}),
       cosmosInvalid, cosmosBtnOpacity:cosmosInvalid?0.4:1, cosmosDup:!!s.cosmosName.trim()&&s.cosmos.includes(s.cosmosName.trim().toUpperCase()),
-      cosmosKey:e=>{ if(e.key==='Enter'&&!cosmosInvalid) e.currentTarget.blur(), this.setState(st=>({cosmos:[...st.cosmos,st.cosmosName.trim().toUpperCase()],showCosmosModal:false})), this.logJ({type:'cosmos',cosmos:s.cosmosName.trim().toUpperCase(),detail:'Cosmos créé'}); },
-      saveCosmos:()=>{ const n=s.cosmosName.trim().toUpperCase(); if(!n) return; this.setState(st=>({cosmos:[...st.cosmos,n],showCosmosModal:false})); this.logJ({type:'cosmos',cosmos:n,detail:'Cosmos créé'}); this.flash('Cosmos '+n+' créé'); },
+      cosmosKey:e=>{ if(e.key==='Enter'&&!cosmosInvalid){ e.currentTarget.blur(); this.creerCosmos(s.cosmosName); } },
+      saveCosmos:()=>this.creerCosmos(s.cosmosName),
       form:f, set, tabs, tab0:s.tab===0, tab1:s.tab===1, tab2:s.tab===2, tab3:s.tab===3, notLastTab:s.tab<3, nextTab:()=>this.setState({tab:Math.min(3,s.tab+1)}),
-      parentChips:s.cosmos.map((c,i)=>({label:withRank(c),dot:COLORS[i%COLORS.length],...(f.cosmos===c?chipOn:chipOff),onClick:()=>this.setState(st=>({form:{...st.form,cosmos:c}}))})),
+      parentChips:s.cosmos.map((c,i)=>({label:withRank(c),dot:COLORS[i%COLORS.length],...(f.cosmos===c?chipOn:chipOff),onClick:()=>this.setState(st=>({form:{...st.form,cosmos:c,titre:c===st.form.cosmos?st.form.titre:''}}))})),
+      formHasTitres:this.titresOf(f.cosmos).length>0, formTitreChips:[{id:'',label:'Aucun'},...this.titresOf(f.cosmos).map(t=>({id:t,label:t}))].map(o=>({label:o.label,...((f.titre||'')===o.id?chipOn:chipOff),onClick:()=>this.setState(st=>({form:{...st.form,titre:o.id}}))})),
       formEcheanceChips:[['datee','Datée'],['mandat','Mandat 1 an']].map(([k,label])=>({label,...(f.echeance===k?chipOn:chipOff),onClick:()=>this.setState(st=>({form:{...st.form,echeance:k}}))})),
       formIsDated:f.echeance==='datee', formIsMandat:f.echeance==='mandat', formEcheanceHint:f.echeance==='mandat'?'mandat d\u2019un an jusqu\u2019au '+fmtFR(resolveCloture(mandatDepuis(formStartBase)))+' · renouvelé dans le volet si la discipline tient, supprimé sinon':'datée : projection jusqu\u2019à la clôture · mandat : objectif continu revu au bout d\u2019un an, comme un bilan', formAlertChips:[3,7,15,30].map(n=>({label:n+' j',...(+f.alertDays===n?chipOn:chipOff),onClick:()=>this.setState(st=>({form:{...st.form,alertDays:n}}))})), formStartsLater:!!(f.startAt&&f.startAt>daysAgo(0)), formStartLabel:(f.startAt||daysAgo(0)).split('-').reverse().join('/'),
       formClotureDate:resolveCloture(f.cloture)||'', formClotureSel:clotureSel(f.cloture), formClotureLabel:clotureLabel(f.cloture), clotureOpts,
@@ -1411,7 +1547,8 @@ class Component extends DCLogic {
         const row={cosmos:f.cosmos,name:f.name.trim(),objectif:f.objectif||'—',actuel:f.actuel||'—',sas:f.sas||'—',sasUntil:formHasSas?formSasUntilEff:undefined,tags:(f.tags||[]).filter(Boolean),poids:POIDS.includes(f.poids)?f.poids:'normal',entropie:f.entropie||'—',reponse:f.reponse||'—',alerte:f.alerte||'—',kill:f.kill||'—',
           pause:false, closed:false, sasDone:false, startAt:/^\d{4}-\d{2}-\d{2}$/.test(f.startAt||'')?f.startAt:daysAgo(0), alertDays:alertDaysOf({alertDays:f.alertDays}), cloture:f.echeance==='mandat'?mandatDepuis(startV):f.cloture,
           actions:acts.map(t=>({text:t,done:false})), createdAt:daysAgo(0), history:[{t:daysAgo(0),type:'created'}], id:'mc-'+Date.now().toString(36)+Math.random().toString(36).slice(2,5)};
-        this.setState(st=>({rows:[...st.rows,row],showMiniModal:false})); this.logJ({type:'creation',mini:row.name,miniId:row.id,cosmos:row.cosmos,detail:'Mini-cosmos créé · début '+fmtFR(row.startAt)+' · '+(isMandat(row.cloture)?'mandat jusqu\u2019au '+fmtFR(resolveCloture(row.cloture)):'échéance '+clotureLabel(row.cloture))+(row.sasUntil?' · test jusqu\u2019au '+fmtFR(row.sasUntil):'')+(row.tags.length?' · lentilles : '+row.tags.join(', '):'')+(row.poids!=='normal'?' · poids '+POIDS_LABEL[row.poids].toLowerCase():'')+' · '+statutOf(row)}); this.flash(row.name+' créé dans '+row.cosmos); },
+        if(f.titre&&this.titresOf(f.cosmos).includes(f.titre)) row.titre=f.titre;
+        this.setState(st=>({rows:[...st.rows,row],showMiniModal:false})); this.logJ({type:'creation',mini:row.name,miniId:row.id,cosmos:row.cosmos,detail:'Mini-cosmos créé · début '+fmtFR(row.startAt)+' · '+(isMandat(row.cloture)?'mandat jusqu\u2019au '+fmtFR(resolveCloture(row.cloture)):'échéance '+clotureLabel(row.cloture))+(row.sasUntil?' · test jusqu\u2019au '+fmtFR(row.sasUntil):'')+(row.tags.length?' · lentilles : '+row.tags.join(', '):'')+(row.poids!=='normal'?' · poids '+POIDS_LABEL[row.poids].toLowerCase():'')+(row.titre?' · sous « '+row.titre+' »':'')+' · '+statutOf(row)}); this.flash(row.name+' créé dans '+row.cosmos); },
       toast:s.toast
     };
   }
