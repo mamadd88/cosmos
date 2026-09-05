@@ -20,15 +20,11 @@ const POIDS_ORDER = {vital:0,important:1,normal:2};
 const poidsOf = x => POIDS.includes(x.poids)?x.poids:'normal';
 // point devant le nom : plein et lumineux (vital), atténué (important), creux discret (normal)
 const POIDS_DOT = {vital:{bg:'#fafafa',border:'#fafafa',glow:'0 0 6px rgba(250,250,250,0.55)'},important:{bg:'#71717a',border:'#71717a',glow:'none'},normal:{bg:'transparent',border:'#3f3f46',glow:'none'}};
-// lentilles (tags) : ce que touche un mini-cosmos, à travers les cosmos. Noms du registre (state.lentilles), stockés dans x.tags
-const normTag = t => String(t||'').trim().replace(/\s+/g,' ');
-const tagsOf = x => Array.isArray(x&&x.tags)?x.tags.filter(t=>typeof t==='string'&&t.trim()):[];
-const tagStyle = color => ({color, bg:color+'1f', border:color+'59'});
 const startOf = x => /^\d{4}-\d{2}-\d{2}$/.test(x.startAt||'')?x.startAt:(x.createdAt||null);
 const notStarted = x => { const s=startOf(x); return !!s && s>isoD(TODAY); };
 const statutOf = x => x.closed?'Clôturé':(x.pause||notStarted(x))?'Pause':(hasSas(x)&&!x.sasDone)?'SAS':'Actif';
 // migration des anciens statuts manuels (Draft/Actif/Pause/Clôturé) vers les drapeaux pause / closed
-const migrate = rows => rows.map(x=>{ const y={...x}; if(y.pause==null) y.pause=x.statut==='Pause'; if(y.closed==null) y.closed=x.statut==='Clôturé'; if(y.sasDone==null) y.sasDone=false;
+const migrate = rows => rows.map(x=>{ const y={...x}; delete y.tags; if(y.pause==null) y.pause=x.statut==='Pause'; if(y.closed==null) y.closed=x.statut==='Clôturé'; if(y.sasDone==null) y.sasDone=false;
   if(sasPendingOf(y)&&!sasUntilOf(y)) y.sasUntil=inferSasUntil(y);
   if(!y.cloture||y.cloture==='Permanent'||y.cloture==='À dater') y.cloture=mandatDepuis(startOf(y)||y.createdAt); return y; });
 // steps: [texte, fait]. Les champs etat/maintenance sont conservés dans les données d'exemple mais ne sont plus utilisés.
@@ -146,7 +142,7 @@ SEED.forEach((x,i)=>{ const age=20+(i*37)%110; x.createdAt=daysAgo(age); x.histo
     actions:[{text:'Préparer',done:true},{text:'Réaliser',done:true},{text:'Valider',done:true}],history:[{t:daysAgo(age),type:'created'},{t:daysAgo(Math.round(age*0.6)),type:'step'},{t:daysAgo(Math.round(age*0.3)),type:'step'},{t:daysAgo(closedAgo),type:'step'},{t:daysAgo(closedAgo),type:'statut',value:'Clôturé'}]}); });
 const progOf = x => { const t=x.actions.length; const d=x.actions.filter(a=>a.done).length; return t?Math.round(d/t*100):0; };
 const nextOf = x => { const n=x.actions.find(a=>!a.done); return n?n.text:(x.actions.length?'toutes les étapes faites':'—'); };
-const EMPTY_FORM = {cosmos:'',name:'',tags:[],poids:'normal',objectif:'',actuel:'',sas:'',sasUntil:'',entropie:'',reponse:'',alerte:'',kill:'',startAt:'',echeance:'datee',cloture:'',alertDays:7,actions:['','','','','']}
+const EMPTY_FORM = {cosmos:'',name:'',poids:'normal',objectif:'',actuel:'',sas:'',sasUntil:'',entropie:'',reponse:'',alerte:'',kill:'',startAt:'',echeance:'datee',cloture:'',alertDays:7,actions:['','','','','']}
 // à l'ouverture du formulaire l'échéance est datée, calendrier positionné sur aujourd'hui
 const freshForm=(over={})=>({...EMPTY_FORM,startAt:daysAgo(0),cloture:daysAgo(0),...over});
 const TEMPLATES = [
@@ -165,4 +161,4 @@ const TEMPLATES = [
 const chipOff = {color:'#71717a',bg:'#09090b',border:'#27272a'};
 const chipOn = {color:'#f4f4f5',bg:'rgba(63,63,70,0.55)',border:'rgba(113,113,122,0.7)'};
 
-export { COLORS, STATUTS, STATUT_STYLE, hasSas, sasUntilOf, sasPendingOf, isMandat, mandatDepuis, POIDS, POIDS_LABEL, POIDS_ORDER, POIDS_DOT, poidsOf, normTag, tagsOf, tagStyle, inferSasUntil, echeanceEffective, plusDays, plusMonths, startOf, notStarted, statutOf, migrate, r, SEED, ACTUEL, CLOTURE, TYPES, MOIS_S, lastDay, fmtJM, fmtFR, resolveCloture, clotureLabel, clotureShort, clotureInfo, clotureOptions, clotureSel, PROJ, alertDaysOf, projectionOf, TODAY, isoD, daysAgo, progOf, nextOf, EMPTY_FORM, freshForm, TEMPLATES, chipOff, chipOn };
+export { COLORS, STATUTS, STATUT_STYLE, hasSas, sasUntilOf, sasPendingOf, isMandat, mandatDepuis, POIDS, POIDS_LABEL, POIDS_ORDER, POIDS_DOT, poidsOf, inferSasUntil, echeanceEffective, plusDays, plusMonths, startOf, notStarted, statutOf, migrate, r, SEED, ACTUEL, CLOTURE, TYPES, MOIS_S, lastDay, fmtJM, fmtFR, resolveCloture, clotureLabel, clotureShort, clotureInfo, clotureOptions, clotureSel, PROJ, alertDaysOf, projectionOf, TODAY, isoD, daysAgo, progOf, nextOf, EMPTY_FORM, freshForm, TEMPLATES, chipOff, chipOn };

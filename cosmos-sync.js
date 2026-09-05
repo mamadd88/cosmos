@@ -11,7 +11,7 @@ export async function createSync({ author = 'Toi' } = {}) {
   const db = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseKey);
 
   // Ce que le serveur connaît, pour calculer les différences
-  const cache = { rows: new Map(), cosmosJson: '', lentillesJson: '[]', journalIds: new Set(), lastPoll: null };
+  const cache = { rows: new Map(), cosmosJson: '', journalIds: new Set(), lastPoll: null };
   let queue = null, timer = null, inflight = null, retries = 0, onError = () => {}, currentEmail = '';
 
   const rowKey = x => JSON.stringify(x);
@@ -38,11 +38,10 @@ export async function createSync({ author = 'Toi' } = {}) {
     cache.etageDeJson = JSON.stringify(data.etageDe || {});
     cache.etagesJson = JSON.stringify(data.etages || {});
     cache.titresDeJson = JSON.stringify(data.titresDe || {});
-    cache.lentillesJson = JSON.stringify(data.lentilles || []);
     cache.journalIds = new Set((data.journal || []).map(j => j.id));
     cache.lastPoll = data.now;
     const rows = minis.map(r => r.data);
-    return { cosmos: data.cosmos || [], reperes: data.reperes || {}, etageDe: data.etageDe || {}, etages: data.etages || {}, titresDe: data.titresDe || {}, lentilles: data.lentilles || [], rows, journal: (data.journal || []).map(jEntry), journalArchived: data.journalArchived || 0,
+    return { cosmos: data.cosmos || [], reperes: data.reperes || {}, etageDe: data.etageDe || {}, etages: data.etages || {}, titresDe: data.titresDe || {}, rows, journal: (data.journal || []).map(jEntry), journalArchived: data.journalArchived || 0,
       propositions: (data.propositions || []).map(pEntry), empty: !(data.cosmos || []).length && !rows.length };
   }
   // Après migration côté app : considère l'état courant comme sauvegardé (les migrations sont rejouées à chaque chargement)
@@ -53,7 +52,6 @@ export async function createSync({ author = 'Toi' } = {}) {
     cache.etageDeJson = JSON.stringify(state.etageDe || {});
     cache.etagesJson = JSON.stringify(state.etages || {});
     cache.titresDeJson = JSON.stringify(state.titresDe || {});
-    cache.lentillesJson = JSON.stringify(state.lentilles || []);
     (state.journal || []).forEach(e => cache.journalIds.add(e.id));
   }
 
@@ -84,8 +82,6 @@ export async function createSync({ author = 'Toi' } = {}) {
     const cosmosJson = JSON.stringify(s.cosmos);
     const cosmosPayload = cosmosJson !== cache.cosmosJson ? s.cosmos : null;
     const journalPayload = (s.journal || []).filter(e => !cache.journalIds.has(e.id));
-    const lentillesJson = JSON.stringify(s.lentilles || []);
-    const lentillesPayload = lentillesJson !== cache.lentillesJson ? (s.lentilles || []) : null;
     const reperesJson = JSON.stringify(s.reperes || {});
     const reperesPayload = reperesJson !== cache.reperesJson ? (s.reperes || {}) : null;   // carte complète { cosmos : repère }
     const etageDeJson = JSON.stringify(s.etageDe || {}), etagesJson = JSON.stringify(s.etages || {});
@@ -94,10 +90,10 @@ export async function createSync({ author = 'Toi' } = {}) {
     const titresDeJson = JSON.stringify(s.titresDe || {});
     const titresDePayload = titresDeJson !== cache.titresDeJson ? (s.titresDe || {}) : null;   // carte complète { cosmos : [titres] }
     const replace = !!s.replace;
-    if (!replace && !rowsPayload.length && !deleted.length && !cosmosPayload && !journalPayload.length && !lentillesPayload && !reperesPayload && !etageDePayload && !etagesPayload && !titresDePayload) return;
+    if (!replace && !rowsPayload.length && !deleted.length && !cosmosPayload && !journalPayload.length && !reperesPayload && !etageDePayload && !etagesPayload && !titresDePayload) return;
     const args = replace
-      ? { p_cosmos: s.cosmos, p_rows: s.rows.map((x, i) => ({ id: x.id, data: x, position: i })), p_deleted: [], p_journal: s.journal || [], p_replace: true, p_author: author, p_lentilles: s.lentilles || [], p_reperes: s.reperes || {}, p_etage_de: s.etageDe || {}, p_etages: s.etages || {}, p_titres_de: s.titresDe || {} }
-      : { p_cosmos: cosmosPayload, p_rows: rowsPayload, p_deleted: deleted, p_journal: journalPayload, p_replace: false, p_author: author, p_lentilles: lentillesPayload, p_reperes: reperesPayload, p_etage_de: etageDePayload, p_etages: etagesPayload, p_titres_de: titresDePayload };
+      ? { p_cosmos: s.cosmos, p_rows: s.rows.map((x, i) => ({ id: x.id, data: x, position: i })), p_deleted: [], p_journal: s.journal || [], p_replace: true, p_author: author, p_reperes: s.reperes || {}, p_etage_de: s.etageDe || {}, p_etages: s.etages || {}, p_titres_de: s.titresDe || {} }
+      : { p_cosmos: cosmosPayload, p_rows: rowsPayload, p_deleted: deleted, p_journal: journalPayload, p_replace: false, p_author: author, p_reperes: reperesPayload, p_etage_de: etageDePayload, p_etages: etagesPayload, p_titres_de: titresDePayload };
     const { data, error } = await db.rpc('sync_etat', args);
     if (error) throw error;
     const at = data && data.savedAt;
@@ -105,7 +101,6 @@ export async function createSync({ author = 'Toi' } = {}) {
     (replace ? args.p_rows : rowsPayload).forEach(r => cache.rows.set(r.id, { json: rowKey(r.data), position: r.position, savedAt: at }));
     deleted.forEach(id => cache.rows.delete(id));
     cache.cosmosJson = cosmosJson;
-    cache.lentillesJson = lentillesJson;
     cache.reperesJson = reperesJson;
     cache.etageDeJson = etageDeJson;
     cache.etagesJson = etagesJson;

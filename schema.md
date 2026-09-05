@@ -155,18 +155,15 @@ Le modèle ci-dessus reste la référence conceptuelle. L'implémentation retenu
 | `etapes` (vue) | `mini_cosmos_id`, `position`, `texte`, `done` |
 | `journal` | trace de toute écriture : `t` (horodatage de l'auteur), `created_at` (serveur), `author`, `type` (+ `proposition`, `note`), `mini_id` sans FK, `changes` jsonb |
 | `agents` | une clé par agent : `key_hash` (SHA-256, jamais la clé), `ecriture_directe`, `actif`, `last_used_at` |
-| `lentilles` | registre des tags par utilisateur : `(user_id, name)` clé, `color`, `position` ; sur chaque mini-cosmos, `data->'tags'` = liste de noms |
 | `propositions` | suggestions d'agents : `patch` jsonb (objectif, actuel, entropie, reponse, sas, alerte, kill, etapes), `motif`, `statut` en_attente / acceptee / refusee |
 
 Toutes les tables portent `user_id` et une politique RLS `user_id = auth.uid()` ; `anon` n'a aucun accès.
 
 **Fonctions côté app** (droits de l'utilisateur connecté) : `charger_etat()` (tout l'état en un appel, journal des 12 derniers mois), `sync_etat(...)` (sauvegarde différentielle en une transaction, ou remplacement complet à l'import), `creer_agent(nom, ecriture_directe)` (renvoie la clé une seule fois).
 
-**Fonctions agents** (`security definer`, exécutables uniquement par `service_role`, donc par `/api/agent`) : `agent_verifier(hash)`, `agent_lire`, `agent_proposer`, `agent_modifier` (exige `ecriture_directe`, applique le patch, ajoute les étapes sans doublon, trace `changes`), `agent_noter`. Champs autorisés dans un patch : `objectif, actuel, entropie, reponse, sas, sasUntil (AAAA-MM-JJ), alerte, kill, etapes, tags` (noms de lentilles existantes, la liste remplace la précédente).
 
 **Titres** : `cosmos.titres` (jsonb, liste ordonnée de noms) sépare les terrains d'une pièce ; `data->>'titre'` range un terrain sous l'un d'eux. Un titre n'a ni objectif ni date ; renommer ou supprimer un titre met à jour ou vide le champ des terrains concernés.
 
-**Liens** : `data->'dependDe'` = liste d'identifiants de mini-cosmos amont (« ce terrain dépend de »). Plus affiché depuis le retrait de la carte (les lentilles font les liens) ; le champ reste toléré dans les données. Supprimer un mini-cosmos retire les références qui pointaient vers lui.
 
 **SAS daté** (migration `20260904030000_sas_until.sql`) : `data->>'sasUntil'` = fin du test. Règle de déduction quand elle manque (app et SQL, fonction `sas_until_deduit`) : date explicite « (30/09) » dans le texte du SAS, sinon « 14 jours » / « 2 semaines » / « 1 mois » depuis le début, sinon 14 jours. L'échéance effective d'un mini-cosmos (`echeanceEffective` dans `cosmos-core.js`) est cette date tant que le SAS n'est pas franchi, puis la clôture.
 
