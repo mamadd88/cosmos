@@ -13,7 +13,8 @@ export async function createSync({ author = 'Toi' } = {}) {
 
   // Ce que le serveur connaît, pour calculer les différences
   const cache = { rows: new Map(), cosmosJson: '', journalIds: new Set(), lastPoll: null };
-  let queue = null, timer = null, retryTimer = null, inflight = null, retries = 0, revision = 0, onError = () => {}, currentEmail = '';
+  let queue = null, timer = null, retryTimer = null, inflight = null, retries = 0, revision = 0, onError = () => {}, currentEmail = '', conflict = false;
+  const serverStructure = {};
   const structureKeys = ['cosmos', 'etageDe', 'etages', 'titresDe'];
   const structureValue = (s, key) => s[key] || (key === 'cosmos' ? [] : {});
 
@@ -45,7 +46,8 @@ export async function createSync({ author = 'Toi' } = {}) {
       propositions: (data.propositions || []).map(pEntry), empty: !(data.cosmos || []).length && !rows.length };
   }
   function remember(data, state) {
-    cache.rows = new Map((data.miniCosmos || []).map((r, i) => [r.id, { json: rowKey(r.data), position: i, savedAt: r.updated_at }]));
+    for (const key of structureKeys) serverStructure[key] = structureValue(data, key);
+    cache.rows = new Map((data.miniCosmos || []).map((r, i) => [r.id, { json: rowKey(r.data), position: i, serverPosition: r.position ?? i, serverData: r.data, savedAt: r.updated_at }]));
     cache.journalIds = new Set();
     prime(state);
     cache.lastPoll = data.now;
@@ -58,7 +60,7 @@ export async function createSync({ author = 'Toi' } = {}) {
   }
   // Après migration côté app : considère l'état courant comme sauvegardé (les migrations sont rejouées à chaque chargement)
   function prime(state) {
-    cache.rows = new Map(state.rows.map((x, i) => { const p = cache.rows.get(x.id); return [x.id, { json: rowKey(x), position: i, savedAt: p ? p.savedAt : null }]; }));
+    cache.rows = new Map(state.rows.map((x, i) => { const p = cache.rows.get(x.id); return [x.id, { json: rowKey(x), position: i, savedAt: p ? p.savedAt : null, serverData: p ? p.serverData : x, serverPosition: p ? p.serverPosition : i }]; }));
     cache.cosmosJson = rowKey(state.cosmos);
     cache.etageDeJson = rowKey(state.etageDe || {});
     cache.etagesJson = rowKey(state.etages || {});
@@ -71,19 +73,21 @@ export async function createSync({ author = 'Toi' } = {}) {
     revision++;
     clearTimeout(retryTimer); retries = 0;
     queue = { ...state, replace: !!state.replace || !!(queue && queue.replace) };
-    clearTimeout(timer); timer = setTimeout(flush, 350);
+    clearTimeout(timer); if (!conflict) timer = setTimeout(flush, 350);
   }
   function flush() {
     clearTimeout(timer); clearTimeout(retryTimer);
     if (inflight) return inflight;
+    if (conflict) return Promise.resolve();
     inflight = (async () => {
       while (queue) {
         const s = queue; queue = null;
         try { await doSave(s); retries = 0; }
         catch (e) {
-          onError(new Error(fr(e)));
+          conflict = e.code === 'P4090';
+          onError(Object.assign(new Error(fr(e)), { code: e.code }));
           if (!queue) queue = s; else queue.replace = queue.replace || s.replace;
-          if (retries < 3) { retries++; retryTimer = setTimeout(flush, [5000, 15000, 45000][retries - 1]); }
+          if (!conflict && retries < 3) { retries++; retryTimer = setTimeout(flush, [5000, 15000, 45000][retries - 1]); }
           break;
         }
       }
@@ -92,7 +96,14 @@ export async function createSync({ author = 'Toi' } = {}) {
   }
   async function doSave(s) {
     const rowsPayload = [], seen = new Set();
-    s.rows.forEach((x, i) => { seen.add(x.id); const j = rowKey(x), p = cache.rows.get(x.id); if (!p || p.json !== j || p.position !== i) rowsPayload.push({ id: x.id, data: x, position: i }); });
+    s.rows.forEach((x, i) => {
+      seen.add(x.id); const j = rowKey(x), p = cache.rows.get(x.id);
+      if (!p || p.json !== j || p.position !== i) {
+        const previous = p ? JSON.parse(p.json) : {};
+        const changed = [...new Set([...Object.keys(previous), ...Object.keys(x)])].filter(k => rowKey(previous[k]) !== rowKey(x[k]));
+        rowsPayload.push({ id: x.id, data: x, position: i, changed, base: p ? p.serverData : null, basePosition: p ? p.serverPosition : null, positionChanged: !p || p.position !== i });
+      }
+    });
     const deleted = [...cache.rows.keys()].filter(id => !seen.has(id));
     const cosmosJson = rowKey(s.cosmos);
     const cosmosPayload = cosmosJson !== cache.cosmosJson ? s.cosmos : null;
@@ -107,11 +118,16 @@ export async function createSync({ author = 'Toi' } = {}) {
     const args = replace
       ? { p_cosmos: s.cosmos, p_rows: s.rows.map((x, i) => ({ id: x.id, data: x, position: i })), p_deleted: [], p_journal: s.journal || [], p_replace: true, p_author: author, p_etage_de: s.etageDe || {}, p_etages: s.etages || {}, p_titres_de: s.titresDe || {} }
       : { p_cosmos: cosmosPayload, p_rows: rowsPayload, p_deleted: deleted, p_journal: journalPayload, p_replace: false, p_author: author, p_etage_de: etageDePayload, p_etages: etagesPayload, p_titres_de: titresDePayload };
-    const { data, error } = await db.rpc('sync_etat', args);
+    args.p_expected = { ...serverStructure, deleted: Object.fromEntries(deleted.map(id => { const p = cache.rows.get(id); return [id, { data: p.serverData, position: p.serverPosition }]; })) };
+    const { data, error } = await db.rpc('sync_etat_v2', args);
     if (error) throw error;
     const at = data && data.savedAt;
     if (replace) { cache.rows = new Map(); cache.journalIds = new Set(); }
-    (replace ? args.p_rows : rowsPayload).forEach(r => cache.rows.set(r.id, { json: rowKey(r.data), position: r.position, savedAt: at }));
+    const saved = new Map((data?.rows || []).map(r => [r.id, r]));
+    (replace ? args.p_rows : rowsPayload).forEach(r => { const remote = saved.get(r.id) || r; cache.rows.set(r.id, { json: rowKey(r.data), position: r.position, serverData: remote.data, serverPosition: remote.position, savedAt: at }); });
+    for (const [arg, key] of [['p_cosmos','cosmos'], ['p_etage_de','etageDe'], ['p_etages','etages'], ['p_titres_de','titresDe']]) {
+      if (args[arg] !== null) serverStructure[key] = data?.structure?.[key] ?? structureValue(s, key);
+    }
     deleted.forEach(id => cache.rows.delete(id));
     cache.cosmosJson = cosmosJson;
     cache.etageDeJson = etageDeJson;
@@ -174,5 +190,14 @@ export async function createSync({ author = 'Toi' } = {}) {
     return data.map(jEntry);
   }
 
-  return { session, login, logout, onAuth, email, load, prime, save, flush, poll, decideProposition, listAgents, createAgent, revokeAgent, assist, journalArchive, onError: cb => { onError = cb; } };
+  // Le bouton de résolution exporte d'abord la copie locale. Un échec de lecture conserve la file.
+  async function reloadAfterConflict() {
+    if (inflight) await inflight;
+    const version = revision;
+    const data = await readState(), state = stateFrom(data);
+    if (version !== revision) throw new Error('Des modifications ont été faites pendant le rechargement. Exporte-les à nouveau.');
+    clearTimeout(timer); clearTimeout(retryTimer); queue = null; conflict = false; retries = 0; revision++;
+    remember(data, state); return state;
+  }
+  return { hasPending: () => !!queue || !!inflight, reloadAfterConflict, session, login, logout, onAuth, email, load, prime, save, flush, poll, decideProposition, listAgents, createAgent, revokeAgent, assist, journalArchive, onError: cb => { onError = cb; } };
 }

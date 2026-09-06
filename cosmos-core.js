@@ -134,7 +134,7 @@ const inferSasUntil = x => { const base=startOf(x)||daysAgo(0); const t=String(x
 // mandat d'un an depuis une date de base, reporté d'année en année jusqu'à la prochaine échéance après aujourd'hui
 const mandatDepuis = base => { const d=/^\d{4}-\d{2}-\d{2}$/.test(base||'')?base:daysAgo(0); const today=daysAgo(0); let end=plusMonths(d,12); let guard=0; while(end<=today&&guard++<200) end=plusMonths(end,12); return 'A:'+end; };
 // échéance effective : la fin du test tant que le SAS n'est pas franchi, sinon la clôture (null = sans date)
-const echeanceEffective = x => { const fin=resolveCloture(x.cloture); const su=(!x.closed&&sasPendingOf(x))?sasUntilOf(x):null; return su?{iso:su,sas:true,final:fin}:{iso:fin,sas:false,final:fin}; };
+const echeanceEffective = x => { const fin=resolveCloture(x.cloture); const su=(!x.closed&&sasPendingOf(x))?sasUntilOf(x):null; return x.closed?{iso:x.closedAt||fin,sas:false,final:fin}:su?{iso:su,sas:true,final:fin}:{iso:fin,sas:false,final:fin}; };
 SEED.forEach((x,i)=>{ const age=20+(i*37)%110; x.createdAt=daysAgo(age); x.history=[{t:x.createdAt,type:'created'}];
   const done=x.actions.filter(a=>a.done).length; for(let j=0;j<done;j++) x.history.push({t:daysAgo(Math.max(0,Math.round(age-(j+1)*age/(done+1)))),type:'step'});
   if(sasPendingOf(x)) x.sasUntil=inferSasUntil(x); if(x.cloture==='Permanent') x.cloture=mandatDepuis(x.createdAt); });
@@ -162,4 +162,21 @@ const TEMPLATES = [
 const chipOff = {color:'#71717a',bg:'#09090b',border:'#27272a'};
 const chipOn = {color:'#f4f4f5',bg:'rgba(63,63,70,0.55)',border:'rgba(113,113,122,0.7)'};
 
-export { COLORS, STATUTS, STATUT_STYLE, hasSas, sasUntilOf, sasPendingOf, isMandat, mandatDepuis, POIDS, POIDS_LABEL, POIDS_ORDER, POIDS_DOT, poidsOf, inferSasUntil, echeanceEffective, plusDays, plusMonths, startOf, notStarted, statutOf, migrate, r, SEED, ACTUEL, CLOTURE, TYPES, MOIS_S, lastDay, fmtJM, fmtFR, resolveCloture, clotureLabel, clotureShort, clotureInfo, clotureOptions, clotureSel, PROJ, alertDaysOf, projectionOf, TODAY, refreshToday, isoD, daysAgo, progOf, nextOf, EMPTY_FORM, freshForm, TEMPLATES, chipOff, chipOn };
+// Même validation pour un nouveau mini-cosmos et une fiche modifiée.
+const validateMini=(x,rows=[])=>{
+  if(!x.cosmos) return 'Choisis un cosmos.';
+  if(!String(x.name||'').trim()) return 'Le nom du mini-cosmos est obligatoire.';
+  if(rows.some(r=>r.id!==x.id&&r.cosmos===x.cosmos&&String(r.name||'').trim().toLowerCase()===x.name.trim().toLowerCase())) return 'Ce nom existe déjà dans ce cosmos.';
+  if(!String(x.entropie||'').trim()||!String(x.reponse||'').trim()) return 'Renseigne l’entropie et sa réponse.';
+  const validDate=d=>/^\d{4}-\d{2}-\d{2}$/.test(d||'')&&!isNaN(new Date(d+'T00:00:00'))&&isoD(new Date(d+'T00:00:00'))===d;
+  const start=startOf(x), end=resolveCloture(x.cloture);
+  if(!validDate(start)) return 'La date de début est invalide.';
+  if(!validDate(end)) return 'Choisis une échéance valide.';
+  if(end<start) return 'L’échéance doit être après la date de début ou le même jour.';
+  if(hasSas(x)) { const until=sasUntilOf(x); if(!validDate(until)) return 'Choisis une date de fin de test valide.';
+    if(until<start||until>end) return 'La fin du test doit être comprise entre le début et l’échéance.'; }
+  if(x.alertDays!=null&&(!Number.isInteger(Number(x.alertDays))||Number(x.alertDays)<0)) return 'Le préavis doit être un nombre entier positif ou nul.';
+  return '';
+};
+
+export { validateMini, COLORS, STATUTS, STATUT_STYLE, hasSas, sasUntilOf, sasPendingOf, isMandat, mandatDepuis, POIDS, POIDS_LABEL, POIDS_ORDER, POIDS_DOT, poidsOf, inferSasUntil, echeanceEffective, plusDays, plusMonths, startOf, notStarted, statutOf, migrate, r, SEED, ACTUEL, CLOTURE, TYPES, MOIS_S, lastDay, fmtJM, fmtFR, resolveCloture, clotureLabel, clotureShort, clotureInfo, clotureOptions, clotureSel, PROJ, alertDaysOf, projectionOf, TODAY, refreshToday, isoD, daysAgo, progOf, nextOf, EMPTY_FORM, freshForm, TEMPLATES, chipOff, chipOn };

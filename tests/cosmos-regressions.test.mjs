@@ -24,7 +24,7 @@ async function setup(t, initial = snapshot()) {
       if (server.readGate) await server.readGate.promise;
       return { data, error: null };
     }
-    assert.equal(name, 'sync_etat');
+    assert.equal(name, 'sync_etat_v2');
     server.writes.push(clone(args));
     if (server.writeGate) await server.writeGate.promise;
     if (server.failWrite) return { error: { message: 'Réseau indisponible' } };
@@ -218,6 +218,7 @@ function application(document = { getElementById: () => null }) {
   app.messages = [];
   app.flash = message => app.messages.push(message);
   app.syncHash = () => {};
+  app.importRef = { current: null };
   return app;
 }
 
@@ -332,4 +333,121 @@ test('le timer et le retour sur l’onglet sont branchés même sans Supabase', 
   assert.equal(core.daysAgo(0), '2026-09-09');
   app.componentWillUnmount();
   assert.equal(handlers.has('visibilitychange'), false);
+});
+
+function editableApp(rows = [mini('mc-a')]) {
+  const app = application();
+  app.state = { ...app.state, cosmos: ['TRAVAIL'], etageDe: { TRAVAIL: 'ethos' }, titresDe: { TRAVAIL: ['PROJETS'] },
+    rows: rows.map(x => ({ objectif: 'Objectif initial', entropie: 'Risque', reponse: 'Réponse', ...x })), ready: true, form: core.freshForm() };
+  return app;
+}
+const input = value => ({ target: { value } });
+
+test('valider un renommage identique garde les titres et l’étage', () => {
+  const app = editableApp();
+  app.renderVals().groups[0].startEdit({ stopPropagation() {} });
+  app.renderVals().groups[0].saveEdit();
+  assert.deepEqual(app.state.titresDe, { TRAVAIL: ['PROJETS'] });
+  assert.deepEqual(app.state.etageDe, { TRAVAIL: 'ethos' });
+  assert.equal(app.state.journal.length, 0);
+});
+
+test('renommer réellement déplace les titres, l’étage et les mini-cosmos', () => {
+  const app = editableApp();
+  app.setState({ editCosmos: 'TRAVAIL', editCosmosName: 'PROJETS' });
+  app.renderVals().groups[0].saveEdit();
+  assert.deepEqual(app.state.cosmos, ['PROJETS']);
+  assert.deepEqual(app.state.titresDe, { PROJETS: ['PROJETS'] });
+  assert.deepEqual(app.state.etageDe, { PROJETS: 'ethos' });
+  assert.equal(app.state.rows[0].cosmos, 'PROJETS');
+});
+
+test('le tri clôture compare les dates réelles, dates précises et mandats compris', () => {
+  const app = editableApp([mini('mc-late'), { ...mini('mc-middle'), cloture: 'A:2026-11-01' }, { ...mini('mc-early'), cloture: 'M:2026-10' }]);
+  const ids = () => app.renderVals().groups[0].rows.filter(x => x.isRow).map(x => x.id);
+  app.renderVals().columns.find(x => x.key === 'cloture').onClick();
+  assert.deepEqual(ids(), ['mc-early', 'mc-middle', 'mc-late']);
+  app.renderVals().columns.find(x => x.key === 'cloture').onClick();
+  assert.deepEqual(ids(), ['mc-late', 'mc-middle', 'mc-early']);
+});
+
+for (const exit of ['close', 'finish', 'navigate']) test(`une édition valide est enregistrée avec son journal (${exit})`, () => {
+  const app = editableApp(); app.setState({ selected: 'mc-a' });
+  app.renderVals().detail.toggleEdit();
+  app.renderVals().detail.edit.objectif(input('Objectif modifié'));
+  assert.equal(app.state.rows[0].objectif, 'Objectif initial');
+  assert.equal(app.serialize().miniCosmos[0].objectif, 'Objectif initial');
+  if (exit === 'close') app.renderVals().closeDetail();
+  else if (exit === 'navigate') app.renderVals().tabJournal.onClick();
+  else app.renderVals().detail.toggleEdit();
+  assert.equal(app.state.rows[0].objectif, 'Objectif modifié');
+  assert.equal(app.state.journal.length, 1);
+  assert.deepEqual(app.state.journal[0].changes, [{ field: 'Objectif', before: 'Objectif initial', after: 'Objectif modifié' }]);
+  app.renderVals().closeDetail();
+  assert.equal(app.state.journal.length, 1);
+});
+
+for (const [field, value] of [['name', ''], ['entropie', '  '], ['reponse', ''], ['startAt', '2027-01-01'], ['cloture', '2026-02-30'], ['alertDays', '-1']]) {
+  test(`une édition invalide ne se sauvegarde pas : ${field}`, () => {
+    const app = editableApp(); app.setState({ selected: 'mc-a' }); app.beginEdit('mc-a');
+    const before = clone(app.state.rows);
+    app.renderVals().detail.edit[field](input(value)); app.renderVals().closeDetail();
+    assert.equal(app.state.selected, 'mc-a'); assert.equal(app.state.editing, true); assert.ok(app.state.editError);
+    assert.deepEqual(app.state.rows, before); assert.equal(app.state.journal.length, 0);
+    app.renderVals().detail.cancelEdit(); assert.equal(app.state.editing, false);
+  });
+}
+
+test('édition : les doublons et les dates de SAS hors période sont refusés', () => {
+  const app = editableApp([mini('mc-a'), mini('mc-b')]); app.setState({ selected: 'mc-a' }); app.beginEdit('mc-a');
+  app.renderVals().detail.edit.name(input('mc-b')); assert.equal(app.finishEdit(), false);
+  app.renderVals().detail.edit.name(input('mc-a'));
+  app.renderVals().detail.edit.sas(input('14 jours'));
+  app.renderVals().detail.edit.sasUntil(input('2027-01-01')); assert.equal(app.finishEdit(), false);
+  app.renderVals().detail.edit.sasUntil(input('2026-09-15')); assert.equal(app.finishEdit(), true);
+});
+
+test('annuler restaure aussi les étapes et les actions de statut du brouillon', () => {
+  const app = editableApp(); app.setState({ selected: 'mc-a' }); app.beginEdit('mc-a');
+  app.renderVals().detail.addStep(); app.renderVals().detail.togglePause();
+  app.renderVals().detail.cancelEdit();
+  assert.deepEqual(app.state.rows[0].actions, []); assert.equal(app.state.rows[0].pause, false); assert.equal(app.state.journal.length, 0);
+});
+
+test('clôturer et réouvrir conserve le mandat, les dates et le statut calculé', () => {
+  const app = editableApp([{ ...mini('mc-a'), cloture: 'A:2027-09-06', pause: true }]); app.setState({ selected: 'mc-a' });
+  app.renderVals().detail.closeIt();
+  assert.equal(app.state.rows[0].cloture, 'A:2027-09-06'); assert.equal(app.state.rows[0].closedAt, core.daysAgo(0));
+  assert.equal(app.renderVals().detail.cloture, core.fmtFR(core.daysAgo(0)));
+  assert.equal(core.echeanceEffective(app.state.rows[0]).iso, core.daysAgo(0));
+  app.renderVals().detail.toggleClose();
+  assert.equal(app.state.rows[0].closedAt, undefined); assert.equal(app.state.rows[0].cloture, 'A:2027-09-06');
+  assert.equal(core.statutOf(app.state.rows[0]), 'Pause');
+  assert.equal(app.state.rows[0].history.at(-1).value, 'Pause');
+});
+
+test('Échap pendant le renommage ne renomme pas le cosmos au blur suivant', () => {
+  const app=editableApp(); app.setState({editCosmos:'TRAVAIL',editCosmosName:'RENOMMÉ'});
+  const g=app.renderVals().groups[0]; g.editKey({key:'Escape'}); g.saveEdit();
+  assert.deepEqual(app.state.cosmos,['TRAVAIL']); assert.deepEqual(app.state.titresDe,{TRAVAIL:['PROJETS']});
+});
+test('le rangement sous un titre fait partie du brouillon annulable', () => {
+  const app=editableApp(); app.setState({selected:'mc-a'}); app.beginEdit('mc-a');
+  app.rangerSous('mc-a','PROJETS'); assert.equal(app.state.rows[0].titre,undefined); assert.equal(app.state.editDraft.titre,'PROJETS');
+  app.rangerSous('mc-a',''); assert.equal(app.state.editDraft.titre,undefined);
+  app.rangerSous('mc-a','PROJETS'); app.cancelMiniEdit();
+  assert.equal(app.state.rows[0].titre,undefined); assert.equal(app.state.journal.length,0);
+});
+
+test('résoudre un conflit exporte la copie locale avant de charger la base, même vide', async () => {
+  const app=editableApp(); app.setState({syncConflict:'Conflit'}); const calls=[];
+  app.exportJson=async () => { calls.push(['export',app.serialize().miniCosmos.length]); };
+  app.sync={reloadAfterConflict:async()=>{calls.push(['load']);return {cosmos:[],rows:[],etageDe:{},etages:{},titresDe:{},journal:[],journalArchived:0,propositions:[]};},prime:()=>{calls.push(['prime']);}};
+  await app.resolveSyncConflict();
+  assert.deepEqual(calls,[['export',1],['load'],['prime']]); assert.deepEqual(app.state.rows,[]); assert.equal(app.state.syncConflict,'');
+});
+test('une erreur de rechargement conserve la copie locale et le message de conflit', async () => {
+  const app=editableApp(); app.setState({syncConflict:'Conflit'});
+  app.exportJson=async()=>{}; app.sync={reloadAfterConflict:async()=>{throw new Error('Hors ligne');}};
+  await app.resolveSyncConflict(); assert.equal(app.state.rows.length,1); assert.equal(app.state.syncConflict,'Conflit'); assert.equal(app.state.syncConflictBusy,false);
 });
