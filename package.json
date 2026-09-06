@@ -6,6 +6,7 @@
     "node": "22.x"
   },
   "scripts": {
+    "test": "node --test",
     "creer-utilisateur": "node --env-file=.env.local scripts/creer-utilisateur.mjs"
   },
   "dependencies": {

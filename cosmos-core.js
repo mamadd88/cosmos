@@ -116,8 +116,9 @@ const projectionOf = x => {
   return {permanent:false,sas:eff.sas,mandat,days,pct,zone,color:PROJ[zone][1],zoneLabel,label:days<0?'-'+(-days)+' j':days===0?'J+0':'+'+days+' j',preavis,finalIso,finalPermanent:!finalIso,finalDays};
 };
 
-// historique simulé : création, étapes cochées, changements d'état
+// Même objet Date pour tous les consommateurs ; actualisé avant chaque rendu et au retour sur l'onglet.
 const TODAY=new Date(); TODAY.setHours(0,0,0,0);
+const refreshToday=(now=new Date())=>{ const day=new Date(now); day.setHours(0,0,0,0); const changed=TODAY.getTime()!==day.getTime(); if(changed) TODAY.setTime(day.getTime()); return changed; };
 const isoD=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 const daysAgo=n=>{ const d=new Date(TODAY); d.setDate(d.getDate()-n); return isoD(d); };
 const plusDays=(iso,n)=>{ const d=new Date(iso+'T00:00:00'); d.setDate(d.getDate()+n); return isoD(d); };
@@ -161,4 +162,4 @@ const TEMPLATES = [
 const chipOff = {color:'#71717a',bg:'#09090b',border:'#27272a'};
 const chipOn = {color:'#f4f4f5',bg:'rgba(63,63,70,0.55)',border:'rgba(113,113,122,0.7)'};
 
-export { COLORS, STATUTS, STATUT_STYLE, hasSas, sasUntilOf, sasPendingOf, isMandat, mandatDepuis, POIDS, POIDS_LABEL, POIDS_ORDER, POIDS_DOT, poidsOf, inferSasUntil, echeanceEffective, plusDays, plusMonths, startOf, notStarted, statutOf, migrate, r, SEED, ACTUEL, CLOTURE, TYPES, MOIS_S, lastDay, fmtJM, fmtFR, resolveCloture, clotureLabel, clotureShort, clotureInfo, clotureOptions, clotureSel, PROJ, alertDaysOf, projectionOf, TODAY, isoD, daysAgo, progOf, nextOf, EMPTY_FORM, freshForm, TEMPLATES, chipOff, chipOn };
+export { COLORS, STATUTS, STATUT_STYLE, hasSas, sasUntilOf, sasPendingOf, isMandat, mandatDepuis, POIDS, POIDS_LABEL, POIDS_ORDER, POIDS_DOT, poidsOf, inferSasUntil, echeanceEffective, plusDays, plusMonths, startOf, notStarted, statutOf, migrate, r, SEED, ACTUEL, CLOTURE, TYPES, MOIS_S, lastDay, fmtJM, fmtFR, resolveCloture, clotureLabel, clotureShort, clotureInfo, clotureOptions, clotureSel, PROJ, alertDaysOf, projectionOf, TODAY, refreshToday, isoD, daysAgo, progOf, nextOf, EMPTY_FORM, freshForm, TEMPLATES, chipOff, chipOn };

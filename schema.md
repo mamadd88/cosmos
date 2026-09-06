@@ -149,7 +149,7 @@ Le modèle ci-dessus reste la référence conceptuelle. L'implémentation retenu
 
 | Table / vue | Rôle |
 |---|---|
-| `cosmos` | domaines de vie : `(user_id, name)` clé, `position`, `repere` (la règle du jeu de la pièce, une phrase ; lue par les agents, écrite par l'utilisateur), `etage` (`ethos`, `logos` ou `pathos` : les trois étages fixes, dans l'ordre de chute), `titres` (liste ordonnée des séparations de la pièce) |
+| `cosmos` | domaines de vie : `(user_id, name)` clé, `position`, `etage` (`ethos`, `logos` ou `pathos` : les trois étages fixes, dans l'ordre de chute), `titres` (liste ordonnée des séparations de la pièce) |
 | `etages` | le repère de chaque étage : `(user_id, etage)` clé, `repere` |
 | `mini_cosmos` | une ligne par mini-cosmos : `id` (celui de l'app), `data` jsonb, `position`, colonnes générées (dont `sas_until`, fin du test d'entrée, et `poids` : vital / important / normal), `updated_at`, `updated_by` (« Toi » ou nom d'agent) |
 | `etapes` (vue) | `mini_cosmos_id`, `position`, `texte`, `done` |

@@ -297,7 +297,7 @@ input:focus,textarea:focus{outline:none;border-color:#52525b !important}
 <sc-for list="{{ t.groups }}" as="g" hint-placeholder-count="4">
   <div onDragOver="{{ g.gDragOver }}" onDrop="{{ g.gDrop }}" style="background:rgba(24,24,27,0.5);backdrop-filter:blur(12px);border:1px solid {{ g.cardBorder }};border-radius:16px;overflow:hidden;opacity:{{ g.cardOpacity }};box-shadow:{{ g.dropShadow }};transition:border-color 150ms ease,opacity 150ms ease">
     <div style="overflow-x:auto">
-    <div draggable="true" onDragStart="{{ g.gDragStart }}" onDragEnd="{{ g.gDragEnd }}" onClick="{{ g.toggle }}" title="Cliquer pour replier ou déplier" style="min-width:1180px;display:grid;grid-template-columns:14px 12px 18px 3px minmax(120px,160px) 96px 64px 46px 56px 56px 72px 72px 64px minmax(150px,1fr) auto auto;column-gap:10px;align-items:center;padding:10px 16px;background:rgba(24,24,27,0.75);border-bottom:1px solid {{ g.headBorder }};cursor:pointer;user-select:none">
+    <div draggable="true" onDragStart="{{ g.gDragStart }}" onDragEnd="{{ g.gDragEnd }}" onClick="{{ g.toggle }}" title="Cliquer pour replier ou déplier" style="min-width:1180px;display:grid;grid-template-columns:14px 12px 18px 3px minmax(120px,160px) 96px 64px 46px 56px 56px 72px 72px 64px 1fr auto auto;column-gap:10px;align-items:center;padding:10px 16px;background:rgba(24,24,27,0.75);border-bottom:1px solid {{ g.headBorder }};cursor:pointer;user-select:none">
       <span title="Glisser pour réordonner" style="font-family:'JetBrains Mono',monospace;font-size:13px;color:#3f3f46;letter-spacing:-2px;user-select:none">⋮⋮</span>
       <span style="display:inline-flex;justify-content:center;color:#71717a;font-size:9px;transform:rotate({{ g.chevron }});transition:transform 150ms ease">▶</span>
       <span title="{{ g.rankTitle }}" style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:#fafafa;text-align:right;white-space:nowrap">{{ g.rank }}</span>
@@ -311,8 +311,7 @@ input:focus,textarea:focus{outline:none;border-color:#52525b !important}
       <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#71717a;white-space:nowrap">{{ g.countLabel }}</span>
       <span title="{{ g.thermoTitle }}" style="display:flex;height:5px;border-radius:3px;overflow:hidden;background:#27272a"><sc-for list="{{ g.thermo }}" as="th" hint-placeholder-count="2"><span style="flex:{{ th.flex }};background:{{ th.color }}"></span></sc-for></span>
       <sc-for list="{{ g.counters }}" as="kc" hint-placeholder-count="6"><span title="{{ kc.title }}" style="display:flex;align-items:baseline;gap:5px;font-family:'JetBrains Mono',monospace;white-space:nowrap"><span style="min-width:2ch;text-align:right;font-size:12px;font-weight:600;color:{{ kc.color }}">{{ kc.value }}</span><span style="font-size:9.5px;letter-spacing:0.04em;text-transform:uppercase;color:#52525b">{{ kc.label }}</span></span></sc-for>
-      <sc-if value="{{ g.notEditingRepere }}" hint-placeholder-val="{{ true }}"><span onClick="{{ g.startRepere }}" title="{{ g.repereTitle }}" style="font-size:12px;color:{{ g.repereColor }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:text;min-width:0">{{ g.repereLabel }}</span></sc-if>
-      <sc-if value="{{ g.isEditingRepere }}" hint-placeholder-val="{{ false }}"><input value="{{ g.repereDraft }}" onClick="{{ g.stopIt }}" onChange="{{ g.setRepereDraft }}" onBlur="{{ g.saveRepere }}" onKeyDown="{{ g.repereKey }}" autoFocus="{{ true }}" maxLength="120" placeholder="la règle du jeu de cette pièce, en une phrase" style="background:#09090b;border:1px solid #3f3f46;border-radius:8px;padding:4px 10px;font-size:12px;color:#fafafa;width:100%;min-width:0"></sc-if>
+      <span></span>
       <span style="display:flex;gap:4px;align-items:center;justify-content:flex-end;min-width:24px"><sc-for list="{{ g.dots }}" as="dt" hint-placeholder-count="1"><span style="width:8px;height:8px;border-radius:99px;background:{{ dt.bg }};box-shadow:{{ dt.glow }}"></span></sc-for><sc-if value="{{ g.hasAlarm }}" hint-placeholder-val="{{ false }}"><span title="un terrain vital est en tension ou en retard" style="width:8px;height:8px;border-radius:99px;margin-left:6px;background:{{ g.alarm }};box-shadow:0 0 8px {{ g.alarm }}"></span></sc-if></span>
       <span onClick="{{ g.stopIt }}" style="display:flex;gap:6px;align-items:center;justify-content:flex-end">
       <sc-if value="{{ g.confirmDelete }}" hint-placeholder-val="{{ false }}">
@@ -876,8 +875,8 @@ input:focus,textarea:focus{outline:none;border-color:#52525b !important}
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;author&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Toi&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Journal&quot;}}">
 // Le cœur métier vit dans ./cosmos-core.js (chargé au montage) ; les identifiants ci-dessous sont liés à l'import.
-let COLORS, STATUTS, STATUT_STYLE, hasSas, sasUntilOf, sasPendingOf, isMandat, mandatDepuis, POIDS, POIDS_LABEL, POIDS_ORDER, POIDS_DOT, poidsOf, inferSasUntil, echeanceEffective, plusDays, plusMonths, startOf, notStarted, statutOf, migrate, r, SEED, ACTUEL, CLOTURE, TYPES, MOIS_S, lastDay, fmtJM, fmtFR, resolveCloture, clotureLabel, clotureShort, clotureInfo, clotureOptions, clotureSel, PROJ, alertDaysOf, projectionOf, TODAY, isoD, daysAgo, progOf, nextOf, EMPTY_FORM, freshForm, TEMPLATES, chipOff, chipOn;
-const bindCore = m => { ({ COLORS, STATUTS, STATUT_STYLE, hasSas, sasUntilOf, sasPendingOf, isMandat, mandatDepuis, POIDS, POIDS_LABEL, POIDS_ORDER, POIDS_DOT, poidsOf, inferSasUntil, echeanceEffective, plusDays, plusMonths, startOf, notStarted, statutOf, migrate, r, SEED, ACTUEL, CLOTURE, TYPES, MOIS_S, lastDay, fmtJM, fmtFR, resolveCloture, clotureLabel, clotureShort, clotureInfo, clotureOptions, clotureSel, PROJ, alertDaysOf, projectionOf, TODAY, isoD, daysAgo, progOf, nextOf, EMPTY_FORM, freshForm, TEMPLATES, chipOff, chipOn } = m); };
+let COLORS, STATUTS, STATUT_STYLE, hasSas, sasUntilOf, sasPendingOf, isMandat, mandatDepuis, POIDS, POIDS_LABEL, POIDS_ORDER, POIDS_DOT, poidsOf, inferSasUntil, echeanceEffective, plusDays, plusMonths, startOf, notStarted, statutOf, migrate, r, SEED, ACTUEL, CLOTURE, TYPES, MOIS_S, lastDay, fmtJM, fmtFR, resolveCloture, clotureLabel, clotureShort, clotureInfo, clotureOptions, clotureSel, PROJ, alertDaysOf, projectionOf, TODAY, refreshToday, isoD, daysAgo, progOf, nextOf, EMPTY_FORM, freshForm, TEMPLATES, chipOff, chipOn;
+const bindCore = m => { ({ COLORS, STATUTS, STATUT_STYLE, hasSas, sasUntilOf, sasPendingOf, isMandat, mandatDepuis, POIDS, POIDS_LABEL, POIDS_ORDER, POIDS_DOT, poidsOf, inferSasUntil, echeanceEffective, plusDays, plusMonths, startOf, notStarted, statutOf, migrate, r, SEED, ACTUEL, CLOTURE, TYPES, MOIS_S, lastDay, fmtJM, fmtFR, resolveCloture, clotureLabel, clotureShort, clotureInfo, clotureOptions, clotureSel, PROJ, alertDaysOf, projectionOf, TODAY, refreshToday, isoD, daysAgo, progOf, nextOf, EMPTY_FORM, freshForm, TEMPLATES, chipOff, chipOn } = m); };
 
 // Trois étages fixes, dans l'ordre de chute. Un cosmos appartient à un étage (Logos par défaut) ; l'ordre dans un étage est l'ordre du tableau des cosmos restreint à l'étage.
 const ETAGES=[['ethos','Ethos','E','ce qui porte l’opérateur : s’il tombe, tout tombe','Le caractère'],['logos','Logos','L','ce qu’il fait tourner : la règle et le moteur','L’ordre'],['pathos','Pathos','P','ce pour quoi tout existe : la source des poids','L’énergie']];
@@ -889,7 +888,7 @@ const rangerParEtage=(list,E)=>[...(list||[])].map((n,i)=>[n,i]).sort((a,b)=>(ET
 const placerEnFinEtage=(list,name,etage,E)=>{ const c=list.filter(n=>n!==name); let at=c.length; for(let k=0;k<c.length;k++){ if(ETAGE_ORDER[etageDeNom(E,c[k])]>ETAGE_ORDER[etage]){ at=k; break; } } c.splice(at,0,name); return c; };
 
 class Component extends DCLogic {
-  state = { ready:false, cosmos:[], reperes:{}, editRepere:null, editRepereText:'', etageDe:{}, etages:{}, editEtage:null, editEtageText:'', newEtage:'logos', titresDe:{}, editTitre:null, editTitreName:'', addTitreFor:null, newTitreName:'', rows:[], journal:[], filter:'Tous', selected:null,
+  state = { ready:false, cosmos:[], etageDe:{}, etages:{}, editEtage:null, editEtageText:'', newEtage:'logos', titresDe:{}, editTitre:null, editTitreName:'', addTitreFor:null, newTitreName:'', rows:[], journal:[], filter:'Tous', selected:null,
     showCosmosModal:false, showMiniModal:false, cosmosName:'', form:null, tab:0, toast:null, clock:'',
     needsLogin:false, loginEmail:'', loginPassword:'', loginError:'', loginBusy:false, propositions:[], agents:[], showAgents:false, newAgentName:'', newAgentDirect:false, newAgentKey:'', newAgentKeyName:'',
     plis:(()=>{ try{ const p=JSON.parse(localStorage.getItem('cosmos-plis-v1')||'{}'); return {cosmos:p.cosmos||{}}; }catch(e){ return {cosmos:{}}; } })() };
@@ -902,35 +901,35 @@ class Component extends DCLogic {
     if(location.hash===want){ this._fromHash=false; return; } if(this._fromHash){ this._fromHash=false; return; } history.pushState(null,'',want); }
   // persistance locale — un seul document JSON versionné, même format que l'export
   STORE_KEY='cosmos-app-v1';
-  serialize(){ const s=this.state; return {version:1,exportedAt:new Date().toISOString(),cosmos:s.cosmos,miniCosmos:s.rows,journal:s.journal||[],journalArchive:s.journalArchive||[],reperes:s.reperes||{},etageDe:s.etageDe||{},etages:s.etages||{},titresDe:s.titresDe||{},view:s.view||'table'}; }
+  serialize(){ const s=this.state; return {version:1,exportedAt:new Date().toISOString(),cosmos:s.cosmos,miniCosmos:s.rows,journal:s.journal||[],journalArchive:s.journalArchive||[],etageDe:s.etageDe||{},etages:s.etages||{},titresDe:s.titresDe||{},view:s.view||'table'}; }
   // le journal vivant garde 12 mois ; le reste part dans journalArchive (conservé dans l'export JSON)
   archiveOld(){ if(this.sync) return; const s=this.state; const J=s.journal||[]; const cut=new Date(); cut.setFullYear(cut.getFullYear()-1); const c=cut.toISOString();
     const old=J.filter(e=>e.t<c); if(!old.length) return; this.setState({journal:J.filter(e=>e.t>=c),journalArchive:[...old,...(s.journalArchive||[])]}); }
   load(){ try{ const raw=localStorage.getItem(this.STORE_KEY); if(!raw) return null; const d=JSON.parse(raw); if(d&&d.version===1&&Array.isArray(d.cosmos)&&Array.isArray(d.miniCosmos)) return d; }catch(e){} return null; }
   // en mode base : sauvegarde différentielle regroupée (cosmos-sync.js) ; sinon localStorage
-  persist(){ if(this.sync){ const s=this.state; this.sync.save({cosmos:s.cosmos,reperes:s.reperes||{},etageDe:s.etageDe||{},etages:s.etages||{},titresDe:s.titresDe||{},rows:s.rows,journal:this._replace?[...(s.journal||[]),...(this._replaceArchive||[])]:(s.journal||[]),replace:!!this._replace}); this._replace=false; this._replaceArchive=null; return; }
+  persist(){ if(this.sync){ const s=this.state; this.sync.save({cosmos:s.cosmos,etageDe:s.etageDe||{},etages:s.etages||{},titresDe:s.titresDe||{},rows:s.rows,journal:this._replace?[...(s.journal||[]),...(this._replaceArchive||[])]:(s.journal||[]),replace:!!this._replace}); this._replace=false; this._replaceArchive=null; return; }
     try{ localStorage.setItem(this.STORE_KEY,JSON.stringify(this.serialize())); }catch(e){} }
-  componentDidMount(){ this.tick(); this.t = setInterval(()=>this.tick(),30000);
+  componentDidMount(){ this._unmounted=false; this.tick(); this.t = setInterval(()=>this.tick(),30000);
+    this._onVis=()=>{ if(document.visibilityState==='visible') this.tick(); }; document.addEventListener('visibilitychange',this._onVis);
     this.onHash=()=>{ this._fromHash=true; const r=this.routeState(); this.setState(r.selected!==this.state.selected?{...r,editing:false,editSnap:null,confirmDeleteMini:false}:r); }; window.addEventListener('hashchange',this.onHash);
     this.onKey=e=>{ if(e.key!=='Escape') return; const s=this.state; if(s.showCosmosModal||s.showMiniModal||s.showAgents) this.setState({showCosmosModal:false,showMiniModal:false,showAgents:false}); else if(s.selected&&!s.editing) this.setState({selected:null,confirmDeleteMini:false}); }; window.addEventListener('keydown',this.onKey);
     Promise.all([import('./cosmos-core.js'),import('./cosmos-sync.js')]).then(async ([m,sy])=>{ bindCore(m);
       // base Supabase si /api/config la déclare (site déployé), sinon localStorage (fichier ouvert en local)
       let sync=null; try{ sync=await sy.createSync({author:this.props.author??'Toi'}); }catch(e){ console.error('cosmos-sync.js',e); this.flash('Synchronisation indisponible — mode local'); }
       if(sync){ this.sync=sync; sync.onError(e=>this.flash('Sauvegarde impossible — '+(e&&e.message?e.message:e)));
-        this._onVis=()=>{ if(document.visibilityState==='visible') this.pollDb(); }; document.addEventListener('visibilitychange',this._onVis);
         sync.onAuth(ev=>{ if(ev==='SIGNED_OUT'&&this.state.ready) this.setState({ready:false,needsLogin:true,dataMenu:false}); });
         if(await sync.session()) await this.bootDb(); else this.setState({needsLogin:true}); return; }
       this.bootLocal(); })
       .catch(e=>{ console.error('cosmos-core.js',e); this.setState({bootError:String(e)}); }); }
   bootLocal(){ const d=this.load();
-    const base=d?{cosmos:d.cosmos,reperes:d.reperes||{},etageDe:d.etageDe||{},etages:d.etages||{},titresDe:d.titresDe||{},rows:migrate(d.miniCosmos),journal:d.journal||this.journalFromRows(d.miniCosmos),view:d.view||'table'}:{cosmos:['ENTREPRISE','FAMILLE','RELATIONS','PERSONNEL'],reperes:{},etageDe:{...SEED_ETAGES},etages:{},titresDe:{},rows:SEED,journal:this.journalFromRows(SEED),view:'table'};
+    const base=d?{cosmos:d.cosmos,etageDe:d.etageDe||{},etages:d.etages||{},titresDe:d.titresDe||{},rows:migrate(d.miniCosmos),journal:d.journal||this.journalFromRows(d.miniCosmos),view:d.view||'table'}:{cosmos:['ENTREPRISE','FAMILLE','RELATIONS','PERSONNEL'],etageDe:{...SEED_ETAGES},etages:{},titresDe:{},rows:SEED,journal:this.journalFromRows(SEED),view:'table'};
     base.cosmos=rangerParEtage(base.cosmos,base.etageDe);
     this.setState({...base,journalArchive:(d&&d.journalArchive)||[],form:freshForm(),ready:true,...this.routeState()},()=>this.archiveOld()); }
   // démarrage en mode base : charge tout ; base vide ⇒ reprend les données de ce navigateur (Phase 1) ou l'exemple
   async bootDb(){ try{ const d=await this.sync.load(); let base;
-      if(d.empty){ const l=this.load(); if(l){ base={cosmos:l.cosmos,reperes:l.reperes||{},etageDe:l.etageDe||{},etages:l.etages||{},titresDe:l.titresDe||{},rows:migrate(l.miniCosmos),journal:l.journal||this.journalFromRows(l.miniCosmos)}; this._replaceArchive=l.journalArchive||[]; this.flash('Données de ce navigateur reprises dans la base'); }
-        else base={cosmos:['ENTREPRISE','FAMILLE','RELATIONS','PERSONNEL'],reperes:{},etageDe:{...SEED_ETAGES},etages:{},titresDe:{},rows:SEED,journal:this.journalFromRows(SEED)}; this._replace=true; }
-      else { base={cosmos:d.cosmos,reperes:d.reperes||{},etageDe:d.etageDe||{},etages:d.etages||{},titresDe:d.titresDe||{},rows:migrate(d.rows),journal:d.journal}; this.sync.prime(base); }
+      if(d.empty){ const l=this.load(); if(l){ base={cosmos:l.cosmos,etageDe:l.etageDe||{},etages:l.etages||{},titresDe:l.titresDe||{},rows:migrate(l.miniCosmos),journal:l.journal||this.journalFromRows(l.miniCosmos)}; this._replaceArchive=l.journalArchive||[]; this.flash('Données de ce navigateur reprises dans la base'); }
+        else base={cosmos:['ENTREPRISE','FAMILLE','RELATIONS','PERSONNEL'],etageDe:{...SEED_ETAGES},etages:{},titresDe:{},rows:SEED,journal:this.journalFromRows(SEED)}; this._replace=true; }
+      else { base={cosmos:d.cosmos,etageDe:d.etageDe||{},etages:d.etages||{},titresDe:d.titresDe||{},rows:migrate(d.rows),journal:d.journal}; this.sync.prime(base); }
       base.cosmos=rangerParEtage(base.cosmos,base.etageDe);
       this.installAssist();
       this.setState({...base,view:'table',journalArchive:[],journalArchived:d.journalArchived||0,propositions:d.propositions||[],needsLogin:false,loginError:'',bootError:'',form:freshForm(),ready:true,...this.routeState()});
@@ -939,15 +938,21 @@ class Component extends DCLogic {
   // l'assistant du volet gauche passe par /api/assist (la clé Anthropic reste côté serveur)
   installAssist(){ if(window.claude&&window.claude.complete) return; const sync=this.sync; window.claude={complete:req=>sync.assist(req)}; }
   async loadAgents(){ try{ this.setState({agents:await this.sync.listAgents()}); }catch(e){ console.error('agents',e); } }
-  // ce qui a changé ailleurs (agents, autre appareil) : toutes les 30 s et au retour sur l'onglet
+  // Relève différée pendant une édition ou un déplacement pour préserver les champs en cours de saisie.
+  pollState(){ const s=this.state; return this._unmounted||!s.ready||this._replace||s.editing||s.editCosmos||s.editTitre||s.editEtage||s.addTitreFor||s.drag||s.showMiniModal||s.showCosmosModal?null:s; }
+  // ce qui a changé ailleurs (agents, autre appareil) : état complet toutes les 30 s et au retour sur l'onglet
   async pollDb(){ if(!this.sync||!this.state.ready||this._polling) return; this._polling=true;
-    try{ const d=await this.sync.poll(this.state.rows); if(!d) return;
-      const byId=new Map(d.rows.map(r=>[r.data.id,r]));
-      if(byId.size||d.journal.length){ this.setState(s=>{ const seen=new Set(); const rows=s.rows.map(x=>{ if(byId.has(x.id)){ seen.add(x.id); return byId.get(x.id).data; } return x; }); d.rows.forEach(r=>{ if(!seen.has(r.data.id)) rows.push(r.data); });
-          const have=new Set((s.journal||[]).map(e=>e.id)); const journal=[...d.journal.filter(e=>!have.has(e.id)),...(s.journal||[])].sort((a,b)=>a.t<b.t?1:-1); return {rows,journal}; });
-        d.rows.forEach(r=>this.flash((r.data.name||'Mini-cosmos')+' mis à jour par '+r.updatedBy)); }
-      const before=(this.state.propositions||[]).length; this.setState({propositions:d.propositions});
-      if(d.propositions.length>before){ const p=d.propositions[d.propositions.length-1]; this.flash('Nouvelle proposition de '+p.agent); }
+    try{ await this.sync.poll(()=>this.pollState(),(d,changes)=>{
+      const before=new Set((this.state.propositions||[]).map(p=>p.id));
+      this.setState(s=>{ const patch={cosmos:d.cosmos,etageDe:d.etageDe,etages:d.etages,titresDe:d.titresDe,rows:d.rows,journal:d.journal,journalArchived:d.journalArchived,propositions:d.propositions};
+        if(s.selected&&!d.rows.some(x=>x.id===s.selected)) Object.assign(patch,{selected:null,editing:false,editSnap:null,confirmDeleteMini:false,aiDetail:null});
+        if(s.cosmosFilter&&s.cosmosFilter!=='Tous'&&!d.cosmos.includes(s.cosmosFilter)) patch.cosmosFilter='Tous';
+        if(s.cosmosMenu&&!d.cosmos.includes(s.cosmosMenu)) patch.cosmosMenu=null;
+        return patch; });
+      changes.rows.forEach(r=>this.flash((r.data.name||'Mini-cosmos')+' mis à jour par '+(r.updatedBy||'un autre appareil')));
+      if(changes.deleted.length) this.flash(changes.deleted.length+' mini-cosmos supprimé'+(changes.deleted.length>1?'s':'')+' depuis un autre appareil');
+      const p=d.propositions.find(p=>!before.has(p.id)); if(p) this.flash('Nouvelle proposition de '+p.agent);
+    });
     }catch(e){ console.error('poll',e); } finally{ this._polling=false; } }
   async doLogin(){ const s=this.state; if(!(s.loginEmail||'').trim()||!s.loginPassword||s.loginBusy) return; this.setState({loginBusy:true,loginError:''});
     try{ await this.sync.login(s.loginEmail.trim(),s.loginPassword); this.setState({loginPassword:'',loginBusy:false}); await this.bootDb(); }catch(e){ this.setState({loginBusy:false,loginError:e&&e.message?e.message:String(e)}); } }
@@ -971,11 +976,11 @@ class Component extends DCLogic {
     else this.logJ({type:'proposition',mini:sel.name,miniId:sel.id,cosmos:sel.cosmos,detail:'Proposition de '+p.agent+' refusée'});
     this.setState(s=>({propositions:(s.propositions||[]).filter(x=>x.id!==p.id)})); this.flash(ok?'Proposition appliquée':'Proposition refusée');
     try{ await this.sync.decideProposition(p.id,ok?'acceptee':'refusee'); }catch(e){ this.flash('Décision non enregistrée — '+(e&&e.message?e.message:e)); } }
-  componentDidUpdate(){ const s=this.state; const voile=document.getElementById('cosmos-chargement'); if(voile&&(s.ready||s.needsLogin||s.bootError)) voile.remove(); if(!s.ready) return; this.syncHash(); const k=[s.cosmos,s.reperes,s.etageDe,s.etages,s.titresDe,s.rows,s.view,s.journal,s.journalArchive]; if(!this.__snap||k.some((v,i)=>v!==this.__snap[i])){ this.__snap=k; this.persist(); } }
-  componentWillUnmount(){ clearInterval(this.t); window.removeEventListener('hashchange',this.onHash); window.removeEventListener('keydown',this.onKey); if(this._onVis) document.removeEventListener('visibilitychange',this._onVis); }
+  componentDidUpdate(){ const s=this.state; const voile=document.getElementById('cosmos-chargement'); if(voile&&(s.ready||s.needsLogin||s.bootError)) voile.remove(); if(!s.ready) return; this.syncHash(); const k=[s.cosmos,s.etageDe,s.etages,s.titresDe,s.rows,s.view,s.journal,s.journalArchive]; if(!this.__snap||k.some((v,i)=>v!==this.__snap[i])){ this.__snap=k; this.persist(); } }
+  componentWillUnmount(){ this._unmounted=true; clearInterval(this.t); window.removeEventListener('hashchange',this.onHash); window.removeEventListener('keydown',this.onKey); if(this._onVis) document.removeEventListener('visibilitychange',this._onVis); }
   async exportJson(){ try{ localStorage.setItem(this.STORE_KEY+':lastExport',new Date().toISOString()); }catch(e){} this.setState({lastExport:new Date().toISOString()}); let doc=this.serialize(); if(this.sync){ try{ doc={...doc,journalArchive:await this.sync.journalArchive()}; }catch(e){ this.flash('Archive du journal non récupérée — '+(e&&e.message?e.message:e)); } } const blob=new Blob([JSON.stringify(doc,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='cosmos-'+daysAgo(0)+'.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000); this.flash('Export JSON téléchargé'); }
-  importJson(file){ if(!file) return; const r=new FileReader(); r.onload=()=>{ try{ const d=JSON.parse(r.result); if(!(d&&d.version===1&&Array.isArray(d.cosmos)&&Array.isArray(d.miniCosmos))) throw 0; this._replace=true; this._replaceArchive=d.journalArchive||[]; this.setState({cosmos:rangerParEtage(d.cosmos,d.etageDe||{}),reperes:d.reperes||{},etageDe:d.etageDe||{},etages:d.etages||{},titresDe:d.titresDe||{},rows:migrate(d.miniCosmos),journal:d.journal||this.journalFromRows(d.miniCosmos),journalArchive:this.sync?[]:(d.journalArchive||[]),journalArchived:(d.journalArchive||[]).length,propositions:[]}); this.logJ({type:'donnees',detail:'Import JSON — '+d.miniCosmos.length+' mini-cosmos, '+d.cosmos.length+' cosmos'}); this.flash(d.miniCosmos.length+' mini-cosmos importés'); }catch(e){ this.flash('Fichier invalide'); } }; r.readAsText(file); }
-  resetData(){ this._replace=true; this._replaceArchive=[]; this.setState({cosmos:['ENTREPRISE','FAMILLE','RELATIONS','PERSONNEL'],reperes:{},etageDe:{...SEED_ETAGES},etages:{},titresDe:{},rows:SEED,journal:this.journalFromRows(SEED),journalArchive:[],journalArchived:0,propositions:[],confirmReset:false}); this.logJ({type:'donnees',detail:'Données d\u2019exemple restaurées'}); this.flash('Données d\u2019exemple restaurées'); }
+  importJson(file){ if(!file) return; const r=new FileReader(); r.onload=()=>{ try{ const d=JSON.parse(r.result); if(!(d&&d.version===1&&Array.isArray(d.cosmos)&&Array.isArray(d.miniCosmos))) throw 0; this._replace=true; this._replaceArchive=d.journalArchive||[]; this.setState({cosmos:rangerParEtage(d.cosmos,d.etageDe||{}),etageDe:d.etageDe||{},etages:d.etages||{},titresDe:d.titresDe||{},rows:migrate(d.miniCosmos),journal:d.journal||this.journalFromRows(d.miniCosmos),journalArchive:this.sync?[]:(d.journalArchive||[]),journalArchived:(d.journalArchive||[]).length,propositions:[]}); this.logJ({type:'donnees',detail:'Import JSON — '+d.miniCosmos.length+' mini-cosmos, '+d.cosmos.length+' cosmos'}); this.flash(d.miniCosmos.length+' mini-cosmos importés'); }catch(e){ this.flash('Fichier invalide'); } }; r.readAsText(file); }
+  resetData(){ this._replace=true; this._replaceArchive=[]; this.setState({cosmos:['ENTREPRISE','FAMILLE','RELATIONS','PERSONNEL'],etageDe:{...SEED_ETAGES},etages:{},titresDe:{},rows:SEED,journal:this.journalFromRows(SEED),journalArchive:[],journalArchived:0,propositions:[],confirmReset:false}); this.logJ({type:'donnees',detail:'Données d\u2019exemple restaurées'}); this.flash('Données d\u2019exemple restaurées'); }
   // Assistant IA : propositions (entropies, SAS, étapes, seuils) à partir du nom et de l'objectif — rien n'est appliqué sans clic
   async runAI(key,ctx){
     if(!(window.claude&&window.claude.complete)){ this.setState({[key]:{error:'Assistant indisponible dans cet environnement'}}); return; }
@@ -1002,7 +1007,7 @@ class Component extends DCLogic {
       remarque:d?d.remarque:'', hasRemarque:!!(d&&d.remarque), alerte:d?d.alerte:'', kill:d?d.kill:'', useSeuils:()=>d&&apply({alerte:d.alerte,kill:d.kill}),
       applyAll:()=>{ if(!d) return; apply({entropie:d.entropies[0]&&d.entropies[0].entropie,reponse:d.entropies[0]&&d.entropies[0].reponse,sas:d.sas[0],etapes:d.etapes,alerte:d.alerte,kill:d.kill}); } };
   }
-  tick(){ const d=new Date(); this.setState({clock:d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short'})+' · '+d.toTimeString().slice(0,5)}); if(this.sync&&this.state.ready) this.pollDb(); }
+  tick(){ const d=new Date(); const changed=refreshToday&&refreshToday(d); this.setState({clock:d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short'})+' · '+d.toTimeString().slice(0,5)}); if(changed&&this.state.ready) this.archiveOld(); if(this.sync&&this.state.ready) this.pollDb(); }
   flash(msg){ this.setState({toast:msg}); clearTimeout(this.tt); this.tt=setTimeout(()=>this.setState({toast:null}),2600); }
   setField(k){ return e=>this.setState(s=>({form:{...s.form,[k]:e.target.value}})); }
   // journal : trace horodatée de toute écriture (humain aujourd'hui, agents IA demain)
@@ -1065,16 +1070,11 @@ class Component extends DCLogic {
   // Monter / Descendre : dans son étage seulement
   moveCosmosBy(name,delta){ this.setState(s=>{ const et=etageDeNom(s.etageDe,name); const inE=s.cosmos.filter(n=>etageDeNom(s.etageDe,n)===et); const k=inE.indexOf(name), m=k+delta; if(k<0||m<0||m>=inE.length) return {};
       const other=inE[m]; const c=[...s.cosmos]; const i=c.indexOf(name), j=c.indexOf(other); c.splice(i,1); c.splice(j,0,name); return {cosmos:c}; }); }
-  // repère d'un étage : même mécanique que celui d'une pièce
+  // repère d'un étage : enregistré à Entrée ou en quittant le champ, tracé dans le Journal s'il change ; Échap annule
   saveEtageRepere(etage){ if(this._etageCancel===etage){ this._etageCancel=null; return; } const s=this.state; if(s.editEtage!==etage) return;
     const t=(s.editEtageText||'').trim().slice(0,320), cur=(s.etages||{})[etage]||'';
     this.setState(st=>{ const E={...(st.etages||{})}; if(t) E[etage]=t; else delete E[etage]; return {etages:E,editEtage:null,editEtageText:''}; });
     if(t!==cur) this.logJ({type:'cosmos',cosmos:ETAGE_LABEL[etage],detail:t?'Repère de l’étage '+ETAGE_LABEL[etage]+' : « '+t+' »':'Repère de l’étage '+ETAGE_LABEL[etage]+' effacé'}); }
-  // repère d'une pièce : enregistré à Entrée ou en quittant le champ, tracé dans le Journal s'il change ; Échap annule
-  saveRepere(name){ if(this._repereCancel===name){ this._repereCancel=null; return; } const s=this.state; if(s.editRepere!==name) return;
-    const t=(s.editRepereText||'').trim().slice(0,120), cur=(s.reperes||{})[name]||'';
-    this.setState(st=>{ const R={...(st.reperes||{})}; if(t) R[name]=t; else delete R[name]; return {reperes:R,editRepere:null,editRepereText:''}; });
-    if(t!==cur) this.logJ({type:'cosmos',cosmos:name,detail:t?'Repère de '+name+' : « '+t+' »':'Repère de '+name+' effacé'}); }
   // sections repliées de la page Cosmos : un réglage d'affichage, mémorisé dans ce navigateur (pas en base)
   setPlis(fn){ this.setState(st=>{ const p={cosmos:{...((st.plis||{}).cosmos||{})}}; fn(p); try{ localStorage.setItem('cosmos-plis-v1',JSON.stringify(p)); }catch(e){} return {plis:p}; }); }
   togglePli(kind,name){ this.setPlis(p=>{ if(p[kind][name]) delete p[kind][name]; else p[kind][name]=1; }); }
@@ -1171,6 +1171,7 @@ class Component extends DCLogic {
     return {jActivity:activity.map(m=>({...m,title:m.label+' · '+periodLabel+' · '+m.deltaLabel})),jStepsPerWeek:(count('step',from,end)/(spanDays/7)).toFixed(1),jPeriodLabel:periodLabel};
   }
   renderVals(){
+    if(refreshToday) refreshToday();
     const s=this.state; const TAB_OFF={color:'#a1a1aa',bg:'transparent',border:'transparent'};
     if(!s.ready) return {isTable:false, booting:!s.needsLogin, needsLogin:!!s.needsLogin, bootError:s.bootError||'', clock:s.clock, lastExportLabel:'', lastExportColor:'transparent',
       tabTable:TAB_OFF, tabEch:TAB_OFF, tabTpl:TAB_OFF, tabJournal:TAB_OFF,
@@ -1229,7 +1230,7 @@ class Component extends DCLogic {
     const pliOf=(kind,name)=>{ const open=!isClosed(kind,name); return {open,chevron:open?'90deg':'0deg',headBorder:open?'rgba(39,39,42,0.8)':'transparent',toggle:()=>this.togglePli(kind,name),stopIt:ev=>ev.stopPropagation()}; };
     // ligne d'insertion pendant le glisser d'une section : en haut si elle vient d'en dessous, en bas si elle vient d'au-dessus
     const dragNow=s.drag; const dropShadowOf=(type,from,to,key)=>(dragNow&&dragNow.type===type&&s.over===key&&from>=0&&from!==to)?(from>to?'inset 0 2px 0 0 #fafafa':'inset 0 -2px 0 0 #fafafa'):'none';
-    // bande d'en-tête d'une pièce : une ligne de tableau, mêmes colonnes pour toutes — thermomètre, six compteurs (zéros compris), repère, points de poids, alerte
+    // bande d'en-tête d'une pièce : une ligne de tableau, mêmes colonnes pour toutes — thermomètre, six compteurs (zéros compris), points de poids, alerte
     const SEV={retard:0,jourj:1,tension:2};
     const bandOf=list=>{ const open=list.filter(x=>x.statut!=='Clôturé'), run=open.filter(x=>x.statut!=='Pause'); const pj=run.map(x=>{ const p=projectionOf(x); return {x,z:p.zone,v:poidsOf(x),d:p.days}; });
       const z=k=>pj.filter(o=>o.z===k).length; const t={ok:z('ok'),test:z('sas'),warn:z('tension')+z('jourj'),bad:z('retard'),cont:z('continu')};
@@ -1240,11 +1241,6 @@ class Component extends DCLogic {
       const counters=[[open.filter(x=>x.statut==='SAS').length,'SAS','#818cf8','en SAS'],[paused,'pause','#d4a054','en pause'],[open.length-mandats,'datés','#a1a1aa','à échéance datée'],[mandats,'mandats','#a1a1aa','sous mandat d’un an'],[t.warn,'tension','#fbbf24','en tension ou au jour J'],[t.bad,'retard','#fb7185','en retard']]
         .map(([n,l,color,what])=>({value:n,label:l,color:n>0?color:'#3f3f46',title:n+' '+what}));
       return {countLabel:open.length+' mini-cosmos',thermo,thermoTitle:t.ok+' tenus · '+t.test+' en test · '+t.warn+' en tension · '+t.bad+' en retard · '+t.cont+' sans date',dots,alarm,hasAlarm:!!alarm,counters}; };
-    // repère d'une pièce : sa règle du jeu en une phrase, éditable au clic dans la bande
-    const R=s.reperes||{};
-    const repereOf=name=>{ const t=R[name]||''; const editing=s.editRepere===name; return {isEditingRepere:editing,notEditingRepere:!editing,repereLabel:t||'+ repère',repereColor:t?'#d4d4d8':'#3f3f46',repereTitle:t?t+' — cliquer pour modifier':'ajouter un repère : la règle du jeu de cette pièce, en une phrase',repereDraft:editing?(s.editRepereText||''):t,
-      startRepere:ev=>{ ev.stopPropagation(); this._repereCancel=null; this.setState({editRepere:name,editRepereText:t}); },setRepereDraft:e=>this.setState({editRepereText:e.target.value}),saveRepere:()=>this.saveRepere(name),
-      repereKey:e=>{ if(e.key==='Enter') e.currentTarget.blur(); if(e.key==='Escape'){ this._repereCancel=name; this.setState({editRepere:null,editRepereText:''}); } }}; };
     // page Cosmos : une section par pièce, dans l'ordre des cosmos (l'ordre domino), avec renommage, suppression et glisser-déposer
     const cosmosGroups=()=>s.cosmos.map((name,i)=>({name,i})).filter(g=>cf==='Tous'||g.name===cf).map(({name,i})=>{
       const all=rowsN.filter(x=>x.cosmos===name); const roomRows=filtered.filter(x=>x.cosmos===name).map(x=>this.decorate(x)); const titres=this.titresOf(name); const connus=new Set(titres);
@@ -1268,7 +1264,7 @@ class Component extends DCLogic {
         addingTitre:s.addTitreFor===name,newTitreName:s.addTitreFor===name?(s.newTitreName||''):'',setNewTitreName:e=>this.setState({newTitreName:e.target.value}),
         addTitre:ev=>{ ev.stopPropagation(); this._titreDone=false; this.setPlis(p=>{ delete p.cosmos[name]; }); this.setState({addTitreFor:name,newTitreName:'',cosmosMenu:null}); },
         newTitreKey:e=>{ if(e.key==='Enter'){ this._titreDone=true; if(this.creerTitre(name,this.state.newTitreName)) this.setState({addTitreFor:null,newTitreName:''}); else this._titreDone=false; } if(e.key==='Escape'){ this._titreDone=true; this.setState({addTitreFor:null,newTitreName:''}); } },
-        newTitreBlur:()=>{ if(this._titreDone) return; const v=(this.state.newTitreName||'').trim(); if(v) this.creerTitre(name,v); this.setState({addTitreFor:null,newTitreName:''}); },emptyLabel:anyFilterEarly?'aucun mini-cosmos pour ce filtre':'aucun mini-cosmos — ajoute-en un avec le bouton +',...bandOf(all),rank:rankOf(name),rankTitle:'Domino '+rankOf(name)+' — '+(parEtage[etageOf(name)].indexOf(name)+1)+'ᵉ de l’étage '+ETAGE_LABEL[etageOf(name)]+' : si cette pièce tombe, elle entraîne la suivante',...pliOf('cosmos',name),...(tq?{open:true,chevron:'90deg',headBorder:'rgba(39,39,42,0.8)'}:{}),...repereOf(name),
+        newTitreBlur:()=>{ if(this._titreDone) return; const v=(this.state.newTitreName||'').trim(); if(v) this.creerTitre(name,v); this.setState({addTitreFor:null,newTitreName:''}); },emptyLabel:anyFilterEarly?'aucun mini-cosmos pour ce filtre':'aucun mini-cosmos — ajoute-en un avec le bouton +',...bandOf(all),rank:rankOf(name),rankTitle:'Domino '+rankOf(name)+' — '+(parEtage[etageOf(name)].indexOf(name)+1)+'ᵉ de l’étage '+ETAGE_LABEL[etageOf(name)]+' : si cette pièce tombe, elle entraîne la suivante',...pliOf('cosmos',name),...(tq?{open:true,chevron:'90deg',headBorder:'rgba(39,39,42,0.8)'}:{}),
         menuOpen:s.cosmosMenu===name,menuColor:s.cosmosMenu===name?'#fafafa':'#71717a',toggleMenu:ev=>{ ev.stopPropagation(); this.setState({cosmosMenu:s.cosmosMenu===name?null:name}); },
         moveUp:ev=>{ ev.stopPropagation(); this.setState({cosmosMenu:null}); this.moveCosmosBy(name,-1); },moveDown:ev=>{ ev.stopPropagation(); this.setState({cosmosMenu:null}); this.moveCosmosBy(name,1); },upColor:parEtage[etageOf(name)].indexOf(name)>0?'#a1a1aa':'#3f3f46',downColor:parEtage[etageOf(name)].indexOf(name)<parEtage[etageOf(name)].length-1?'#a1a1aa':'#3f3f46',
         dropShadow:dropShadowOf('group',dg?s.cosmos.indexOf(dg.id):-1,i,'g:'+name),
@@ -1281,14 +1277,14 @@ class Component extends DCLogic {
         startEdit:ev=>{ ev.stopPropagation(); this.setState({editCosmos:name,editCosmosName:name,confirmDelete:null,cosmosMenu:null}); },
         setEditName:e=>this.setState({editCosmosName:e.target.value}),
         saveEdit:()=>{ const n=(s.editCosmosName||'').trim().toUpperCase(); if(!n||(n!==name&&s.cosmos.includes(n))){ this.setState({editCosmos:null}); return; }
-          this.setState(st=>({cosmos:st.cosmos.map(c=>c===name?n:c),rows:st.rows.map(x=>x.cosmos===name?{...x,cosmos:n}:x),cosmosFilter:st.cosmosFilter===name?n:st.cosmosFilter,editCosmos:null,reperes:(()=>{ const R={...(st.reperes||{})}; if(R[name]!=null){ R[n]=R[name]; delete R[name]; } return R; })(),etageDe:(()=>{ const E={...(st.etageDe||{})}; if(E[name]!=null){ E[n]=E[name]; delete E[name]; } return E; })(),titresDe:(()=>{ const T={...(st.titresDe||{})}; if(T[name]!=null){ T[n]=T[name]; delete T[name]; } return T; })()})); if(n!==name){ this.renamePli('cosmos',name,n); this.logJ({type:'cosmos',cosmos:n,detail:'Cosmos renommé : '+name+' → '+n}); this.flash(name+' renommé en '+n); } },
+          this.setState(st=>({cosmos:st.cosmos.map(c=>c===name?n:c),rows:st.rows.map(x=>x.cosmos===name?{...x,cosmos:n}:x),cosmosFilter:st.cosmosFilter===name?n:st.cosmosFilter,editCosmos:null,etageDe:(()=>{ const E={...(st.etageDe||{})}; if(E[name]!=null){ E[n]=E[name]; delete E[name]; } return E; })(),titresDe:(()=>{ const T={...(st.titresDe||{})}; if(T[name]!=null){ T[n]=T[name]; delete T[name]; } return T; })()})); if(n!==name){ this.renamePli('cosmos',name,n); this.logJ({type:'cosmos',cosmos:n,detail:'Cosmos renommé : '+name+' → '+n}); this.flash(name+' renommé en '+n); } },
         cancelEdit:()=>this.setState({editCosmos:null}),
         editKey:e=>{ if(e.key==='Enter') e.currentTarget.blur(); if(e.key==='Escape') this.setState({editCosmos:null}); },
         totalRows:rowsN.filter(x=>x.cosmos===name).length,
         confirmDelete:s.confirmDelete===name, notConfirmDelete:s.confirmDelete!==name,
         askDelete:ev=>{ ev.stopPropagation(); this.setState({confirmDelete:name,editCosmos:null,cosmosMenu:null}); },
         cancelDelete:ev=>{ ev.stopPropagation(); this.setState({confirmDelete:null}); },
-        doDelete:ev=>{ ev.stopPropagation(); this.setState(st=>({cosmos:st.cosmos.filter(c=>c!==name),rows:st.rows.filter(x=>x.cosmos!==name),cosmosFilter:st.cosmosFilter===name?'Tous':st.cosmosFilter,confirmDelete:null,reperes:(()=>{ const R={...(st.reperes||{})}; delete R[name]; return R; })(),etageDe:(()=>{ const E={...(st.etageDe||{})}; delete E[name]; return E; })(),titresDe:(()=>{ const T={...(st.titresDe||{})}; delete T[name]; return T; })()})); this.logJ({type:'cosmos',cosmos:name,detail:'Cosmos supprimé avec '+s.rows.filter(x=>x.cosmos===name).length+' mini-cosmos'}); this.flash('Cosmos '+name+' supprimé'); },
+        doDelete:ev=>{ ev.stopPropagation(); this.setState(st=>({cosmos:st.cosmos.filter(c=>c!==name),rows:st.rows.filter(x=>x.cosmos!==name),cosmosFilter:st.cosmosFilter===name?'Tous':st.cosmosFilter,confirmDelete:null,etageDe:(()=>{ const E={...(st.etageDe||{})}; delete E[name]; return E; })(),titresDe:(()=>{ const T={...(st.titresDe||{})}; delete T[name]; return T; })()})); this.logJ({type:'cosmos',cosmos:name,detail:'Cosmos supprimé avec '+s.rows.filter(x=>x.cosmos===name).length+' mini-cosmos'}); this.flash('Cosmos '+name+' supprimé'); },
         cardBorder:s.over==='g:'+name||s.over==='c:'+name?'rgba(161,161,170,0.9)':'rgba(39,39,42,0.8)',
         cardOpacity:isGroupDrag&&dg.id===name?0.4:1,
         addMini:ev=>{ ev.stopPropagation(); this.setState({showMiniModal:true,tab:0,form:freshForm({cosmos:name}),aiForm:null,cosmosMenu:null}); }};
