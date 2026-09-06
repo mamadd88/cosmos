@@ -20,6 +20,8 @@ input,textarea,select,button{font-family:inherit}
 input::placeholder,textarea::placeholder{color:#52525b}
 input:focus,textarea:focus{outline:none;border-color:#52525b !important}
 .echeance-row:focus-visible{outline:2px solid #a1a1aa;outline-offset:-2px}
+.journal-mini:focus-visible,.journal-changes summary:focus-visible{outline:2px solid #a1a1aa;outline-offset:3px;border-radius:4px}
+.journal-mini:not(:disabled):hover .journal-mini-name{text-decoration:underline}
 ::-webkit-scrollbar{width:9px;height:9px}::-webkit-scrollbar-thumb{background:#27272a;border-radius:6px}::-webkit-scrollbar-track{background:transparent}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 @keyframes fadein{from{opacity:0}to{opacity:1}}
@@ -93,6 +95,7 @@ input:focus,textarea:focus{outline:none;border-color:#52525b !important}
   <sc-for list="{{ jAuthorChips }}" as="c" hint-placeholder-count="3">
     <button onClick="{{ c.onClick }}" style="padding:5px 11px;border-radius:99px;font-size:12px;cursor:pointer;color:{{ c.color }};background:{{ c.bg }};border:1px solid {{ c.border }};display:flex;gap:6px;align-items:center">{{ c.label }} <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#fafafa">{{ c.count }}</span></button>
   </sc-for>
+  <sc-if value="{{ jHasFilters }}"><button type="button" onClick="{{ resetJournalFilters }}" style="padding:5px 10px;border-radius:99px;font-size:12px;cursor:pointer;color:#a1a1aa;background:#09090b;border:1px solid #27272a">Réinitialiser les filtres</button></sc-if>
 </div>
 <div style="display:flex;align-items:center;justify-content:center;padding:14px 24px 0;width:min(100%,1100px);margin:0 auto">
   <input value="{{ jQuery }}" onChange="{{ setJQuery }}" placeholder="Rechercher un mini-cosmos, un cosmos, un détail…" style="width:420px;background:#09090b;border:1px solid #27272a;border-radius:10px;padding:9px 12px;font-size:12.5px;color:#f4f4f5">
@@ -103,11 +106,21 @@ input:focus,textarea:focus{outline:none;border-color:#52525b !important}
     <div style="background:rgba(24,24,27,0.5);backdrop-filter:blur(12px);border:1px solid rgba(39,39,42,0.8);border-radius:16px;overflow:hidden">
       <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:rgba(24,24,27,0.75);border-bottom:1px solid rgba(39,39,42,0.8)"><span style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#fafafa">{{ g.label }}</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#71717a">{{ g.count }}</span></div>
       <sc-for list="{{ g.items }}" as="e" hint-placeholder-count="4">
-        <div style="display:grid;grid-template-columns:48px 96px 120px 1fr 90px;gap:14px;align-items:center;padding:10px 16px;border-bottom:1px solid rgba(39,39,42,0.35)">
+        <div key="{{ e.id }}" style="display:grid;grid-template-columns:48px 96px 120px 1fr 90px;gap:14px;align-items:center;padding:10px 16px;border-bottom:1px solid rgba(39,39,42,0.35)">
           <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#71717a">{{ e.time }}</span>
           <span><span style="padding:3px 9px;border-radius:99px;font-size:11px;font-weight:600;color:{{ e.typeColor }};background:rgba(39,39,42,0.55)">{{ e.typeLabel }}</span></span>
-          <span onClick="{{ e.openMini }}" title="Ouvrir le mini-cosmos" style="display:flex;flex-direction:column;gap:2px;min-width:0;cursor:{{ e.miniCursor }}"><span style="font-size:12.5px;font-weight:600;color:{{ e.miniColor }};overflow:hidden;text-overflow:ellipsis;white-space:nowrap" style-hover="text-decoration:underline">{{ e.mini }}</span><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#52525b;text-transform:uppercase">{{ e.cosmos }}</span></span>
-          <span style="font-size:12.5px;color:#d4d4d8">{{ e.detail }}</span>
+          <button type="button" class="journal-mini" onClick="{{ e.openMini }}" disabled="{{ e.unlinked }}" aria-label="{{ e.openLabel }}" title="{{ e.miniHint }}" style="display:flex;flex-direction:column;gap:2px;min-width:0;padding:0;border:0;background:transparent;text-align:left;cursor:{{ e.miniCursor }}"><span class="journal-mini-name" style="max-width:100%;font-size:12.5px;font-weight:600;color:{{ e.miniColor }};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ e.mini }}</span><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#52525b;text-transform:uppercase">{{ e.cosmos }}</span></button>
+          <div style="font-size:12.5px;color:#d4d4d8;min-width:0;overflow-wrap:anywhere">
+            <span>{{ e.detail }}</span>
+            <sc-if value="{{ e.hasChanges }}"><details class="journal-changes" key="{{ e.id }}" style="margin-top:6px">
+              <summary style="cursor:pointer;color:#a1a1aa;font-size:11.5px">Voir les valeurs avant / après</summary>
+              <sc-for list="{{ e.changeLines }}" as="c" hint-placeholder-count="1"><div style="margin-top:8px;padding:8px 10px;border-left:2px solid #3f3f46;background:rgba(9,9,11,0.4);border-radius:4px">
+                <div style="font-weight:600;color:#f4f4f5;margin-bottom:4px">{{ c.field }}</div>
+                <div style="white-space:pre-wrap"><span style="color:#71717a">Avant : </span>{{ c.before }}</div>
+                <div style="white-space:pre-wrap"><span style="color:#71717a">Après : </span>{{ c.after }}</div>
+              </div></sc-for>
+            </details></sc-if>
+          </div>
           <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:{{ e.authorColor }};text-align:right">{{ e.author }}</span>
         </div>
       </sc-for>
@@ -116,11 +129,11 @@ input:focus,textarea:focus{outline:none;border-color:#52525b !important}
   <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 4px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#71717a">
     <span>{{ jRange }} sur {{ jShown }} entrées<span style="color:#3f3f46"> · {{ jTotal }} sur 12 mois</span><sc-if value="{{ jHasArchive }}" hint-placeholder-val="{{ false }}"><span style="color:#3f3f46"> · {{ jArchived }} archivées (dans l'export JSON)</span></sc-if></span>
     <span style="display:flex;align-items:center;gap:4px">
-      <button onClick="{{ jFirst }}" style="width:28px;height:28px;border-radius:8px;border:1px solid #27272a;background:#09090b;color:{{ jPrevColor }};cursor:pointer;font-size:12px">«</button>
-      <button onClick="{{ jPrev }}" style="width:28px;height:28px;border-radius:8px;border:1px solid #27272a;background:#09090b;color:{{ jPrevColor }};cursor:pointer;font-size:12px">‹</button>
+      <button type="button" onClick="{{ jFirst }}" disabled="{{ jPrevDisabled }}" aria-label="Première page" style="width:28px;height:28px;border-radius:8px;border:1px solid #27272a;background:#09090b;color:{{ jPrevColor }};cursor:pointer;font-size:12px">«</button>
+      <button type="button" onClick="{{ jPrev }}" disabled="{{ jPrevDisabled }}" aria-label="Page précédente" style="width:28px;height:28px;border-radius:8px;border:1px solid #27272a;background:#09090b;color:{{ jPrevColor }};cursor:pointer;font-size:12px">‹</button>
       <span style="padding:0 10px;color:#a1a1aa">{{ jPageLabel }}</span>
-      <button onClick="{{ jNext }}" style="width:28px;height:28px;border-radius:8px;border:1px solid #27272a;background:#09090b;color:{{ jNextColor }};cursor:pointer;font-size:12px">›</button>
-      <button onClick="{{ jLast }}" style="width:28px;height:28px;border-radius:8px;border:1px solid #27272a;background:#09090b;color:{{ jNextColor }};cursor:pointer;font-size:12px">»</button>
+      <button type="button" onClick="{{ jNext }}" disabled="{{ jNextDisabled }}" aria-label="Page suivante" style="width:28px;height:28px;border-radius:8px;border:1px solid #27272a;background:#09090b;color:{{ jNextColor }};cursor:pointer;font-size:12px">›</button>
+      <button type="button" onClick="{{ jLast }}" disabled="{{ jNextDisabled }}" aria-label="Dernière page" style="width:28px;height:28px;border-radius:8px;border:1px solid #27272a;background:#09090b;color:{{ jNextColor }};cursor:pointer;font-size:12px">»</button>
     </span>
   </div>
 </div>
@@ -986,13 +999,14 @@ class Component extends DCLogic {
   cyclePoids(row){ const cur=poidsOf(row); this.setPoids(row,POIDS[(POIDS.indexOf(cur)+1)%POIDS.length]); }
   setPoids(row,p){ if(poidsOf(row)===p) return; this.update(row.id,{poids:p},{type:'modification',detail:'Poids → '+POIDS_LABEL[p]}); this.flash(row.name+' : '+POIDS_LABEL[p].toLowerCase()); }
   // applique un patch (assistant IA ou proposition d'agent) : champs texte remplacés, étapes ajoutées sans doublon
-  applyPatch(sel,p,label){ const patch={}; ['objectif','actuel','entropie','reponse','sas','sasUntil','alerte','kill'].forEach(k=>{ if(p[k]!=null&&p[k]!=='') patch[k]=p[k]; });
+  applyPatch(sel,p,label){ sel=this.state.editing&&this.state.editDraft?.id===sel.id?this.state.editDraft:(this.state.rows.find(x=>x.id===sel.id)||sel);
+    const patch={}; ['objectif','actuel','entropie','reponse','sas','sasUntil','alerte','kill'].forEach(k=>{ if(p[k]!=null&&p[k]!=='') patch[k]=p[k]; });
     if(POIDS.includes(p.poids)) patch.poids=p.poids;
     if(patch.sasUntil&&!/^\d{4}-\d{2}-\d{2}$/.test(patch.sasUntil)) delete patch.sasUntil;
     if(patch.sas&&!patch.sasUntil&&!sasUntilOf(sel)) patch.sasUntil=inferSasUntil({...sel,sas:patch.sas});
     const add=p.etapes||(p.etape!=null?[p.etape]:[]); if(add.length){ const have=new Set(sel.actions.map(a=>a.text)); const fresh=add.filter(t=>t&&!have.has(t)); if(fresh.length) patch.actions=[...sel.actions,...fresh.map(t=>({text:t,done:false}))]; }
-    const fields=Object.keys(patch).map(k=>({objectif:'objectif',actuel:'valeur actuelle',entropie:'entropie',reponse:'réponse',sas:'SAS',sasUntil:'fin du test',alerte:'alerte',kill:'kill',actions:'étapes',poids:'poids'}[k]||k)); if(!fields.length) return false;
-    this.update(sel.id,patch,{type:'modification',detail:label+' : '+fields.join(', ')}); return true; }
+    const changes=this.miniChanges(sel,{...sel,...patch}); if(!changes.length) return false;
+    this.update(sel.id,patch,{type:'modification',detail:label+' : '+changes.map(c=>c.field).join(', '),changes}); return true; }
   async decideProposal(p,sel,ok){ if(!this.finishEdit()) return; sel=this.state.rows.find(x=>x.id===sel.id); if(!sel) return; if(ok){ if(!this.applyPatch(sel,p.patch||{},'Proposition de '+p.agent+' acceptée')) this.logJ({type:'proposition',mini:sel.name,miniId:sel.id,cosmos:sel.cosmos,detail:'Proposition de '+p.agent+' acceptée (rien à changer)'}); }
     else this.logJ({type:'proposition',mini:sel.name,miniId:sel.id,cosmos:sel.cosmos,detail:'Proposition de '+p.agent+' refusée'});
     this.setState(s=>({propositions:(s.propositions||[]).filter(x=>x.id!==p.id)})); this.flash(ok?'Proposition appliquée':'Proposition refusée');
@@ -1033,14 +1047,24 @@ class Component extends DCLogic {
   setField(k){ return e=>this.setState(s=>({form:{...s.form,[k]:e.target.value}})); }
   // journal : trace horodatée de toute écriture (humain aujourd'hui, agents IA demain)
   logJ(e){ this.setState(s=>({journal:[{id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),t:new Date().toISOString(),author:this.props.author??'Toi',...e},...(s.journal||[])]})); }
+  miniChanges(before,after){
+    const labels={name:'Nom',cosmos:'Cosmos',titre:'Titre',poids:'Poids',objectif:'Objectif',actuel:'Valeur actuelle',sas:'SAS',sasUntil:'Fin du test',entropie:'Entropie',reponse:'Réponse entropie',alerte:'Alerte',kill:'Kill',startAt:'Début',cloture:'Clôture',alertDays:'Préavis'};
+    const fmt=(k,v)=>k==='cloture'?clotureLabel(v):(k==='startAt'||k==='sasUntil')?fmtFR(v||''):k==='poids'?(POIDS_LABEL[v]||'Normal'):(v??'');
+    const changes=Object.keys(labels).filter(k=>k==='poids'?poidsOf(before)!==poidsOf(after):(before[k]??'')!==(after[k]??'')).map(k=>({field:labels[k],before:fmt(k,before[k]),after:fmt(k,after[k])}));
+    const steps=x=>(x.actions||[]).map(a=>a.text);
+    if(JSON.stringify(steps(before))!==JSON.stringify(steps(after))) changes.push({field:'Étapes',before:steps(before).join('\n'),after:steps(after).join('\n')});
+    return changes;
+  }
   update(id,patch,ev){ const row=this.state.rows.find(x=>x.id===id);
+    if(!row) return;
     const HIST=['created','statut','step'];
     if(this.state.editing&&this.state.editDraft?.id===id){
       this.setState(s=>({editDraft:{...s.editDraft,...patch,history:ev&&HIST.includes(ev.type)?[...(s.editDraft.history||[]),{t:daysAgo(0),type:ev.type,value:ev.value}]:s.editDraft.history},editEvents:ev?[...(s.editEvents||[]),ev]:(s.editEvents||[]),editError:''})); return;
     }
-    this.setState(s=>({rows:s.rows.map(x=>x.id===id?{...x,...patch,history:ev&&HIST.includes(ev.type)?[...(x.history||[]),{t:daysAgo(0),type:ev.type,value:ev.value}]:x.history}:x)}));
-    if(ev&&row){ const map={statut:'statut',step:'etape',unstep:'etape',created:'creation'};
-      this.logJ({type:map[ev.type]||ev.type,mini:row.name,miniId:row.id,cosmos:row.cosmos,detail:ev.detail||(ev.type==='statut'?'Statut → '+ev.value:'')}); } }
+    const entry=ev?{id:Date.now().toString(36)+Math.random().toString(36).slice(2,8),t:new Date().toISOString(),author:this.props.author??'Toi',
+      type:({statut:'statut',step:'etape',unstep:'etape',created:'creation'})[ev.type]||ev.type,mini:row.name,miniId:row.id,cosmos:row.cosmos,
+      detail:ev.detail||(ev.type==='statut'?'Statut → '+ev.value:''),...(ev.changes?{changes:ev.changes}:{})}:null;
+    this.setState(s=>({rows:s.rows.map(x=>x.id===id?{...x,...patch,history:ev&&HIST.includes(ev.type)?[...(x.history||[]),{t:daysAgo(0),type:ev.type,value:ev.value}]:x.history}:x),...(entry?{journal:[entry,...(s.journal||[])]}:{})})); }
   beginEdit(id){ const row=this.state.rows.find(x=>x.id===id); if(!row) return;
     this.setState({editing:true,editSnap:JSON.parse(JSON.stringify(row)),editDraft:JSON.parse(JSON.stringify(row)),editEvents:[],editError:''}); }
   cancelMiniEdit(){ this.setState({editing:false,editSnap:null,editDraft:null,editEvents:[],editError:''}); }
@@ -1048,11 +1072,8 @@ class Component extends DCLogic {
     const row=s.editDraft, snap=s.editSnap; if(!row||!snap){ this.cancelMiniEdit(); return true; }
     if(JSON.stringify(row)===JSON.stringify(snap)){ this.cancelMiniEdit(); return true; }
     const error=validateMini(row,s.rows); if(error){ this.setState({editError:error}); return false; }
-    const labels={name:'Nom',cosmos:'Cosmos',titre:'Titre',poids:'Poids',objectif:'Objectif',actuel:'Valeur actuelle',sas:'SAS',sasUntil:'Fin du test',entropie:'Entropie',reponse:'Réponse entropie',alerte:'Alerte',kill:'Kill',startAt:'Début',cloture:'Clôture',alertDays:'Préavis'};
-    const fmt=(k,v)=>k==='cloture'?clotureLabel(v):(k==='startAt'||k==='sasUntil')?fmtFR(v||''):k==='poids'?(POIDS_LABEL[v]||'Normal'):(v??'');
-    const changes=Object.keys(labels).filter(k=>k==='poids'?poidsOf(snap)!==poidsOf(row):(snap[k]??'')!==(row[k]??'')).map(k=>({field:labels[k],before:fmt(k,snap[k]),after:fmt(k,row[k])}));
-    if(JSON.stringify((snap.actions||[]).map(a=>a.text))!==JSON.stringify(row.actions.map(a=>a.text))) changes.push({field:'Étapes',before:(snap.actions||[]).length+' étape(s)',after:row.actions.length+' étape(s)'});
-    const events=(s.editEvents||[]).map(e=>({type:({step:'etape',unstep:'etape',created:'creation'})[e.type]||e.type,detail:e.detail||''}));
+    const changes=this.miniChanges(snap,row);
+    const events=(s.editEvents||[]).map(e=>({type:({step:'etape',unstep:'etape',created:'creation'})[e.type]||e.type,detail:e.detail||'',...(e.changes?{changes:e.changes}:{})}));
     if(changes.length) events.push({type:'modification',changes,detail:changes.map(c=>c.field+' : « '+String(c.before).slice(0,80)+' » → « '+String(c.after).slice(0,80)+' »').join(' · ')});
     const entries=events.map(e=>({id:Date.now().toString(36)+Math.random().toString(36).slice(2,8),t:new Date().toISOString(),author:this.props.author??'Toi',mini:row.name,miniId:row.id,cosmos:row.cosmos,...e}));
     this.setState(st=>({rows:st.rows.map(x=>x.id===row.id?{...row,name:row.name.trim()}:x),journal:[...entries.reverse(),...(st.journal||[])],editing:false,editSnap:null,editDraft:null,editEvents:[],editError:''})); return true;
@@ -1147,26 +1168,46 @@ class Component extends DCLogic {
       rowBg:this.state.over===x.id?'rgba(63,63,70,0.35)':'transparent',
       dragOpacity:this.state.drag&&this.state.drag.id===x.id?0.4:1, isRow:true, isSep:false, titre:x.titre||'' };
   }
+  // Une même sélection pour la liste, les compteurs et les comparaisons ; les jours suivent le fuseau du navigateur.
+  journalContext(){
+    const s=this.state, tf=s.jType||'Tous', ja=s.jAuthor||'Tous', jp=s.jPeriod||0, q=(s.jQuery||'').trim().toLowerCase();
+    const text=v=>v==null?'':typeof v==='object'?JSON.stringify(v,null,2):String(v);
+    const events=(s.journal||[]).map(e=>{ const dt=new Date(e.t), stamp=dt.getTime();
+      const changeLines=(Array.isArray(e.changes)?e.changes:[]).filter(c=>c&&typeof c==='object').map(c=>({field:text(c.field),before:text(c.before),after:text(c.after)}));
+      return {...e,author:e.author||'—',stamp,day:Number.isFinite(stamp)?isoD(dt):'',changeLines,
+        search:[e.mini,e.cosmos,e.detail,e.author,...changeLines.flatMap(c=>[c.field,c.before,c.after])].join(' ').toLowerCase()};
+    }).sort((a,b)=>(Number.isFinite(b.stamp)?b.stamp:-Infinity)-(Number.isFinite(a.stamp)?a.stamp:-Infinity));
+    const midnight=n=>new Date(daysAgo(n)+'T00:00:00').getTime();
+    const from=jp?midnight(jp-1):-Infinity, prevFrom=jp?midnight(2*jp-1):-Infinity, end=midnight(-1);
+    const select=({type=tf,author=ja,previous=false}={})=>events.filter(e=>(type==='Tous'||e.type===type)&&(author==='Tous'||e.author===author)&&(!q||e.search.includes(q))&&
+      (!jp||(previous?e.stamp>=prevFrom&&e.stamp<from:e.stamp>=from&&e.stamp<end)));
+    return {events,select,tf,ja,jp,q};
+  }
   journalVals(){
     const s=this.state; if((s.view||'table')!=='journal') return {};
-    const J=s.journal||[]; const tf=s.jType||'Tous'; const q=(s.jQuery||'').toLowerCase(); const jp=s.jPeriod||0; const ja=s.jAuthor||'Tous';
-    const since=jp?new Date(TODAY.getTime()-(jp-1)*86400000).toISOString():'';
+    const {events:J,select,tf,ja,jp,q}=this.journalContext();
     const TYPES={creation:['Création','#34d399'],statut:['Statut','#818cf8'],etape:['Étape','#22d3ee'],modification:['Modification','#d4d4d8'],deplacement:['Déplacement','#c084fc'],suppression:['Suppression','#fb7185'],cosmos:['Cosmos','#fafafa'],donnees:['Données','#71717a'],proposition:['Proposition','#c084fc'],note:['Note','#22d3ee']};
-    const list=J.filter(e=>(tf==='Tous'||e.type===tf)&&(!jp||e.t>=since)&&(ja==='Tous'||e.author===ja)&&(!q||[e.mini,e.cosmos,e.detail,e.author].join(' ').toLowerCase().includes(q)));
+    const list=select();
     const periodChips=[[0,'Tout'],[7,'7 j'],[30,'30 j'],[90,'90 j']].map(([d,label])=>({label,...(jp===d?chipOn:chipOff),onClick:()=>this.setState({jPeriod:d,jPage:0})}));
-    const authors=[...new Set(J.map(e=>e.author||'—'))];
-    const authorChips=['Tous',...authors].map(a=>({label:a,...(ja===a?chipOn:chipOff),count:a==='Tous'?J.length:J.filter(e=>e.author===a).length,onClick:()=>this.setState({jAuthor:a,jPage:0})}));
-    const PAGE=50; const pages=Math.max(1,Math.ceil(list.length/PAGE)); const page=Math.min(s.jPage||0,pages-1); const slice=list.slice(page*PAGE,(page+1)*PAGE);
-    const ids=new Set(s.rows.map(x=>x.id)); const byName=new Map(s.rows.map(x=>[x.cosmos+'|'+x.name,x.id]));
-    const typeChips=[['Tous','Tous',null],...Object.keys(TYPES).map(k=>[k,TYPES[k][0],TYPES[k][1]])].map(([k,label,dot])=>({label,dot:dot||'transparent',dotW:dot?'6px':'0px',...(tf===k?chipOn:chipOff),count:k==='Tous'?J.length:J.filter(e=>e.type===k).length,onClick:()=>this.setState({jType:k,jPage:0})}));
+    const authors=[...new Set([...J.map(e=>e.author),...(ja!=='Tous'?[ja]:[])])];
+    const authorChips=['Tous',...authors.filter(a=>a!=='Tous')].map(a=>({label:a,...(ja===a?chipOn:chipOff),count:select({author:a}).length,onClick:()=>this.setState({jAuthor:a,jPage:0})}));
+    const PAGE=50; const pages=Math.max(1,Math.ceil(list.length/PAGE)); const page=Math.max(0,Math.min(s.jPage||0,pages-1)); const slice=list.slice(page*PAGE,(page+1)*PAGE);
+    const ids=new Set(s.rows.map(x=>x.id));
+    const typeChips=[['Tous','Tous',null],...Object.keys(TYPES).map(k=>[k,TYPES[k][0],TYPES[k][1]])].map(([k,label,dot])=>({label,dot:dot||'transparent',dotW:dot?'6px':'0px',...(tf===k?chipOn:chipOff),count:select({type:k}).length,onClick:()=>this.setState({jType:k,jPage:0})}));
     const today=daysAgo(0), yest=daysAgo(1); const MOIS=['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'];
-    const dayLabel=d=>d===today?'Aujourd\u2019hui':d===yest?'Hier':(+d.slice(8,10))+' '+MOIS[+d.slice(5,7)-1]+' '+d.slice(0,4);
-    const groups=[]; slice.forEach(e=>{ const dt=new Date(e.t); const d=isNaN(dt)?e.t.slice(0,10):isoD(dt); const time=isNaN(dt)?e.t.slice(11,16):String(dt.getHours()).padStart(2,'0')+':'+String(dt.getMinutes()).padStart(2,'0');
+    const dayLabel=d=>!d?'Date inconnue':d===today?'Aujourd’hui':d===yest?'Hier':(+d.slice(8,10))+' '+MOIS[+d.slice(5,7)-1]+' '+d.slice(0,4);
+    const groups=[]; slice.forEach(e=>{ const dt=new Date(e.stamp), d=e.day; const time=d?String(dt.getHours()).padStart(2,'0')+':'+String(dt.getMinutes()).padStart(2,'0'):'—';
       let g=groups[groups.length-1]; if(!g||g.day!==d){ g={day:d,label:dayLabel(d),items:[]}; groups.push(g); }
-      const ty=TYPES[e.type]||[e.type,'#a1a1aa']; const mid=(e.miniId&&ids.has(e.miniId))?e.miniId:byName.get((e.cosmos||'')+'|'+(e.mini||'')); const linkable=!!mid; g.items.push({...e,time,typeLabel:ty[0],typeColor:ty[1],hasMini:!!e.mini,mini:e.mini||'',cosmos:e.cosmos||'',linkable,miniColor:linkable?'#fafafa':'#a1a1aa',miniCursor:linkable?'pointer':'default',openMini:()=>{ if(linkable) this.navigate({view:'table',selected:mid,editing:false}); },authorColor:e.author==='Toi'?'#fafafa':e.author==='Exemple'?'#52525b':'#c084fc'}); });
+      // Le nom peut être réutilisé : seul l'identifiant relie une entrée à sa fiche.
+      const ty=TYPES[e.type]||[e.type,'#a1a1aa']; const mid=e.miniId&&ids.has(e.miniId)&&e.type!=='suppression'?e.miniId:null; const linkable=!!mid;
+      g.items.push({...e,time,typeLabel:ty[0],typeColor:ty[1],hasMini:!!e.mini,mini:e.mini||'',cosmos:e.cosmos||'',linkable,unlinked:!linkable,
+        hasChanges:e.changeLines.length>0,changeLines:e.changeLines.map(c=>({...c,before:c.before||'—',after:c.after||'—'})),
+        openLabel:linkable?'Ouvrir '+e.mini+' — '+e.cosmos:(e.mini||'')+' — fiche indisponible',miniHint:linkable?'Ouvrir le mini-cosmos':'Fiche indisponible',
+        miniColor:linkable?'#fafafa':'#a1a1aa',miniCursor:linkable?'pointer':'default',openMini:()=>{ if(linkable) this.navigate({view:'table',selected:mid,editing:false,confirmDeleteMini:false}); },authorColor:e.author==='Toi'?'#fafafa':e.author==='Exemple'?'#52525b':'#c084fc'}); });
     groups.forEach(g=>g.count=g.items.length);
     return {jGroups:groups,jEmpty:groups.length===0,jTypeChips:typeChips,jPeriodChips:periodChips,jAuthorChips:authorChips,jArchived:this.sync?(s.journalArchived||0):(s.journalArchive||[]).length,jHasArchive:(this.sync?(s.journalArchived||0):(s.journalArchive||[]).length)>0,jQuery:s.jQuery||'',setJQuery:e=>this.setState({jQuery:e.target.value,jPage:0}),jTotal:J.length,jShown:list.length,
-      jPageLabel:'Page '+(page+1)+' / '+pages, jRange:list.length?((page*PAGE+1)+'–'+Math.min(list.length,(page+1)*PAGE)):'0', jHasPrev:page>0, jHasNext:page<pages-1, jMultiPage:pages>1,
+      jHasFilters:tf!=='Tous'||ja!=='Tous'||!!jp||!!q,resetJournalFilters:()=>this.setState({jType:'Tous',jAuthor:'Tous',jPeriod:0,jQuery:'',jPage:0}),
+      jPageLabel:'Page '+(page+1)+' / '+pages, jRange:list.length?((page*PAGE+1)+'–'+Math.min(list.length,(page+1)*PAGE)):'0', jHasPrev:page>0, jHasNext:page<pages-1, jMultiPage:pages>1,jPrevDisabled:page===0,jNextDisabled:page===pages-1,
       jPrev:()=>this.setState({jPage:Math.max(0,page-1)}), jNext:()=>this.setState({jPage:Math.min(pages-1,page+1)}), jFirst:()=>this.setState({jPage:0}), jLast:()=>this.setState({jPage:pages-1}),
       jPrevColor:page>0?'#f4f4f5':'#3f3f46', jNextColor:page<pages-1?'#f4f4f5':'#3f3f46'};
   }
@@ -1206,19 +1247,20 @@ class Component extends DCLogic {
     return {eQuery:s.eQuery||'', setEQuery:e=>this.setState({eQuery:e.target.value}), echeances,echCount:live.length,echShown:shown.length,noEcheances:shown.length===0,echEmptyLabel:anyF?'aucune échéance pour ces filtres':'aucune échéance active ou à venir',echZoneChips,echTimeChips,echKpis,echHasFilters:anyF,
       resetEcheancesFilters:()=>this.setState({echZone:'Tous',timeFilter:0,monthFilter:'',quarterFilter:'',yearFilter:'',eQuery:''})};
   }
-  // en-tête du Journal : l'activité de la période choisie (créés, admis, clôturés, supprimés, étapes cochées), comparée à la période précédente
+  // Les événements restent la source des statistiques, même si leur mini-cosmos a été supprimé.
   activityVals(){
     const s=this.state; if((s.view||'table')!=='journal') return {};
-    const P=s.jPeriod||0; const ALL=P===0; const from=ALL?'0000-00-00':daysAgo(P-1), prevFrom=ALL?'0000-00-00':daysAgo(2*P-1), end=daysAgo(-1);
-    const rows=s.rows; const count=(type,f,t,val)=>rows.reduce((a,x)=>a+(x.history||[]).filter(e=>e.type===type&&(!val||e.value===val)&&e.t>=f&&e.t<t).length,0);
-    const delta=(cur,prev)=>{ const d=cur-prev; return {deltaLabel:ALL?'depuis le début':(d>0?'+':'')+d+' vs période préc.',deltaColor:ALL?'#52525b':d>0?'#34d399':d<0?'#fb7185':'#52525b'}; };
-    const metric=(label,type,val,color)=>{ const cur=count(type,from,end,val); return {label,value:cur,color,...delta(cur,count(type,prevFrom,from,val))}; };
-    const J=s.journal||[]; const jcount=(f,t,pred)=>J.filter(e=>pred(e)&&e.t.slice(0,10)>=f&&e.t.slice(0,10)<t).length;
-    const jmetric=(label,pred,color)=>{ const cur=jcount(from,end,pred); return {label,value:cur,color,...delta(cur,jcount(prevFrom,from,pred))}; };
-    const activity=[metric('créés','created',null,'#fafafa'),jmetric('admis',e=>e.type==='statut'&&/^SAS franchi/.test(e.detail||''),'#818cf8'),metric('clôturés','statut','Clôturé','#71717a'),jmetric('supprimés',e=>e.type==='suppression','#fb7185'),metric('étapes cochées','step',null,'#34d399')];
-    const oldest=rows.reduce((a,x)=>x.createdAt&&x.createdAt<a?x.createdAt:a,daysAgo(0)); const spanDays=ALL?Math.max(7,Math.round((TODAY-new Date(oldest+'T00:00:00'))/86400000)):P;
-    const periodLabel=ALL?'toute la période':P+' derniers jours';
-    return {jActivity:activity.map(m=>({...m,title:m.label+' · '+periodLabel+' · '+m.deltaLabel})),jStepsPerWeek:(count('step',from,end)/(spanDays/7)).toFixed(1),jPeriodLabel:periodLabel};
+    const {events,select,jp:P}=this.journalContext(), ALL=P===0, current=select(), previous=ALL?[]:select({previous:true});
+    const delta=(cur,prev)=>{ const d=cur-prev; return {deltaLabel:ALL?'journal des 12 derniers mois':(d>0?'+':'')+d+' vs période préc.',deltaColor:ALL?'#52525b':d>0?'#34d399':d<0?'#fb7185':'#52525b'}; };
+    const checked=e=>e.type==='etape'&&/^Étape cochée(?:\s|:|$)/i.test(e.detail||'');
+    const metric=(label,pred,color)=>{ const cur=current.filter(pred).length; return {label,value:cur,color,...delta(cur,previous.filter(pred).length)}; };
+    const activity=[metric('créés',e=>e.type==='creation','#fafafa'),metric('admis',e=>e.type==='statut'&&/^SAS franchi/.test(e.detail||''),'#818cf8'),
+      metric('clôturés',e=>e.type==='statut'&&/^Statut\s*→\s*Clôturé(?:\s|$)/i.test(e.detail||''),'#71717a'),metric('supprimés',e=>e.type==='suppression','#fb7185'),metric('étapes cochées',checked,'#34d399')];
+    const oldest=events.reduce((a,e)=>e.day&&e.day<a?e.day:a,daysAgo(0));
+    const ordinal=d=>Date.parse(d+'T00:00:00Z')/86400000;
+    const spanDays=ALL?Math.max(7,ordinal(daysAgo(0))-ordinal(oldest)+1):P;
+    const periodLabel=ALL?'journal des 12 derniers mois':P+' derniers jours';
+    return {jActivity:activity.map(m=>({...m,title:m.label+' · '+periodLabel+' · filtres actifs · '+m.deltaLabel})),jStepsPerWeek:(current.filter(checked).length/(spanDays/7)).toFixed(1),jPeriodLabel:periodLabel};
   }
   renderVals(){
     if(refreshToday) refreshToday();
@@ -1483,7 +1525,7 @@ class Component extends DCLogic {
       detail, closeDetail:()=>this.navigate({selected:null,confirmDeleteMini:false,editing:false}),
       confirmDeleteMini:!!s.confirmDeleteMini, footerIdle:!s.confirmDeleteMini,
       askDeleteMini:()=>this.setState({confirmDeleteMini:true}), cancelDeleteMini:()=>this.setState({confirmDeleteMini:false}),
-      doDeleteMini:()=>{ if(sel){ this.setState(st=>({rows:st.rows.filter(x=>x.id!==sel.id).map(x=>Array.isArray(x.dependDe)&&x.dependDe.includes(sel.id)?{...x,dependDe:x.dependDe.filter(id=>id!==sel.id)}:x)})); this.logJ({type:'suppression',mini:sel.name,cosmos:sel.cosmos,detail:'Mini-cosmos supprimé'}); this.flash(sel.name+' supprimé'); } this.setState({selected:null,confirmDeleteMini:false,editing:false}); },
+      doDeleteMini:()=>{ if(sel){ this.setState(st=>({rows:st.rows.filter(x=>x.id!==sel.id).map(x=>Array.isArray(x.dependDe)&&x.dependDe.includes(sel.id)?{...x,dependDe:x.dependDe.filter(id=>id!==sel.id)}:x)})); this.logJ({type:'suppression',mini:sel.name,miniId:sel.id,cosmos:sel.cosmos,detail:'Mini-cosmos supprimé'}); this.flash(sel.name+' supprimé'); } this.setState({selected:null,confirmDeleteMini:false,editing:false}); },
       showCosmosModal:s.showCosmosModal, showMiniModal:s.showMiniModal,
       openCosmos:()=>this.setState({showCosmosModal:true,cosmosName:''}),
       openMini:()=>this.setState({showMiniModal:true,tab:0,form:freshForm(),aiForm:null}),

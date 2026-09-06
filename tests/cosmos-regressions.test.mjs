@@ -589,3 +589,208 @@ test('Cosmos : les filtres partagés suivent les mêmes bornes de délai et de p
   assert.deepEqual(app.renderVals().groups.flatMap(g => g.rows.filter(r => r.isRow).map(r => r.id)), ['mc-future']);
   assert.equal(app.renderVals().timeChips.find(c => c.label === '7 j').count, 1);
 });
+
+function journalApp(t, journal, rows = [], state = {}, now = '2026-09-06T12:00:00+02:00') {
+  t.mock.timers.enable({ apis: ['Date'], now: new Date(now).getTime() });
+  t.after(() => { t.mock.timers.reset(); core.refreshToday(); });
+  core.refreshToday();
+  const app = editableApp(rows);
+  app.setState({ view: 'journal', journal, ...state });
+  return app;
+}
+const journalEntry = (id, patch = {}) => ({ id, t: '2026-09-06T10:00:00.000Z', type: 'creation', author: 'Toi', miniId: 'mc-a', mini: 'Projet', cosmos: 'TRAVAIL', detail: 'Mini-cosmos créé', ...patch });
+const journalMetrics = app => Object.fromEntries(app.activityVals().jActivity.map(m => [m.label, m.value]));
+
+test('Journal : une proposition IA conserve les valeurs et les étapes complètes, sans entrée pour un changement identique', () => {
+  const app = editableApp([{ ...mini('mc-a'), actions: [{ text: 'Étape initiale', done: true }] }]);
+  const after = 'Objectif détaillé '.repeat(20);
+  assert.equal(app.applyPatch(app.state.rows[0], { objectif: after, etapes: ['Nouvelle étape'], poids: 'vital' }, 'Proposition de Nova acceptée'), true);
+  const entry = app.state.journal[0];
+  assert.equal(entry.miniId, 'mc-a');
+  assert.deepEqual(entry.changes.find(c => c.field === 'Objectif'), { field: 'Objectif', before: 'Objectif initial', after });
+  assert.deepEqual(entry.changes.find(c => c.field === 'Étapes'), { field: 'Étapes', before: 'Étape initiale', after: 'Étape initiale\nNouvelle étape' });
+  assert.equal(entry.changes.find(c => c.field === 'Poids').after, 'Vital');
+  assert.equal(app.state.rows[0].actions[0].done, true);
+  assert.deepEqual(app.serialize().journal[0].changes, entry.changes);
+  assert.equal(app.applyPatch(app.state.rows[0], { objectif: after, etapes: ['Nouvelle étape'], poids: 'vital' }, 'Identique'), false);
+  assert.equal(app.state.journal.length, 1);
+});
+
+test('Journal : le brouillon IA ne publie ses détails qu’à validation et peut être annulé', () => {
+  const app = editableApp();
+  app.beginEdit('mc-a');
+  app.applyPatch(app.state.editDraft, { objectif: 'Objectif proposé' }, 'Proposition IA appliquée');
+  assert.equal(app.state.journal.length, 0);
+  assert.equal(app.state.rows[0].objectif, 'Objectif initial');
+  app.cancelMiniEdit();
+  assert.equal(app.state.journal.length, 0);
+  app.beginEdit('mc-a');
+  app.applyPatch(app.state.editDraft, { objectif: 'Objectif proposé' }, 'Proposition IA appliquée');
+  assert.equal(app.finishEdit(), true);
+  const entry = app.state.journal.find(e => e.detail.startsWith('Proposition IA'));
+  assert.deepEqual(entry.changes, [{ field: 'Objectif', before: 'Objectif initial', after: 'Objectif proposé' }]);
+});
+
+test('Journal : les détails avant/après traversent la sauvegarde et le rechargement', async t => {
+  const h = await setup(t);
+  const app = editableApp(h.local.rows);
+  app.applyPatch(app.state.rows[0], { objectif: 'Objectif synchronisé' }, 'Proposition IA appliquée');
+  h.sync.save(app.state); await h.sync.flush();
+  assert.deepEqual(h.server.writes[0].p_journal[0].changes, app.state.journal[0].changes);
+  const loaded = await h.sync.load();
+  assert.deepEqual(loaded.journal[0].changes, app.state.journal[0].changes);
+});
+
+test('Journal : supprimer une fiche conserve son activité, son rythme et son identifiant dans la suppression', t => {
+  const entries = [journalEntry('j-created'), journalEntry('j-closed', { type: 'statut', detail: 'Statut → Clôturé (date effective 2026-09-06)' }), journalEntry('j-step', { type: 'etape', detail: 'Étape cochée : Livrer' })];
+  const app = journalApp(t, entries, [{ ...mini('mc-a'), createdAt: '2026-09-06', history: [{ t: '2026-09-06', type: 'created' }] }], { selected: 'mc-a', jPeriod: 7 });
+  const before = journalMetrics(app), rhythm = app.activityVals().jStepsPerWeek;
+  app.renderVals().doDeleteMini();
+  assert.equal(app.state.rows.length, 0);
+  assert.deepEqual(journalMetrics(app), { ...before, supprimés: 1 });
+  assert.equal(before['créés'], 1); assert.equal(before['clôturés'], 1); assert.equal(before['étapes cochées'], 1);
+  assert.equal(app.activityVals().jStepsPerWeek, rhythm);
+  assert.equal(app.state.journal[0].miniId, 'mc-a');
+});
+
+test('Journal : les étapes décochées et réouvertures ne gonflent pas les accomplissements', t => {
+  const app = journalApp(t, [
+    journalEntry('a', { type: 'etape', detail: 'Étape cochée : Préparer' }),
+    journalEntry('b', { type: 'etape', detail: 'Étape décochée : Préparer' }),
+    journalEntry('c', { type: 'etape', detail: 'Étape cochée : Préparer' }),
+    journalEntry('d', { type: 'statut', detail: 'Statut → Clôturé' }),
+    journalEntry('e', { type: 'statut', detail: 'Réouvert' }),
+    journalEntry('f', { type: 'statut', detail: 'SAS franchi → admis dans le cosmos' }),
+    journalEntry('g', { type: 'statut', detail: 'SAS rouvert' }),
+  ]);
+  assert.equal(journalMetrics(app)['étapes cochées'], 2);
+  assert.equal(journalMetrics(app)['clôturés'], 1);
+  assert.equal(journalMetrics(app)['admis'], 1);
+});
+
+for (const now of ['2026-04-01T12:00:00+02:00', '2026-10-28T12:00:00+01:00']) {
+  for (const period of [7, 30, 90]) test(`Journal : bornes calendaires et comparaison sur ${period} jours autour de ${now.slice(0, 10)}`, t => {
+    const app = journalApp(t, [], [], { jPeriod: period }, now);
+    const from = new Date(core.daysAgo(period - 1) + 'T00:00:00').getTime();
+    const prevFrom = new Date(core.daysAgo(2 * period - 1) + 'T00:00:00').getTime();
+    const end = new Date(core.daysAgo(-1) + 'T00:00:00').getTime();
+    app.setState({ journal: [
+      journalEntry('before-previous', { t: new Date(prevFrom - 1).toISOString() }),
+      journalEntry('previous', { t: new Date(prevFrom).toISOString() }),
+      journalEntry('before-start', { t: new Date(from - 1).toISOString() }),
+      journalEntry('start', { t: new Date(from).toISOString() }),
+      journalEntry('last', { t: new Date(end - 1).toISOString() }),
+      journalEntry('tomorrow', { t: new Date(end).toISOString() }),
+    ] });
+    const values = app.journalVals();
+    assert.deepEqual(values.jGroups.flatMap(g => g.items.map(e => e.id)), ['last', 'start']);
+    const created = app.activityVals().jActivity.find(m => m.label === 'créés');
+    assert.equal(created.value, 2); assert.equal(created.deltaLabel, '0 vs période préc.');
+  });
+}
+
+test('Journal : une admission après minuit appartient au même jour dans la liste et les compteurs', t => {
+  const app = journalApp(t, [journalEntry('midnight', { t: '2026-08-30T22:30:00.000Z', type: 'statut', detail: 'SAS franchi → admis dans le cosmos' })], [], { jPeriod: 7 });
+  const values = app.journalVals();
+  assert.equal(values.jGroups[0].day, '2026-08-31'); assert.equal(values.jGroups[0].items[0].time, '00:30');
+  assert.equal(values.jShown, 1); assert.equal(journalMetrics(app)['admis'], 1);
+});
+
+test('Journal : minuit actualise la période et ses compteurs sans rechargement', t => {
+  const app = journalApp(t, [journalEntry('boundary', { t: '2026-08-31T00:30:00+02:00' })], [], { jPeriod: 7 }, '2026-09-06T23:59:00+02:00');
+  assert.equal(app.renderVals().jShown, 1);
+  t.mock.timers.setTime(new Date('2026-09-07T00:01:00+02:00').getTime());
+  app.tick();
+  assert.equal(app.renderVals().jShown, 0); assert.equal(journalMetrics(app)['créés'], 0);
+});
+
+test('Journal : chaque compteur annonce le résultat du clic avec les autres filtres', t => {
+  const app = journalApp(t, [
+    journalEntry('a'), journalEntry('b', { author: 'Nova' }),
+    journalEntry('c', { author: 'Nova', type: 'note', detail: 'Projet observé' }),
+    journalEntry('d', { author: 'Nova', mini: 'Autre', detail: 'Autre sujet' }),
+    journalEntry('e', { author: 'Nova', t: '2026-07-01T10:00:00Z' }),
+  ], [], { jPeriod: 7, jAuthor: 'Nova', jType: 'creation', jQuery: 'projet' });
+  assert.equal(app.journalVals().jShown, 1); assert.equal(journalMetrics(app)['créés'], 1);
+  const initial = { ...app.state };
+  for (const category of ['jTypeChips', 'jAuthorChips']) {
+    for (const chip of app.journalVals()[category]) {
+      chip.onClick();
+      assert.equal(app.journalVals().jShown, chip.count, category + ': ' + chip.label);
+      app.state = { ...initial };
+    }
+  }
+  assert.equal(app.journalVals().jTypeChips.find(c => c.label === 'Tous').count, 2);
+});
+
+test('Journal : les auteurs absents restent filtrables et tous les critères peuvent être réinitialisés', t => {
+  const app = journalApp(t, [journalEntry('missing', { author: undefined })], [], { jPeriod: 7, jQuery: 'Projet', jPage: 5 });
+  const anonymous = app.journalVals().jAuthorChips.find(c => c.label === '—');
+  assert.equal(anonymous.count, 1); anonymous.onClick(); assert.equal(app.journalVals().jShown, 1);
+  app.setState({ jType: 'note' }); assert.equal(app.journalVals().jShown, 0);
+  app.journalVals().resetJournalFilters();
+  assert.equal(app.journalVals().jHasFilters, false); assert.equal(app.journalVals().jShown, 1); assert.equal(app.state.jPage, 0);
+});
+
+test('Journal : les noms réutilisés et les entrées sans identifiant ne relient jamais une autre fiche', t => {
+  const app = journalApp(t, [journalEntry('deleted', { miniId: 'mc-deleted' }), journalEntry('legacy', { miniId: undefined }), journalEntry('current', { miniId: 'mc-new' })], [{ ...mini('mc-new'), name: 'Projet' }]);
+  const items = app.journalVals().jGroups[0].items;
+  for (const id of ['deleted', 'legacy']) {
+    const entry = items.find(e => e.id === id);
+    assert.equal(entry.linkable, false); assert.equal(entry.unlinked, true); entry.openMini(); assert.equal(app.state.selected, null);
+  }
+  const current = items.find(e => e.id === 'current');
+  assert.equal(current.linkable, true); assert.equal(current.openLabel, 'Ouvrir Projet — TRAVAIL');
+  current.openMini(); assert.equal(app.state.selected, 'mc-new'); assert.equal(app.state.view, 'table');
+});
+
+test('Journal : un renommage de fiche garde le lien de ses anciennes entrées', t => {
+  const app = journalApp(t, [journalEntry('old-name')], [{ ...mini('mc-a'), name: 'Nouveau nom', cosmos: 'FAMILLE' }]);
+  const entry = app.journalVals().jGroups[0].items[0];
+  assert.equal(entry.mini, 'Projet'); entry.openMini(); assert.equal(app.state.selected, 'mc-a');
+});
+
+test('Journal : les valeurs complètes et les textes des étapes sont affichables et recherchables', t => {
+  const before = 'Ancien texte '.repeat(20) + 'valeur initiale unique';
+  const after = 'Nouveau texte '.repeat(20) + 'valeur finale unique';
+  const app = journalApp(t, [journalEntry('change', { type: 'modification', detail: 'Modification par l’agent : Objectif', changes: [{ field: 'Objectif', before, after }, { field: 'Étapes', before: '', after: 'Étape ajoutée' }] })]);
+  const item = app.journalVals().jGroups[0].items[0];
+  assert.equal(item.hasChanges, true); assert.deepEqual(item.changeLines[0], { field: 'Objectif', before, after });
+  assert.equal(item.changeLines[1].before, '—');
+  for (const query of ['valeur initiale unique', 'valeur finale unique', 'Étape ajoutée']) {
+    app.journalVals().setJQuery(input(query)); assert.equal(app.journalVals().jShown, 1);
+  }
+});
+
+test('Journal : modifier une étape conserve son texte avant/après même si le nombre reste identique', () => {
+  const app = editableApp([{ ...mini('mc-a'), actions: [{ text: 'Avant', done: false }] }]);
+  app.beginEdit('mc-a');
+  app.update('mc-a', { actions: [{ text: 'Après', done: false }] });
+  assert.equal(app.finishEdit(), true);
+  assert.deepEqual(app.state.journal[0].changes, [{ field: 'Étapes', before: 'Avant', after: 'Après' }]);
+});
+
+test('Journal : le tri temporel et la pagination restent corrects avec des fuseaux et un retrait distant', t => {
+  const entries = Array.from({ length: 105 }, (_, i) => journalEntry('j-' + i, { t: new Date(Date.parse('2026-09-06T10:00:00Z') + i * 60000).toISOString() }));
+  entries[104].t = '2026-09-06T13:44:00+02:00';
+  const app = journalApp(t, entries);
+  const seen = [];
+  for (let i = 0; i < 3; i++) { const v = app.journalVals(); seen.push(...v.jGroups.flatMap(g => g.items.map(e => e.id))); v.jNext(); }
+  assert.equal(seen[0], 'j-104'); assert.equal(new Set(seen).size, 105); assert.equal(app.journalVals().jNextDisabled, true);
+  app.setState({ journal: entries.slice(0, 1) });
+  assert.equal(app.journalVals().jPageLabel, 'Page 1 / 1'); assert.equal(app.journalVals().jPrevDisabled, true);
+});
+
+test('Journal : Tout compte le journal vivant sans recomposer les événements depuis les fiches ou les archives', t => {
+  const app = journalApp(t, [journalEntry('live')], [{ ...mini('mc-a'), history: [{ type: 'created', t: '2020-01-01' }] }], { journalArchive: [journalEntry('old', { t: '2020-01-01T10:00:00Z' })] });
+  assert.equal(journalMetrics(app)['créés'], 1);
+  assert.equal(app.activityVals().jPeriodLabel, 'journal des 12 derniers mois');
+});
+
+test('Journal : les commandes de fiche et de détails utilisent des contrôles HTML natifs accessibles au clavier', () => {
+  const markup = html.slice(html.indexOf('<sc-if value="{{ isJournal }}"'), html.indexOf('<sc-if value="{{ isEcheances }}"'));
+  const miniButton = markup.match(/<button\b[^>]*class="journal-mini"[^>]*>/)[0];
+  assert.match(miniButton, /type="button"/); assert.match(miniButton, /aria-label="\{\{ e.openLabel \}\}"/);
+  assert.match(miniButton, /disabled="\{\{ e.unlinked \}\}"/);
+  assert.match(markup, /<details\b[^>]*class="journal-changes"/); assert.match(markup, /<summary\b/);
+});
