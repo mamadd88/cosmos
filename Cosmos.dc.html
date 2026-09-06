@@ -19,6 +19,7 @@ a{color:#fafafa;text-decoration:none}a:hover{color:#e4e4e7}
 input,textarea,select,button{font-family:inherit}
 input::placeholder,textarea::placeholder{color:#52525b}
 input:focus,textarea:focus{outline:none;border-color:#52525b !important}
+.echeance-row:focus-visible{outline:2px solid #a1a1aa;outline-offset:-2px}
 ::-webkit-scrollbar{width:9px;height:9px}::-webkit-scrollbar-thumb{background:#27272a;border-radius:6px}::-webkit-scrollbar-track{background:transparent}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 @keyframes fadein{from{opacity:0}to{opacity:1}}
@@ -142,7 +143,7 @@ input:focus,textarea:focus{outline:none;border-color:#52525b !important}
   </sc-for>
   <span style="width:1px;height:18px;background:rgba(39,39,42,0.8);margin:0 8px"></span>
   <sc-for list="{{ echTimeChips }}" as="c" hint-placeholder-count="4">
-    <button onClick="{{ c.onClick }}" title="Échéance dans ce délai" style="padding:5px 11px;border-radius:99px;font-size:12px;cursor:pointer;color:{{ c.color }};background:{{ c.bg }};border:1px solid {{ c.border }};display:flex;gap:6px;align-items:center;font-family:'JetBrains Mono',monospace">{{ c.label }} <span style="font-size:11px;color:#fafafa">{{ c.count }}</span></button>
+    <button onClick="{{ c.onClick }}" title="{{ c.title }}" style="padding:5px 11px;border-radius:99px;font-size:12px;cursor:pointer;color:{{ c.color }};background:{{ c.bg }};border:1px solid {{ c.border }};display:flex;gap:6px;align-items:center;font-family:'JetBrains Mono',monospace">{{ c.label }} <span style="font-size:11px;color:#fafafa">{{ c.count }}</span></button>
   </sc-for>
   <select value="{{ quarterFilter }}" onChange="{{ setQuarter }}" title="Trimestre de l'échéance" style="width:{{ quarterW }};padding:5px 10px;border-radius:99px;font-size:12px;cursor:pointer;color:{{ quarterStyle.color }};background:{{ quarterStyle.bg }};border:1px solid {{ quarterStyle.border }};font-family:'JetBrains Mono',monospace;color-scheme:dark;outline:none">
     <option value="">Trimestre</option>
@@ -155,6 +156,7 @@ input:focus,textarea:focus{outline:none;border-color:#52525b !important}
   <select value="{{ yearFilter }}" onChange="{{ setYear }}" title="Année de l'échéance" style="width:{{ yearW }};padding:5px 10px;border-radius:99px;font-size:12px;cursor:pointer;color:{{ yearStyle.color }};background:{{ yearStyle.bg }};border:1px solid {{ yearStyle.border }};font-family:'JetBrains Mono',monospace;color-scheme:dark;outline:none">
     <sc-for list="{{ yearOptions }}" as="o" hint-placeholder-count="1"><option value="{{ o.value }}">{{ o.label }}</option></sc-for>
   </select>
+  <sc-if value="{{ echHasFilters }}"><button onClick="{{ resetEcheancesFilters }}" style="padding:5px 10px;border-radius:99px;font-size:12px;cursor:pointer;color:#a1a1aa;background:#09090b;border:1px solid #27272a">Réinitialiser les filtres</button></sc-if>
 </div>
 <div style="display:flex;align-items:center;justify-content:center;padding:14px 16px 0;width:100%">
   <input value="{{ eQuery }}" onChange="{{ setEQuery }}" placeholder="Rechercher un mini-cosmos, un cosmos, une valeur…" style="width:420px;background:#09090b;border:1px solid #27272a;border-radius:10px;padding:9px 12px;font-size:12.5px;color:#f4f4f5">
@@ -168,15 +170,15 @@ input:focus,textarea:focus{outline:none;border-color:#52525b !important}
         <span>Mini-cosmos</span><span>Cosmos</span><span>Statut</span><span>Valeur actuelle</span><span>Échéance</span><span>Projection</span><span style="text-align:right">Jours</span>
       </div>
       <sc-for list="{{ echeances }}" as="x" hint-placeholder-count="6">
-        <div onClick="{{ x.open }}" title="Ouvrir le mini-cosmos" style="display:grid;grid-template-columns:minmax(150px,1.3fr) minmax(110px,150px) 64px minmax(120px,1fr) minmax(120px,150px) 140px 56px;gap:0 14px;align-items:center;padding:9px 16px;border-bottom:1px solid rgba(39,39,42,0.35);cursor:pointer" style-hover="background:rgba(39,39,42,0.35)">
+        <button type="button" class="echeance-row" key="{{ x.id }}" onClick="{{ x.open }}" aria-label="{{ x.openLabel }}" title="{{ x.openLabel }}" style="display:grid;width:100%;text-align:left;background:transparent;color:inherit;border:0;border-radius:0;grid-template-columns:minmax(150px,1.3fr) minmax(110px,150px) 64px minmax(120px,1fr) minmax(120px,150px) 140px 56px;gap:0 14px;align-items:center;padding:9px 16px;border-bottom:1px solid rgba(39,39,42,0.35);cursor:pointer" style-hover="background:rgba(39,39,42,0.35)">
           <span style="display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:#fafafa"><span style="width:8px;height:8px;border-radius:99px;flex:none;background:{{ x.poidsBg }};border:1.5px solid {{ x.poidsBorder }}"></span>{{ x.name }}</span>
           <span style="display:flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#fafafa;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><span style="width:3px;height:12px;border-radius:2px;background:{{ x.cosmosColor }};flex:none"></span>{{ x.cosmos }}</span>
-          <span><span style="padding:2px 8px;border-radius:99px;font-size:10.5px;font-weight:600;color:{{ x.statutColor }};background:{{ x.statutBg }}">{{ x.statut }}</span></span>
+          <span><span title="{{ x.statutHint }}" style="padding:2px 8px;border-radius:99px;font-size:10.5px;font-weight:600;white-space:nowrap;color:{{ x.statutColor }};background:{{ x.statutBg }}">{{ x.statut }}</span></span>
           <span style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#d4d4d8">{{ x.actuel }}</span>
           <span style="display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:11px;color:{{ x.statutColor }}"><sc-if value="{{ x.isSas }}" hint-placeholder-val="{{ false }}"><span style="font-size:10px;color:#818cf8;background:rgba(99,102,241,0.12);padding:1px 5px;border-radius:5px;flex:none">SAS</span></sc-if>{{ x.cloture }}</span>
           <span style="height:4px;border-radius:2px;background:#27272a;overflow:hidden"><span style="display:block;height:100%;background:{{ x.color }};width:{{ x.pct }}"></span></span>
           <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:{{ x.color }};text-align:right">{{ x.label }}</span>
-        </div>
+        </button>
       </sc-for>
     </div></div>
   </div>
@@ -1169,30 +1171,40 @@ class Component extends DCLogic {
       jPrevColor:page>0?'#f4f4f5':'#3f3f46', jNextColor:page<pages-1?'#f4f4f5':'#3f3f46'};
   }
   // filtres de temps, communs aux pages Cosmos et Échéances : délai (7 / 30 / 90 j), trimestre, mois, année de l'échéance effective
+  setPeriodFilter(kind,value){ this.setState(s=>{
+    if(kind==='year') return {yearFilter:value,monthFilter:'',quarterFilter:''};
+    return {[kind+'Filter']:value,[kind==='month'?'quarterFilter':'monthFilter']:'',...(value&&s.yearFilter?{yearFilter:value.slice(0,4)}:{})};
+  }); }
   timeFilter(){ const s=this.state; const tf=s.timeFilter||0, mf=s.monthFilter||'', yf=s.yearFilter||'', qf=(typeof s.quarterFilter==='string'?s.quarterFilter:'');
     const isoOf=x=>echeanceEffective(x).iso, joursAvant=x=>{ const c=isoOf(x); return c?Math.round((new Date(c+'T00:00:00')-TODAY)/86400000):null; };
     const trimestre=c=>c.slice(0,4)+'-Q'+(Math.floor((+c.slice(5,7)-1)/3)+1);
     const dansPeriode=x=>{ if(!mf&&!yf&&!qf) return true; const c=isoOf(x); if(!c) return false; return (!yf||c.slice(0,4)===yf)&&(!mf||c.slice(0,7)===mf)&&(!qf||trimestre(c)===qf); };
-    const inTime=x=>{ if(!tf) return dansPeriode(x); const d=joursAvant(x); return d!=null&&d<=tf&&dansPeriode(x); };
+    // Un délai court couvre aujourd'hui et les jours à venir. Les retards restent accessibles avec « Tous ».
+    const inTime=(x,delay=tf)=>{ if(!delay) return dansPeriode(x); const d=joursAvant(x); return d!=null&&d>=0&&d<=delay&&dansPeriode(x); };
     return {tf,mf,yf,qf,joursAvant,inTime,any:!!(tf||mf||yf||qf)}; }
   // page Échéances : tout ce qui a une date, de la plus proche à la plus lointaine, SAS et mandats compris — l'axe du temps vit ici
   echeancesVals(){
     const s=this.state; if((s.view||'table')!=='echeances') return {};
-    const rows=s.rows.filter(x=>!x.closed).map(x=>({...x,statut:statutOf(x)})).filter(x=>x.statut!=='Pause');
+    const rows=s.rows.filter(x=>!x.closed&&!x.pause).map(x=>({...x,statut:statutOf(x)}));
     const live=rows.map(x=>({x,p:projectionOf(x)})).filter(o=>!o.p.permanent);
     const parE={ethos:[],logos:[],pathos:[]}; s.cosmos.forEach(n=>parE[etageDeNom(s.etageDe,n)].push(n)); const rankOf=n=>{ const e=etageDeNom(s.etageDe,n); const i=parE[e].indexOf(n); return i<0?'':ETAGE_CODE[e]+(i+1)+' '; };
-    const T=this.timeFilter(); const tf=T.tf, joursAvant=T.joursAvant, dansDelai=T.inTime, zf=s.echZone||'Tous';
+    const T=this.timeFilter(); const tf=T.tf, dansDelai=T.inTime, zf=s.echZone||'Tous';
     const eq=(s.eQuery||'').trim().toLowerCase(); const matchEq=x=>!eq||[x.name,x.cosmos,x.actuel,x.objectif].join(' ').toLowerCase().includes(eq);
-    const shown=live.filter(o=>(zf==='Tous'||o.p.zone===zf)&&dansDelai(o.x)&&matchEq(o.x)).sort((a,b)=>(a.p.days-b.p.days)||((POIDS_ORDER[poidsOf(a.x)]??2)-(POIDS_ORDER[poidsOf(b.x)]??2)));
-    const echeances=shown.map(({x,p})=>({name:x.name,poidsBg:POIDS_DOT[poidsOf(x)].bg,poidsBorder:POIDS_DOT[poidsOf(x)].border,cosmos:rankOf(x.cosmos)+x.cosmos,cosmosColor:COLORS[Math.max(0,s.cosmos.indexOf(x.cosmos))%COLORS.length],actuel:x.actuel||'—',pct:(p.pct||0)+'%',color:p.color,label:p.label,cloture:p.sas?fmtFR(echeanceEffective(x).iso):clotureShort(x.cloture),isSas:!!p.sas,statut:x.statut,statutColor:STATUT_STYLE[x.statut][0],statutBg:STATUT_STYLE[x.statut][1],
+    const searched=live.filter(o=>matchEq(o.x));
+    const zoneBase=searched.filter(o=>dansDelai(o.x));
+    const inZone=o=>zf==='Tous'||o.p.zone===zf;
+    const shown=zoneBase.filter(inZone).sort((a,b)=>(a.p.days-b.p.days)||((POIDS_ORDER[poidsOf(a.x)]??2)-(POIDS_ORDER[poidsOf(b.x)]??2)));
+    const echeances=shown.map(({x,p})=>({id:x.id,name:x.name,openLabel:'Ouvrir '+x.name+' — '+x.cosmos,poidsBg:POIDS_DOT[poidsOf(x)].bg,poidsBorder:POIDS_DOT[poidsOf(x)].border,cosmos:rankOf(x.cosmos)+x.cosmos,cosmosColor:COLORS[Math.max(0,s.cosmos.indexOf(x.cosmos))%COLORS.length],actuel:x.actuel||'—',pct:(p.pct||0)+'%',color:p.color,label:p.label,cloture:p.sas?fmtFR(echeanceEffective(x).iso):clotureShort(x.cloture),isSas:!!p.sas,statut:notStarted(x)?'À venir':x.statut,statutHint:notStarted(x)?'Débute le '+fmtFR(startOf(x)):x.statut,statutColor:STATUT_STYLE[x.statut][0],statutBg:STATUT_STYLE[x.statut][1],
       open:()=>this.navigate({selected:x.id,editing:false,confirmDeleteMini:false,aiDetail:null})}));
     const zones=[['Tous','Tous',null],['ok',PROJ.ok[0],PROJ.ok[1]],['sas',PROJ.sas[0],PROJ.sas[1]],['tension',PROJ.tension[0],PROJ.tension[1]],['jourj',PROJ.jourj[0],PROJ.jourj[1]],['retard',PROJ.retard[0],PROJ.retard[1]]];
-    const n=k=>live.filter(o=>o.p.zone===k).length;
-    const echZoneChips=zones.map(([k,label,dot])=>({label,dot:dot||'transparent',dotW:dot?'6px':'0px',...(zf===k?chipOn:chipOff),count:k==='Tous'?live.length:n(k),vitalW:(k==='tension'||k==='jourj'||k==='retard')&&live.some(o=>poidsOf(o.x)==='vital'&&o.p.zone===k)?'6px':'0px',onClick:()=>this.setState({echZone:k})}));
-    const echTimeChips=[[0,'Tous'],[7,'7 j'],[30,'30 j'],[90,'90 j']].map(([d,label])=>({label,...(tf===d?chipOn:chipOff),count:d?live.filter(o=>{ const k=joursAvant(o.x); return k!=null&&k<=d; }).length:live.length,onClick:()=>this.setState({timeFilter:d})}));
-    const echKpis=[{label:'à l’heure',value:n('ok'),color:'#34d399'},{label:'en test',value:n('sas'),color:'#818cf8'},{label:'tension',value:n('tension'),color:'#fbbf24'},{label:'jour J',value:n('jourj'),color:'#fafafa'},{label:'retard',value:n('retard'),color:'#fb7185'},{label:'mandats',value:rows.filter(x=>isMandat(x.cloture)).length,color:'#71717a'}];
+    const n=k=>shown.filter(o=>o.p.zone===k).length;
+    // Chaque compteur annonce le résultat du clic : tous les autres critères sont conservés.
+    const echZoneChips=zones.map(([k,label,dot])=>({label,dot:dot||'transparent',dotW:dot?'6px':'0px',...(zf===k?chipOn:chipOff),count:zoneBase.filter(o=>k==='Tous'||o.p.zone===k).length,vitalW:(k==='tension'||k==='jourj'||k==='retard')&&zoneBase.some(o=>poidsOf(o.x)==='vital'&&o.p.zone===k)?'6px':'0px',onClick:()=>this.setState({echZone:k})}));
+    const echTimeChips=[[0,'Tous'],[7,'7 j'],[30,'30 j'],[90,'90 j']].map(([d,label])=>({label,title:d?'Aujourd’hui et les '+d+' prochains jours':'Toutes les échéances, retards compris',...(tf===d?chipOn:chipOff),count:searched.filter(o=>inZone(o)&&dansDelai(o.x,d)).length,onClick:()=>this.setState({timeFilter:d})}));
+    const echKpis=[{label:'à l’heure',value:n('ok'),color:'#34d399'},{label:'en test',value:n('sas'),color:'#818cf8'},{label:'tension',value:n('tension'),color:'#fbbf24'},{label:'jour J',value:n('jourj'),color:'#fafafa'},{label:'retard',value:n('retard'),color:'#fb7185'},{label:'mandats',value:shown.filter(o=>isMandat(o.x.cloture)).length,color:'#71717a'}];
     const anyF=zf!=='Tous'||T.any||!!eq;
-    return {eQuery:s.eQuery||'', setEQuery:e=>this.setState({eQuery:e.target.value}), echeances,echCount:live.length,echShown:shown.length,noEcheances:shown.length===0,echEmptyLabel:anyF?'aucune échéance pour ces filtres':'aucun mini-cosmos actif avec une échéance',echZoneChips,echTimeChips,echKpis};
+    return {eQuery:s.eQuery||'', setEQuery:e=>this.setState({eQuery:e.target.value}), echeances,echCount:live.length,echShown:shown.length,noEcheances:shown.length===0,echEmptyLabel:anyF?'aucune échéance pour ces filtres':'aucune échéance active ou à venir',echZoneChips,echTimeChips,echKpis,echHasFilters:anyF,
+      resetEcheancesFilters:()=>this.setState({echZone:'Tous',timeFilter:0,monthFilter:'',quarterFilter:'',yearFilter:'',eQuery:''})};
   }
   // en-tête du Journal : l'activité de la période choisie (créés, admis, clôturés, supprimés, étapes cochées), comparée à la période précédente
   activityVals(){
@@ -1219,9 +1231,12 @@ class Component extends DCLogic {
     const visible = rowsN.filter(x=>s.filter==='Clôturé'||x.statut!=='Clôturé');
     const isoOf=x=>echeanceEffective(x).iso;
     const clotureOpts=clotureOptions();
-    const mf=s.monthFilter||'', yf=s.yearFilter||'', qf=(typeof s.quarterFilter==='string'?s.quarterFilter:'');   // filtres de temps : affichés et appliqués dans la page Échéances
-    const y0=new Date().getFullYear();
-    const years=Array.from({length:11},(_,i)=>String(y0+i));
+    const mf=s.monthFilter||'', yf=s.yearFilter||'', qf=(typeof s.quarterFilter==='string'?s.quarterFilter:'');
+    const y0=TODAY.getFullYear();
+    // Inclure les années des échéances et des filtres actifs, même après le Nouvel An ou une suppression distante.
+    const yearSet=new Set(Array.from({length:11},(_,i)=>String(y0+i)));
+    [mf,yf,qf,...s.rows.map(isoOf)].forEach(v=>{ if(/^\d{4}(?:-|$)/.test(v||'')) yearSet.add(v.slice(0,4)); });
+    const years=[...yearSet].sort((a,b)=>Number(a)-Number(b));
     const yearOptions=[{value:'',label:'Année'},...years.map(y=>({value:y,label:y}))];
     const MOIS=['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'];
     const monthGroups=years.map(y=>({year:y,items:MOIS.map((m,i)=>({value:y+'-'+String(i+1).padStart(2,'0'),label:m+' '+y}))}));
@@ -1244,7 +1259,7 @@ class Component extends DCLogic {
     const projChips=[['Tous','Tous',null],['ok',PROJ.ok[0],PROJ.ok[1]],['sas',PROJ.sas[0],PROJ.sas[1]],['tension',PROJ.tension[0],PROJ.tension[1]],['jourj',PROJ.jourj[0],PROJ.jourj[1]],['retard',PROJ.retard[0],PROJ.retard[1]]].map(([k,label,dot])=>({label,dot:dot||'transparent',dotW:dot?'6px':'0px',...(pf===k?chipOn:chipOff),count:k==='Tous'?visible.length:visible.filter(x=>projectionOf(x).zone===k).length,vitalW:(k==='tension'||k==='jourj'||k==='retard')&&visible.some(x=>poidsOf(x)==='vital'&&projectionOf(x).zone===k)?'6px':'0px',onClick:()=>this.setState({projFilter:k})}));
     const cosmosChips=['Tous',...s.cosmos].map((c,i)=>({label:c==='Tous'?c:withRank(c),...(cf===c?chipOn:chipOff),dot:c==='Tous'?'transparent':COLORS[(i-1)%COLORS.length],dotW:c==='Tous'?'0px':'6px',
       count:c==='Tous'?visible.length:visible.filter(x=>x.cosmos===c).length,onClick:()=>this.setState({cosmosFilter:c})}));
-    const timeChips=[[0,'Tous'],[7,'7 j'],[30,'30 j'],[90,'90 j']].map(([d,label])=>({label,...(T.tf===d?chipOn:chipOff),count:d?visible.filter(x=>{ const k=T.joursAvant(x); return k!=null&&k<=d; }).length:visible.length,onClick:()=>this.setState({timeFilter:d})}));
+    const timeChips=[[0,'Tous'],[7,'7 j'],[30,'30 j'],[90,'90 j']].map(([d,label])=>({label,...(T.tf===d?chipOn:chipOff),count:visible.filter(x=>T.inTime(x,d)).length,onClick:()=>this.setState({timeFilter:d})}));
     const COLS=[['name','Mini-cosmos'],['objectif','Objectif'],['actuel','Valeur actuelle'],['alerte','Alerte (seuil)'],['kill','Kill'],['entropie','Entropie'],['reponse','Réponse entropie'],['action','Prochaine étape'],['statut','Statut'],['cloture','Clôture'],['proj','Projection']];
     const sort=s.sort||null;
     const STATUT_ORDER={Actif:0,SAS:1,Pause:2,'Clôturé':3};
@@ -1437,9 +1452,9 @@ class Component extends DCLogic {
       ...(()=>{ const n=[s.filter!=='Tous',pf!=='Tous',cf!=='Tous',T.any].filter(Boolean).length; return {filtersLabel:n?'Filtres · '+n:'Filtres',filtersColor:n?'#fafafa':'#a1a1aa',filtersBorder:n?'rgba(161,161,170,0.9)':'#27272a',filtersTitle:s.showFilters?'Cacher les filtres':(n?n+' filtre'+(n>1?'s':'')+' actif'+(n>1?'s':'')+' — cliquer pour les voir':'Afficher les filtres : statut, zone, délai, cosmos')}; })(),
       sectionsHint, openAll:()=>this.setAllPlis('cosmos',s.cosmos,false), closeAll:()=>this.setAllPlis('cosmos',s.cosmos,true),
       cosmosChips,
-      monthGroups, quarterGroups, yearOptions, quarterW, monthW, yearW, timeChips, monthFilter:mf, yearFilter:yf, quarterFilter:qf, quarterStyle:selStyle(qf), setQuarter:e=>this.setState({quarterFilter:e.target.value,monthFilter:''}),
+      monthGroups, quarterGroups, yearOptions, quarterW, monthW, yearW, timeChips, monthFilter:mf, yearFilter:yf, quarterFilter:qf, quarterStyle:selStyle(qf), setQuarter:e=>this.setPeriodFilter('quarter',e.target.value),
       monthStyle:selStyle(mf), yearStyle:selStyle(yf),
-      setMonth:e=>this.setState({monthFilter:e.target.value,quarterFilter:''}), setYear:e=>this.setState({yearFilter:e.target.value}),
+      setMonth:e=>this.setPeriodFilter('month',e.target.value), setYear:e=>this.setPeriodFilter('year',e.target.value),
       isTable:view==='table', isEcheances:view==='echeances', isTemplates:view==='templates', isJournal:view==='journal',
       tabJournal:{color:view==='journal'?'#fafafa':'#a1a1aa',bg:view==='journal'?'rgba(39,39,42,0.55)':'transparent',border:view==='journal'?'rgba(63,63,70,0.8)':'transparent',onClick:()=>this.navigate({view:'journal'})},
       ...this.journalVals(), ...this.activityVals(),

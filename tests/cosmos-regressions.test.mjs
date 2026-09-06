@@ -451,3 +451,141 @@ test('une erreur de rechargement conserve la copie locale et le message de confl
   app.exportJson=async()=>{}; app.sync={reloadAfterConflict:async()=>{throw new Error('Hors ligne');}};
   await app.resolveSyncConflict(); assert.equal(app.state.rows.length,1); assert.equal(app.state.syncConflict,'Conflit'); assert.equal(app.state.syncConflictBusy,false);
 });
+
+function deadlinesApp(t, rows, state = {}) {
+  t.mock.timers.enable({ apis: ['Date'], now: new Date('2026-09-06T12:00:00+02:00').getTime() });
+  t.after(() => { t.mock.timers.reset(); core.refreshToday(); });
+  core.refreshToday();
+  const app = editableApp(rows);
+  app.setState({ view: 'echeances', ...state });
+  return app;
+}
+const deadline = (id, date, patch = {}) => ({ ...mini(id), cloture: date, ...patch });
+
+test('Échéances : changer l’année retire le mois et le trimestre précédents', t => {
+  const app = deadlinesApp(t, [deadline('mc-2026', '2026-09-30'), deadline('mc-2027', '2027-09-30')]);
+  app.renderVals().setMonth(input('2026-09'));
+  app.renderVals().setYear(input('2027'));
+  let v = app.renderVals();
+  assert.equal(v.monthFilter, ''); assert.equal(v.quarterFilter, '');
+  assert.deepEqual(v.echeances.map(x => x.id), ['mc-2027']);
+  v.setQuarter(input('2027-Q3')); app.renderVals().setYear(input('2026'));
+  v = app.renderVals(); assert.equal(v.quarterFilter, '');
+  assert.deepEqual(v.echeances.map(x => x.id), ['mc-2026']);
+});
+
+test('Échéances : choisir un mois ou trimestre d’une autre année adapte l’année active', t => {
+  const app = deadlinesApp(t, [deadline('mc-2026', '2026-09-30'), deadline('mc-2027', '2027-09-30')], { yearFilter: '2026' });
+  app.renderVals().setMonth(input('2027-09'));
+  assert.equal(app.state.yearFilter, '2027'); assert.equal(app.renderVals().echShown, 1);
+  app.renderVals().setQuarter(input('2026-Q3'));
+  assert.equal(app.state.yearFilter, '2026'); assert.equal(app.state.monthFilter, '');
+  assert.deepEqual(app.renderVals().echeances.map(x => x.id), ['mc-2026']);
+  app.renderVals().setYear(input(''));
+  assert.equal(app.renderVals().echShown, 2); assert.equal(app.state.quarterFilter, '');
+});
+
+test('Échéances : un mois choisi sans filtre annuel ne crée pas de filtre annuel implicite', t => {
+  const app = deadlinesApp(t, [deadline('mc-a', '2026-09-30'), deadline('mc-b', '2027-09-30')]);
+  app.renderVals().setMonth(input('2027-09')); assert.equal(app.renderVals().yearFilter, '');
+  app.renderVals().setMonth(input('')); assert.equal(app.renderVals().echShown, 2);
+});
+
+test('Échéances : les menus incluent les années réelles anciennes et lointaines', t => {
+  const app = deadlinesApp(t, [deadline('mc-old', '2019-12-31', { startAt: '2019-01-01' }), deadline('mc-far', 'A:2050-03-01')]);
+  const v = app.renderVals();
+  for (const year of ['2019', '2050']) {
+    assert.ok(v.yearOptions.some(o => o.value === year));
+    assert.ok(v.monthGroups.some(g => g.year === year));
+    assert.ok(v.quarterGroups.some(g => g.year === year));
+  }
+  v.setYear(input('2019'));
+  assert.deepEqual(app.renderVals().echeances.map(x => x.id), ['mc-old']);
+});
+
+test('Échéances : les valeurs sélectionnées restent proposées après le Nouvel An et une suppression', t => {
+  const app = deadlinesApp(t, [], { yearFilter: '2026', monthFilter: '2026-12' });
+  t.mock.timers.setTime(new Date('2027-01-01T12:00:00+01:00').getTime());
+  let v = app.renderVals();
+  assert.ok(v.yearOptions.some(o => o.value === v.yearFilter));
+  assert.ok(v.monthGroups.flatMap(g => g.items).some(o => o.value === v.monthFilter));
+  app.setState({ monthFilter: '', quarterFilter: '2026-Q4' }); v = app.renderVals();
+  assert.ok(v.quarterGroups.flatMap(g => g.items).some(o => o.value === v.quarterFilter));
+});
+
+for (const days of [7, 30, 90]) test(`Échéances : ${days} jours inclut aujourd’hui et la borne, mais exclut le passé`, t => {
+  const app = deadlinesApp(t, []);
+  app.setState({ rows: [deadline('mc-late', core.daysAgo(180)), deadline('mc-yesterday', core.daysAgo(1)), deadline('mc-today', core.daysAgo(0)), deadline('mc-boundary', core.daysAgo(-days)), deadline('mc-beyond', core.daysAgo(-days - 1))] });
+  app.renderVals().echTimeChips.find(c => c.label === days + ' j').onClick();
+  const v = app.renderVals();
+  assert.deepEqual(v.echeances.map(x => x.id), ['mc-today', 'mc-boundary']);
+  assert.equal(v.echTimeChips.find(c => c.label === days + ' j').count, 2);
+  v.echTimeChips.find(c => c.label === 'Tous').onClick(); assert.equal(app.renderVals().echShown, 5);
+});
+
+test('Échéances : les compteurs annoncent exactement les résultats du clic avec période, zone et recherche', t => {
+  const app = deadlinesApp(t, [
+    deadline('mc-priority-late', '2026-09-03'), deadline('mc-priority-today', '2026-09-06'),
+    deadline('mc-priority-soon', '2026-09-10'), deadline('mc-priority-later', '2026-09-25'),
+    deadline('mc-priority-month', '2026-10-05'), deadline('mc-priority-year', '2027-09-06'),
+    deadline('mc-unrelated', '2026-09-10'),
+  ], { yearFilter: '2026', monthFilter: '2026-09', eQuery: 'priority', timeFilter: 30, echZone: 'tension' });
+  const filters = { ...app.state };
+  const v = app.renderVals();
+  assert.equal(v.echZoneChips.find(c => c.label === 'Retard').count, 0);
+  for (const c of v.echZoneChips) {
+    app.state = { ...filters }; c.onClick(); assert.equal(app.renderVals().echShown, c.count, c.label);
+  }
+  app.state = { ...filters };
+  for (const c of app.renderVals().echTimeChips) {
+    app.state = { ...filters }; c.onClick(); assert.equal(app.renderVals().echShown, c.count, c.label);
+  }
+});
+
+test('Échéances : les KPI et les alertes vitales suivent les filtres actifs', t => {
+  const app = deadlinesApp(t, [deadline('mc-late', '2026-09-01', { poids: 'vital' }), deadline('mc-future', 'A:2027-09-01')], { yearFilter: '2027' });
+  let v = app.renderVals();
+  assert.equal(v.echKpis.find(k => k.label === 'retard').value, 0);
+  assert.equal(v.echKpis.find(k => k.label === 'mandats').value, 1);
+  assert.equal(v.echZoneChips.find(c => c.label === 'Retard').vitalW, '0px');
+  v.setEQuery(input('introuvable')); v = app.renderVals();
+  assert.ok(v.echKpis.every(k => k.value === 0)); assert.ok(v.echZoneChips.every(c => c.count === 0));
+});
+
+test('Échéances : les dates futures apparaissent, les pauses manuelles et clôtures restent exclues', t => {
+  const app = deadlinesApp(t, [
+    deadline('mc-planned', '2026-09-09', { startAt: '2026-09-07' }),
+    deadline('mc-paused', '2026-09-09', { pause: true }),
+    deadline('mc-future-paused', '2026-09-09', { startAt: '2026-09-07', pause: true }),
+    deadline('mc-closed', '2026-09-09', { closed: true }),
+  ]);
+  let v = app.renderVals(); assert.equal(v.echCount, 1);
+  assert.equal(v.echeances[0].statut, 'À venir'); assert.match(v.echeances[0].statutHint, /07\/09\/2026/);
+  t.mock.timers.setTime(new Date('2026-09-07T12:00:00+02:00').getTime()); v = app.renderVals();
+  assert.equal(v.echeances[0].statut, 'Actif'); assert.equal(v.echCount, 1);
+});
+
+test('Échéances : tri par date effective, puis poids, et ouverture sans quitter la page', t => {
+  const app = deadlinesApp(t, [
+    deadline('mc-normal', '2026-09-20'), deadline('mc-vital', '2026-09-20', { poids: 'vital' }),
+    deadline('mc-mandat', 'A:2026-09-15'), deadline('mc-test', '2027-01-01', { sas: 'Test', sasUntil: '2026-09-08' }),
+  ]);
+  app.renderVals().setYear(input('2026')); const v = app.renderVals();
+  assert.deepEqual(v.echeances.map(x => x.id), ['mc-test', 'mc-mandat', 'mc-vital', 'mc-normal']);
+  assert.equal(v.echeances[0].isSas, true); assert.equal(v.echeances[0].cloture, '08/09/2026');
+  v.echeances[0].open(); assert.equal(app.state.selected, 'mc-test'); assert.equal(app.state.view, 'echeances');
+  assert.match(v.echeances[0].openLabel, /mc-test.*TRAVAIL/);
+});
+
+test('Échéances : réinitialiser retire tous les critères, recherche comprise', t => {
+  const app = deadlinesApp(t, [deadline('mc-a', '2026-09-10')], { yearFilter: '2027', monthFilter: '2027-09', timeFilter: 7, echZone: 'retard', eQuery: 'introuvable' });
+  assert.equal(app.renderVals().echHasFilters, true);
+  app.renderVals().resetEcheancesFilters();
+  assert.equal(app.renderVals().echShown, 1); assert.equal(app.renderVals().echHasFilters, false);
+});
+
+test('Cosmos : les filtres partagés suivent les mêmes bornes de délai et de période', t => {
+  const app = deadlinesApp(t, [deadline('mc-past', '2026-09-05'), deadline('mc-future', '2026-09-10')], { view: 'table', timeFilter: 7 });
+  assert.deepEqual(app.renderVals().groups.flatMap(g => g.rows.filter(r => r.isRow).map(r => r.id)), ['mc-future']);
+  assert.equal(app.renderVals().timeChips.find(c => c.label === '7 j').count, 1);
+});
