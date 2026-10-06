@@ -1,6 +1,5 @@
 // cosmos-sync.js — synchronisation avec Supabase (facultative).
-// La SPA reçoit sa configuration publique au build. Le chargement /api/config reste compatible avec les outils existants.
-// Sans configuration Supabase, l'app utilise localStorage.
+// La SPA reçoit sa configuration publique au build. Sans configuration Supabase, l'app utilise localStorage.
 // Ce module ignore l'interface : il charge l'état, sauvegarde en différentiel (une transaction par lot),
 // et remonte ce qui a changé ailleurs — agents IA, autre appareil — sans jamais écraser une saisie en cours.
 import { migrate } from './cosmos-core.js';
@@ -9,12 +8,10 @@ import { valueChangeJournal } from './cosmos-journal.js';
 
 /** @param {{author?: string, config?: {supabaseUrl?: string, supabaseKey?: string}, clientFactory?: typeof import('@supabase/supabase-js').createClient}} options */
 export async function createSync({ author = 'Toi', config, clientFactory } = {}) {
-  let cfg = config || {};
-  if (!config) try { const r = await fetch('/api/config', { cache: 'no-store' }); if (r.ok) cfg = await r.json(); } catch (e) { /* pas de serveur : mode local */ }
+  const cfg = config || {};
   if (!cfg.supabaseUrl || !cfg.supabaseKey) return null;
-  const factory = clientFactory || globalThis.window?.supabase?.createClient;
-  if (!factory) throw new Error('supabase-js non chargé');
-  const db = factory(cfg.supabaseUrl, cfg.supabaseKey);
+  if (!clientFactory) throw new Error('Client Supabase manquant');
+  const db = clientFactory(cfg.supabaseUrl, cfg.supabaseKey);
 
   // Ce que le serveur connaît, pour calculer les différences
   const cache = { rows: new Map(), cosmosJson: '', journalIds: new Set(), lastPoll: null };

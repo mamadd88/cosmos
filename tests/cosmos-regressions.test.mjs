@@ -49,11 +49,7 @@ async function setup(t, initial = snapshot()) {
     server.state.journal.push(...clone(args.p_journal));
     return { data: { savedAt: '2026-09-06T10:01:00Z' }, error: null };
   } };
-  const previousWindow = globalThis.window;
-  globalThis.window = { supabase: { createClient: () => db } };
-  t.after(() => { if (previousWindow === undefined) delete globalThis.window; else globalThis.window = previousWindow; });
-  t.mock.method(globalThis, 'fetch', async () => ({ ok: true, json: async () => ({ supabaseUrl: 'https://example.invalid', supabaseKey: 'test' }) }));
-  const sync = await createSync();
+  const sync = await createSync({ config: { supabaseUrl: 'https://example.invalid', supabaseKey: 'test' }, clientFactory: () => db });
   let local = await sync.load();
   local.rows = core.migrate(local.rows);
   sync.prime(local);

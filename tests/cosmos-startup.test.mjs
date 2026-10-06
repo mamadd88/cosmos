@@ -183,7 +183,7 @@ test('un montage abandonné ne lance ni lecture Supabase ni abonnement après d�
   assert.equal(h.app.state.ready, false);
 });
 
-test('la configuration compilée évite le téléchargement préalable de /api/config', async (t) => {
+test('la configuration compilée suffit, sans requête réseau préalable', async (t) => {
   t.mock.method(globalThis, 'fetch', () => {
     throw new Error('Aucune requête de configuration attendue');
   });

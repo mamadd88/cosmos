@@ -10,7 +10,6 @@ function apiDev(): Plugin {
   ) => {
     const route = req.url?.split('?')[0];
     const handlers = {
-      '/api/config': () => import('./api/config.js'),
       '/api/assist': () => import('./api/assist.js'),
       '/api/agent': () => import('./api/agent.js'),
     };

@@ -1,151 +1,44 @@
 # Cosmos — schéma de données
 
-Modèle figé au 2026-09-04. Le JSON exporté par l'application (`version: 1`) suit ce modèle : `cosmos[]` → table `cosmos`, `miniCosmos[]` → tables `mini_cosmos` + `etapes` + `evenements` (historique), `journal[]` + `journalArchive[]` → table `journal`.
+L'export JSON de l'application (`version: 1`) contient `cosmos[]`, `miniCosmos[]` (objets complets), `journal[]` et `journalArchive[]`. En base, chaque mini-cosmos est stocké tel quel dans une colonne `data` (jsonb) : le format ci-dessous est donc à la fois celui de l'export et celui de la base.
 
 ## Concepts (rappel)
 - **Cosmos** : grand domaine de vie (pièce). **Mini-cosmos** : terrain gouverné à l'intérieur (meuble).
 - **Statut** — calculé, sauf deux drapeaux manuels : `Clôturé` (closed) > `Pause` (pause manuelle, ou date de début future) > `SAS` (champ SAS rempli et non franchi) > `Actif`.
 - **Échéance** — soit une date (précise, fin de mois, fin de trimestre, fin d'année), soit un **mandat d'un an** (`A:AAAA-MM-JJ`, objectif continu revu au terme puis renouvelé ou supprimé). `Permanent` n'existe plus : converti en mandat à la migration.
-- **Projection** — calculée : avancement dans le temps entre début et échéance ; zone `ok | tension | jourj | retard | continu | termine`, la tension démarrant `alert_days` jours avant l'échéance.
+- **Projection** — calculée : avancement dans le temps entre début et échéance ; zone `ok | tension | jourj | retard | continu | termine`, la tension démarrant `alertDays` jours avant l'échéance.
 - **SAS** — test d'entrée borné ; c'est la première étape du mini-cosmos tant qu'il n'est pas franchi.
 
-## Entités
-
-**cosmos**
-- `id` uuid PK · `name` text unique (majuscules) · `position` int · `created_at` timestamptz
-
-**mini_cosmos**
-- `id` uuid PK · `cosmos_id` uuid FK → cosmos (cascade)
-- `name` text
-- `objectif`, `valeur_actuelle`, `entropie`, `reponse_entropie` text — entropie et réponse obligatoires à la création
-- `seuil_alerte`, `seuil_kill` text (libre)
-- `sas` text nullable · `sas_done` bool default false
-- `pause` bool default false · `closed` bool default false
-- `start_at` date — date de début (défaut : création) ; future ⇒ Pause automatique
-- `cloture_kind` enum `date | month | quarter | year | permanent`
-- `cloture_value` text nullable — `AAAA-MM-JJ` · `AAAA-MM` · `AAAA-Qn` · `AAAA` · null si permanent
-- `alert_days` int default 7 — préavis de tension
-- `position` int · `created_at`, `updated_at` timestamptz
-
-**etapes**
-- `id` uuid PK · `mini_cosmos_id` FK (cascade) · `texte` text · `done` bool · `done_at` timestamptz nullable · `position` int
-
-**evenements** — historique compact par mini-cosmos (alimente les statistiques)
-- `id` uuid PK · `mini_cosmos_id` FK (cascade) · `type` enum `created | statut | step` · `valeur` text nullable · `created_at` timestamptz
-
-**journal** — historique des changements réels de Valeur actuelle (humain ou agent IA)
-- `id` uuid PK · `created_at` timestamptz · `author` text
-- `type` enum `creation | statut | etape | modification | deplacement | suppression | cosmos | donnees`
-- `mini_cosmos_id` uuid nullable (FK sans cascade : la trace survit à la suppression) · `mini_nom`, `cosmos_nom` text (dénormalisés pour la lecture)
-- `detail` text · `changes` jsonb nullable — `[{field, before, after}]` pour les modifications
-- Politique : 12 mois « vivants » en local, le reste archivé (table identique ou partition)
-
 ## Règles calculées (non stockées)
-- `statut` (voir ci-dessus) · `cloture_resolue` = dernier jour du mois / trimestre / année, ou la date
+- `statut` (voir ci-dessus) · échéance résolue = dernier jour du mois / trimestre / année, ou la date
 - Ordre d'affichage : statut (Actif → SAS → Pause → Clôturé) puis `position` ; drag & drop uniquement au sein d'un même statut
-- Projection : `pct = (today − start_at) / (cloture − start_at)` borné 0–100 ; `days = cloture − today` ; zone selon `alert_days`
+- Projection : `pct = (aujourd’hui − startAt) / (échéance − startAt)` borné 0–100 ; `days = échéance − aujourd’hui` ; zone selon `alertDays`
 - Compteur d'étapes = done / total (le SAS n'y compte pas)
 
-## SQL (PostgreSQL)
+## Format d’un mini-cosmos (export JSON et colonne `data`)
 
-```sql
-create type cloture_kind as enum ('date','month','quarter','year','permanent');
-create type ev_type      as enum ('created','statut','step');
-create type journal_type as enum ('creation','statut','etape','modification','deplacement','suppression','cosmos','donnees');
-
-create table cosmos (
-  id uuid primary key default gen_random_uuid(),
-  name text not null unique,
-  position int not null default 0,
-  created_at timestamptz not null default now()
-);
-
-create table mini_cosmos (
-  id uuid primary key default gen_random_uuid(),
-  cosmos_id uuid not null references cosmos(id) on delete cascade,
-  name text not null,
-  objectif text, valeur_actuelle text,
-  entropie text not null, reponse_entropie text not null,
-  seuil_alerte text, seuil_kill text,
-  sas text, sas_done boolean not null default false,
-  pause boolean not null default false,
-  closed boolean not null default false,
-  start_at date not null default current_date,
-  cloture_kind cloture_kind not null default 'date',
-  cloture_value text,
-  alert_days int not null default 7 check (alert_days >= 0),
-  position int not null default 0,
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now(),
-  constraint cloture_value_shape check (
-    (cloture_kind = 'permanent' and cloture_value is null) or
-    (cloture_kind = 'date'    and cloture_value ~ '^\d{4}-\d{2}-\d{2}$') or
-    (cloture_kind = 'month'   and cloture_value ~ '^\d{4}-\d{2}$') or
-    (cloture_kind = 'quarter' and cloture_value ~ '^\d{4}-Q[1-4]$') or
-    (cloture_kind = 'year'    and cloture_value ~ '^\d{4}$')),
-  constraint unique_name_per_cosmos unique (cosmos_id, name)
-);
-create index on mini_cosmos (cosmos_id, position);
-
-create table etapes (
-  id uuid primary key default gen_random_uuid(),
-  mini_cosmos_id uuid not null references mini_cosmos(id) on delete cascade,
-  texte text not null,
-  done boolean not null default false,
-  done_at timestamptz,
-  position int not null default 0
-);
-create index on etapes (mini_cosmos_id, position);
-
-create table evenements (
-  id uuid primary key default gen_random_uuid(),
-  mini_cosmos_id uuid not null references mini_cosmos(id) on delete cascade,
-  type ev_type not null,
-  valeur text,
-  created_at timestamptz not null default now()
-);
-create index on evenements (created_at);
-
-create table journal (
-  id uuid primary key default gen_random_uuid(),
-  created_at timestamptz not null default now(),
-  author text not null,
-  type journal_type not null,
-  mini_cosmos_id uuid references mini_cosmos(id) on delete set null,
-  mini_nom text, cosmos_nom text,
-  detail text,
-  changes jsonb
-);
-create index on journal (created_at desc);
-create index on journal (mini_cosmos_id);
-```
-
-SQLite : `enum` → `text` + `check (col in (...))`, `uuid` → `text`, `timestamptz` → `text` ISO 8601, `jsonb` → `text`, regex → à valider côté application.
-
-## Correspondance avec l'export JSON
-
-| JSON `miniCosmos[i]` | Colonne |
+| Champ | Contenu |
 |---|---|
-| `cosmos` (nom) | `cosmos_id` via `cosmos.name` |
-| `actuel`, `reponse` | `valeur_actuelle`, `reponse_entropie` |
-| `alerte`, `kill` | `seuil_alerte`, `seuil_kill` |
-| `sas` (`—` ⇒ null), `sasDone` | `sas`, `sas_done` |
-| `pause`, `closed` | idem |
-| `startAt` (absent ⇒ `createdAt`) | `start_at` |
-| `cloture` : `AAAA-MM-JJ` / `M:AAAA-MM` / `Q:AAAA-Qn` / `Y:AAAA` / `Permanent` | `cloture_kind` + `cloture_value` |
-| `alertDays` (absent ⇒ 7) | `alert_days` |
-| `actions[]` `{text, done}` | `etapes` (position = index) |
-| `history[]` `{t, type, value}` | `evenements` |
-| index dans le tableau | `position` |
-| `journal[]`, `journalArchive[]` `{id, t, author, type, mini, miniId, cosmos, detail, changes}` | `journal` |
+| `id` | identifiant stable (ex. `mc-01`) |
+| `cosmos` | nom du cosmos |
+| `name`, `objectif`, `actuel`, `entropie`, `reponse` | nom, objectif, valeur actuelle, entropie et réponse à l’entropie |
+| `alerte`, `kill` | seuils libres |
+| `sas` (`—` ou vide ⇒ pas de SAS), `sasUntil`, `sasDone` | test d’entrée, sa date de fin, franchi ou non |
+| `pause`, `closed`, `closedAt` | drapeaux manuels ; date effective de clôture |
+| `startAt` (absent ⇒ `createdAt`, sauf brouillon) | date de début |
+| `cloture` : `AAAA-MM-JJ` / `M:AAAA-MM` / `Q:AAAA-Qn` / `Y:AAAA` / `A:AAAA-MM-JJ` | échéance : date, fin de mois / trimestre / année, ou mandat d’un an |
+| `alertDays` (absent ⇒ 7) | préavis de tension |
+| `poids` | `vital`, `important` ou `normal` |
+| `titre` | séparation du cosmos sous laquelle il est rangé |
+| `draft` | fiche créée rapidement, à compléter |
+| `actions[]` `{text, done}` | étapes |
+| `history[]` `{t, type, value}` | historique compact |
 
-Champs hérités à ignorer à l'import : `statut` (recalculé), `etat`, `type`, `maintenance`.
+Entrée de Journal : `{id, t, author, type, mini, miniId, cosmos, detail, changes}`. Champs hérités ignorés à l’import : `statut` (recalculé), `etat`, `type`, `maintenance`.
 
----
+## Ce qui est en base (Supabase)
 
-## Ce qui est en base aujourd'hui (Supabase, migration `20260904013000_init.sql`)
-
-Le modèle ci-dessus reste la référence conceptuelle. L'implémentation retenue pour aller vite sans réécrire l'app diffère sur un point : **un mini-cosmos = une ligne dont `data` (jsonb) contient l'objet complet de l'app** (le format de l'export JSON), avec des **colonnes générées** (`name`, `cosmos`, `objectif`, `valeur_actuelle`, `entropie`, `reponse_entropie`, `seuil_alerte`, `seuil_kill`, `sas`, `sas_done`, `pause`, `closed`, `start_at`, `cloture`) pour requêter en SQL. Les étapes sont exposées par la vue `etapes` (déplie `data->'actions'`) ; l'historique compact (`history[]`) reste dans `data`.
+**Un mini-cosmos = une ligne dont `data` (jsonb) contient l’objet complet de l’app**, avec des **colonnes générées** (`name`, `cosmos`, `objectif`, `valeur_actuelle`, `entropie`, `reponse_entropie`, `seuil_alerte`, `seuil_kill`, `sas`, `sas_done`, `pause`, `closed`, `start_at`, `cloture`) pour requêter en SQL. Les étapes sont exposées par la vue `etapes` (déplie `data->'actions'`) ; l’historique compact (`history[]`) reste dans `data`.
 
 | Table / vue | Rôle |
 |---|---|
@@ -156,10 +49,12 @@ Le modèle ci-dessus reste la référence conceptuelle. L'implémentation retenu
 | `journal` | changements de Valeur actuelle uniquement : `t` (horodatage de l'auteur), `created_at` (serveur), `author`, `type = modification`, `mini_id` sans FK, `changes` jsonb avant/après |
 | `agents` | une clé par agent : `key_hash` (SHA-256, jamais la clé), `ecriture_directe`, `actif`, `last_used_at` |
 | `propositions` | suggestions d'agents : `patch` jsonb (objectif, actuel, entropie, reponse, sas, alerte, kill, etapes), `motif`, `statut` en_attente / acceptee / refusee |
+| `cosmos_sections` | groupes de chaque étage : `(user_id, id)` clé, `name`, `etage`, `position` ; `cosmos.section_id` facultatif |
+| `cosmos_titres_etages` | titre personnalisé de chaque espace : `(user_id, etage)` clé, `titre` (1–300 caractères) |
 
 Toutes les tables portent `user_id` et une politique RLS `user_id = auth.uid()` ; `anon` n'a aucun accès.
 
-**Fonctions côté app** (droits de l'utilisateur connecté) : `charger_etat()` (tout l'état en un appel, journal des 12 derniers mois), `sync_etat(...)` (sauvegarde différentielle en une transaction, ou remplacement complet à l'import), `creer_agent(nom, ecriture_directe)` (renvoie la clé une seule fois).
+**Fonctions côté app** (droits de l'utilisateur connecté) : `charger_etat_v4()` (tout l'état en un appel, journal des 12 derniers mois), `sync_etat_v4(...)` (sauvegarde différentielle en une transaction avec détection des conflits, ou remplacement complet à l'import), `creer_agent(nom, ecriture_directe)` (renvoie la clé une seule fois). Chaque version ajoute une partie de la structure puis appelle la précédente : `charger_etat_v4` → `charger_etat_v3` → `charger_etat` et `sync_etat_v4` → `sync_etat_v3` → `sync_etat_v2` → `sync_etat`. Les versions antérieures restent donc nécessaires, même si l'interface n'appelle que la v4.
 
 
 **Titres** : `cosmos.titres` (jsonb, liste ordonnée de noms) sépare les terrains d'une pièce ; `data->>'titre'` range un terrain sous l'un d'eux. Un titre n'a ni objectif ni date ; renommer ou supprimer un titre met à jour ou vide le champ des terrains concernés.
@@ -169,14 +64,14 @@ Toutes les tables portent `user_id` et une politique RLS `user_id = auth.uid()` 
 
 **SAS daté** (migration `20260904030000_sas_until.sql`) : `data->>'sasUntil'` = fin du test. Règle de déduction quand elle manque (app et SQL, fonction `sas_until_deduit`) : date explicite « (30/09) » dans le texte du SAS, sinon « 14 jours » / « 2 semaines » / « 1 mois » depuis le début, sinon 14 jours. L'échéance effective d'un mini-cosmos (`echeanceEffective` dans `cosmos-core.js`) est cette date tant que le SAS n'est pas franchi, puis la clôture.
 
-Passer un jour au modèle entièrement normalisé (tables `etapes`, `evenements`) est une migration SQL pure à partir de `data`, sans changer le format d'échange de l'app.
+Normaliser un jour les étapes et l’historique en tables reste une migration SQL pure à partir de `data`, sans changer le format d’échange de l’app.
 
 **Journal restreint (2026-09-06)** : seuls les événements de type `modification` dont `changes` contient un changement réel du champ `Valeur actuelle` sont conservés. Le trigger `journal_valeur_actuelle_uniquement` filtre INSERT et UPDATE, enlève les autres champs d’un événement mixte et normalise son détail. Il ignore les entrées non admises sans annuler la sauvegarde du mini-cosmos. `agent_modifier` journalise uniquement `actuel` lorsqu’il change ; `agent_proposer` conserve la proposition sans événement ; `agent_noter` renvoie une erreur explicite. Les exemples et les anciennes données ne régénèrent pas le Journal depuis `history[]`.
 
 
-### Séparations des cosmos (2026-09-07)
+### Groupes des étages (2026-09-07)
 
-`cosmos_sections` contient `user_id`, `id` (identifiant stable), `name` (1–60 caractères), `etage` (ethos/logos/pathos), `position` et `created_at`. La clé primaire `(user_id,id)`, l’unicité du nom dans l’étage et les politiques RLS isolent chaque compte. `cosmos.section_id` est facultatif ; sa clé étrangère inclut le propriétaire. Un déclencheur vérifie la cohérence de l’étage. Supprimer une séparation libère ses cosmos, sans cascade vers les mini-cosmos. Changer l’étage d’un cosmos depuis un ancien client libère son ancienne séparation.
+`cosmos_sections` contient `user_id`, `id` (identifiant stable), `name` (1–60 caractères), `etage` (ethos/logos/pathos), `position` et `created_at`. La clé primaire `(user_id,id)`, l’unicité du nom dans l’étage et les politiques RLS isolent chaque compte. `cosmos.section_id` est facultatif ; sa clé étrangère inclut le propriétaire. Un déclencheur vérifie la cohérence de l’étage. Supprimer un groupe libère ses cosmos, sans cascade vers les mini-cosmos. Changer l’étage d’un cosmos depuis un ancien client le retire de son ancien groupe.
 
 `charger_etat_v3()` complète l’état existant avec `sections: [{id,name,etage}]` et `sectionDe: {nomCosmos: idSection}`. `sync_etat_v3()` ajoute `p_sections` et `p_section_de`, compare les versions attendues sous verrou et sauvegarde la structure dans la même transaction que les autres données. Les RPC précédentes restent disponibles. Les sections sont à un seul niveau ; le repli est un réglage local. Aucun événement de Journal n’est produit par cette organisation.
 

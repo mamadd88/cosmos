@@ -14,10 +14,9 @@ L’interface utilise **React 19 + TypeScript + Vite + React Router 8**, en mode
 - `app/state/startup-cache.ts` — copie d’affichage par compte et projet, valable 24 h, sans Journal ni jeton. Après identification, elle s’affiche en lecture seule jusqu’à la réponse Supabase. Elle est effacée à la déconnexion et ne sert jamais de source de sauvegarde.
 - `cosmos-core.js` — statuts calculés, projections, dates, migrations de données, exemples et modèles.
 - `cosmos-sync.js` — chargement Supabase, sauvegardes différentielles et synchronisation des suppressions et structures.
-- `api/` — fonctions Vercel : configuration publique, assistant IA et accès des agents.
+- `api/` — fonctions Vercel : assistant IA et accès des agents.
 - `supabase/migrations/` — schéma, RLS et fonctions PostgreSQL ; `schema.md` décrit le modèle.
 - `tests/` — régressions métier, synchronisation, cache et interactions React dans un DOM simulé, sans tests visuels.
-- `export/` et `archive/` — anciennes archives, sans rôle dans le build ou le déploiement.
 
 ## Pages
 
@@ -27,7 +26,7 @@ Les favoris historiques `#/…` sont convertis au démarrage sans recharger le d
 
 ## Chargement et capacité
 
-La configuration publique Supabase est intégrée au build : l’interface n’attend plus `/api/config` avant de démarrer. Seuls l’URL et la clé publique Supabase sont inclus dans le client ; les clés de service et Anthropic restent côté serveur. Une modification de configuration nécessite un nouveau build.
+La configuration publique Supabase est intégrée au build : l’interface démarre sans requête de configuration. Seuls l’URL et la clé publique Supabase sont inclus dans le client ; les clés de service et Anthropic restent côté serveur. Une modification de configuration nécessite un nouveau build.
 
 Les assets compilés portent un nom versionné pour leur mise en cache. Les volets s’importent à l’ouverture. La relève Supabase s’arrête pendant que l’onglet est masqué et reprend à son retour. Le premier accès à un compte attend toujours les données réseau ; les rechargements suivants peuvent afficher la copie locale pendant cette attente.
 
@@ -45,7 +44,7 @@ Cette migration facilite l’évolution de l’interface. La RPC actuelle charge
 - **Création rapide** : le champ en bas de chaque tableau ouvert crée un mini-cosmos avec son nom seul, via Entrée ou « Ajouter ». Il reste prêt pour la saisie suivante ; Échap efface la saisie. La nouvelle fiche est en pause, sans dates ni mandat automatiques, sous le dernier titre interne s’il existe. Les filtres du tableau sont réinitialisés pour montrer le résultat. On peut compléter et enregistrer la fiche progressivement ; « Reprendre » exige l’entropie, sa réponse et des dates cohérentes (y compris la fin du test si un SAS est prévu). Une date de début future programme le démarrage. La création ne produit aucun événement dans le Journal ; seuls les changements de Valeur actuelle sont journalisés.
 - **Clôture** : `cloture` conserve l’échéance prévue, `closedAt` mémorise la date effective. Réouvrir préserve donc les dates et le mandat. Les anciennes fiches déjà clôturées gardent leur date historique ; leur échéance antérieure, déjà écrasée, ne peut pas être reconstruite automatiquement.
 - **Groupes dans les étages** : « + Groupe » crée un groupe dans Ethos, Logos ou Pathos. Son menu permet de le modifier ou de le supprimer, en conservant ses cosmos dans le même étage. Glisser directement une ligne (ou son nom) déplace un groupe, un cosmos ou un mini-cosmos, avec le même mécanisme natif que la poignée et sans délai ajouté. Le clic simple ouvre la ligne, le relâchement dépose l’élément, et Échap annule. Les tags, champs et menus gardent leur action ; les poignées restent disponibles, y compris au clavier. Un dépôt conserve les ouvertures des accordéons : une destination fermée reste fermée. Le menu d’un cosmos permet de le modifier, de le supprimer ou d’ajouter une séparation interne. Les données restent synchronisées et incluses dans les exports, sans événement supplémentaire dans le Journal.
-- **Écritures concurrentes** : `sync_etat_v3` (basée sur `sync_etat_v2`) fusionne uniquement les champs modifiés par le client, après comparaison avec sa version de référence sous verrou PostgreSQL. Les modifications incompatibles, les suppressions et les structures périmées produisent un conflit explicite. La copie locale reste dans l’onglet, exportable avant rechargement ; les retries automatiques ne forcent jamais un conflit. Les anciens clients `sync_etat` restent compatibles : recharger les onglets après déploiement pour bénéficier de la protection.
+- **Écritures concurrentes** : `sync_etat_v4` fusionne uniquement les champs modifiés par le client, après comparaison avec sa version de référence sous verrou PostgreSQL. Les modifications incompatibles, les suppressions et les structures périmées produisent un conflit explicite. La copie locale reste dans l’onglet, exportable avant rechargement ; les retries automatiques ne forcent jamais un conflit. Les versions précédentes restent en base car chacune appelle la suivante (`sync_etat_v4` → `v3` → `v2` → `sync_etat`, et de même pour `charger_etat_v4`) ; seule la v4 est appelée par l’interface.
 - **Changement de jour** : la date de calcul est actualisée toutes les 30 s, avant le rendu et au retour sur l'onglet, y compris en mode local ; statuts et projections suivent le nouveau jour sans recharger la page.
 - **Échéances** : les fiches actives et celles dont le début est futur (« À venir ») apparaissent ; les pauses manuelles et les fiches clôturées sont exclues. Les filtres d’année, mois et trimestre restent cohérents, et les menus conservent les années présentes dans les données ou sélectionnées. Les délais 7 / 30 / 90 j couvrent aujourd’hui jusqu’à la borne choisie, sans les retards ; « Tous » inclut aussi le passé. Les compteurs des boutons annoncent le résultat du clic en conservant les autres filtres, les KPI suivent la liste affichée, et « Réinitialiser les filtres » efface aussi la recherche. Les lignes s’ouvrent au clavier avec Tab puis Entrée ou Espace.
 - **Journal** : l’activité est calculée depuis les événements conservés sur 12 mois, même après suppression d’une fiche, avec les mêmes filtres que la liste. Les périodes de 7 / 30 / 90 jours suivent le calendrier local, aujourd’hui inclus, et les comparaisons utilisent la période précédente avec les mêmes critères. Les compteurs de type et d’auteur annoncent le résultat du clic. Les valeurs avant/après des modifications sont consultables et recherchables en entier ; les nouvelles propositions IA appliquées les enregistrent aussi. Les anciennes valeurs jamais enregistrées ne peuvent pas être reconstituées. Une entrée ouvre sa fiche au clavier uniquement lorsqu’elle possède un identifiant encore présent ; un nom réutilisé ne recrée pas de lien.
@@ -80,7 +79,7 @@ Révoquer un agent : même fenêtre, bouton Révoquer (sa clé cesse de fonction
 
 ## Lancer en local
 
-Node.js **22.22.3 ou plus récent dans la branche 22**. Copier les paramètres nécessaires de `.env.example` dans `.env.local` ; Vite charge ce fichier pour l’interface et les trois API locales.
+Node.js **22.22.3 ou plus récent dans la branche 22**. Copier les paramètres nécessaires de `.env.example` dans `.env.local` ; Vite charge ce fichier pour l’interface et les deux API locales.
 
 ```bash
 npm ci --include=dev
@@ -105,13 +104,15 @@ La suite PostgreSQL de `tests/cosmos-database.test.mjs` nécessite une base loca
 
 ## Déployer sur Vercel
 
-`vercel.json` configure le build Vite, publie `build/client` et redirige les pages vers `index.html`. Les chemins `/api/*` restent des fonctions Vercel et les assets sont servis directement.
+Le projet Vercel est relié au dépôt GitHub : chaque push sur `main` déclenche un déploiement de production. Vérifier avant de pousser :
 
 ```bash
 npm run typecheck
 npm test
-npx vercel deploy --prod
+git push
 ```
+
+`vercel.json` configure le build Vite, publie `build/client` et redirige les pages vers `index.html`. Les chemins `/api/*` restent des fonctions Vercel et les assets sont servis directement.
 
 Variables Vercel : `SUPABASE_URL` et `SUPABASE_ANON_KEY` (requises au build pour activer le compte Supabase), `SUPABASE_SERVICE_ROLE_KEY` (serveur uniquement) et `ANTHROPIC_API_KEY` (serveur, assistant facultatif). Les variables publiques du build doivent viser le même projet que les API.
 
@@ -129,13 +130,6 @@ node --env-file=.env.local scripts/creer-utilisateur.mjs <email> <mot-de-passe>
 
 # aperçu de la base
 node --env-file=.env.local scripts/etat-base.mjs
-```
-
-## Pousser sur GitHub
-
-```bash
-git add . && git commit -m "Cosmos — base Supabase, agents IA, déploiement Vercel"
-git push
 ```
 
 Les trois titres d’espace sont personnalisables avec « Modifier », à côté de « + Groupe ». La fenêtre conserve le repli et les filtres. Le titre complet (1–300 caractères) est enregistré dans `titresEtages`, exporté et synchronisé entre appareils, sans événement de Journal. Les identifiants `ethos`, `logos`, `pathos` restent stables pour les groupes, le déplacement et les préférences d’ouverture.

@@ -39,9 +39,8 @@ async function setup(t) {
       return { data };
     } catch (e) { return { error: { message: e.message, code: e.code } }; }
   } };
-  t.mock.method(globalThis, 'fetch', async () => ({ ok: true, json: async () => ({ supabaseUrl: 'https://example.invalid', supabaseKey: 'fake' }) }));
-  const old = globalThis.window; globalThis.window = { supabase: { createClient: () => db } }; t.after(() => { globalThis.window = old; });
-  h.client = async () => { const sync = await createSync(); sync.onError(e => h.errors.push(e)); return { sync, local: await sync.load() }; };
+  const config = { supabaseUrl: 'https://example.invalid', supabaseKey: 'fake' };
+  h.client = async () => { const sync = await createSync({ config, clientFactory: () => db }); sync.onError(e => h.errors.push(e)); return { sync, local: await sync.load() }; };
   h.server = () => actor('select public.charger_etat_v4();');
   h.change = (c, patch, id = 'mc-a') => { c.local = { ...c.local, rows: c.local.rows.map(r => r.id === id ? { ...r, ...patch } : r) }; c.sync.save(c.local); return c.sync.flush(); };
   return h;

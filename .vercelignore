@@ -3,7 +3,6 @@
 .vercel
 node_modules
 uploads
-export
 supabase
 scripts
 *.md
@@ -11,5 +10,4 @@ scripts
 .DS_Store
 build
 .react-router
-archive
 tests
