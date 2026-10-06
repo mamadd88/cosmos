@@ -9,3 +9,7 @@ scripts
 *.md
 .env*
 .DS_Store
+build
+.react-router
+archive
+tests

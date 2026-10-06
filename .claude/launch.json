@@ -3,14 +3,14 @@
   "configurations": [
     {
       "name": "cosmos",
-      "runtimeExecutable": "npx",
-      "runtimeArgs": ["vercel", "dev", "--listen", "8123", "--yes"],
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
       "port": 8123
     },
     {
-      "name": "cosmos-statique",
-      "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "8124", "--bind", "127.0.0.1"],
+      "name": "cosmos-build",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "preview"],
       "port": 8124
     }
   ]

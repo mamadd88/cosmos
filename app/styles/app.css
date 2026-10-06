@@ -1,0 +1,425 @@
+html,
+body {
+  margin: 0;
+  background: #09090b;
+  color: #a1a1aa;
+  font-family: Inter, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+a {
+  color: #fafafa;
+  text-decoration: none;
+}
+a:hover {
+  color: #e4e4e7;
+}
+* {
+  box-sizing: border-box;
+}
+input,
+textarea,
+select,
+button {
+  font-family: inherit;
+}
+input::placeholder,
+textarea::placeholder {
+  color: #52525b;
+}
+input:focus,
+textarea:focus {
+  outline: none;
+  border-color: #52525b !important;
+}
+.echeance-row:focus-visible {
+  outline: 2px solid #a1a1aa;
+  outline-offset: -2px;
+}
+.journal-mini:focus-visible,
+.journal-changes summary:focus-visible {
+  outline: 2px solid #a1a1aa;
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+.journal-mini:not(:disabled):hover .journal-mini-name {
+  text-decoration: underline;
+}
+::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+::-webkit-scrollbar-thumb {
+  background: #27272a;
+  border-radius: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+@keyframes fadein {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes popin {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes slidein {
+  from {
+    opacity: 0;
+    transform: translateX(28px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.cosmos-hover-0:hover {
+  color: #f4f4f5 !important;
+}
+.cosmos-hover-1:hover {
+  color: #f4f4f5 !important;
+}
+.cosmos-hover-2:hover {
+  color: #f4f4f5 !important;
+}
+.cosmos-hover-3:hover {
+  color: #f4f4f5 !important;
+}
+.cosmos-hover-4:hover {
+  color: #f4f4f5 !important;
+}
+.cosmos-hover-5:hover {
+  background: rgba(192, 132, 252, 0.18) !important;
+}
+.cosmos-hover-6:hover {
+  color: #f4f4f5 !important;
+  border-color: #3f3f46 !important;
+}
+.cosmos-hover-7:hover {
+  background: rgba(39, 39, 42, 0.55) !important;
+}
+.cosmos-hover-8:hover {
+  background: rgba(39, 39, 42, 0.55) !important;
+}
+.cosmos-hover-9:hover {
+  background: rgba(39, 39, 42, 0.55) !important;
+  color: #fb7185 !important;
+}
+.cosmos-hover-10:hover {
+  background: rgba(39, 39, 42, 0.55) !important;
+}
+.cosmos-hover-11:hover {
+  background: rgba(39, 39, 42, 0.55) !important;
+  color: #f4f4f5 !important;
+}
+.cosmos-hover-12:hover {
+  color: #f4f4f5 !important;
+  border-color: #3f3f46 !important;
+}
+.cosmos-hover-13:hover {
+  background: #e4e4e7 !important;
+}
+.cosmos-hover-14:hover {
+  background: rgba(39, 39, 42, 0.35) !important;
+}
+.cosmos-hover-15:hover {
+  color: #f4f4f5 !important;
+  border-color: #3f3f46 !important;
+}
+.cosmos-hover-16:hover {
+  color: #f4f4f5 !important;
+  border-color: #3f3f46 !important;
+}
+.cosmos-hover-17:hover {
+  background: #e4e4e7 !important;
+}
+.cosmos-hover-18:hover {
+  color: #f4f4f5 !important;
+  border-color: #3f3f46 !important;
+}
+.cosmos-hover-19:hover {
+  color: #f4f4f5 !important;
+  border-color: #3f3f46 !important;
+}
+.cosmos-hover-20:hover {
+  color: #f4f4f5 !important;
+  border-color: #3f3f46 !important;
+}
+.cosmos-hover-21:hover {
+  border-color: #3f3f46 !important;
+}
+.cosmos-hover-22:hover {
+  border-color: #3f3f46 !important;
+}
+.cosmos-hover-23:hover {
+  color: #f4f4f5 !important;
+  border-color: #3f3f46 !important;
+}
+.cosmos-hover-24:hover {
+  color: #fb7185 !important;
+  border-color: rgba(244, 63, 94, 0.5) !important;
+}
+.cosmos-hover-25:hover {
+  color: #f4f4f5 !important;
+  border-color: #3f3f46 !important;
+}
+.cosmos-hover-26:hover {
+  color: #f4f4f5 !important;
+  border-color: #3f3f46 !important;
+}
+.cosmos-hover-27:hover {
+  color: #f4f4f5 !important;
+  border-color: #3f3f46 !important;
+}
+.cosmos-hover-28:hover {
+  color: #a1a1aa !important;
+}
+.cosmos-hover-29:hover {
+  border-color: #3f3f46 !important;
+  color: #f4f4f5 !important;
+}
+.cosmos-hover-30:hover {
+  border-color: #3f3f46 !important;
+  color: #f4f4f5 !important;
+}
+.cosmos-hover-31:hover {
+  border-color: #3f3f46 !important;
+  color: #f4f4f5 !important;
+}
+.cosmos-hover-32:hover {
+  border-color: #3f3f46 !important;
+  color: #f4f4f5 !important;
+}
+.cosmos-hover-33:hover {
+  border-color: #3f3f46 !important;
+  color: #f4f4f5 !important;
+}
+.cosmos-hover-34:hover {
+  border-color: #3f3f46 !important;
+  color: #f4f4f5 !important;
+}
+.cosmos-hover-35:hover {
+  background: rgba(39, 39, 42, 0.35) !important;
+}
+.cosmos-hover-36:hover {
+  background: #a5b4fc !important;
+}
+.cosmos-hover-37:hover {
+  background: #e4e4e7 !important;
+}
+.cosmos-hover-38:hover {
+  color: #fb7185 !important;
+  border-color: #3f3f46 !important;
+}
+.cosmos-hover-39:hover {
+  color: #f4f4f5 !important;
+  border-color: #3f3f46 !important;
+}
+.cosmos-hover-40:hover {
+  color: #f4f4f5 !important;
+  border-color: #3f3f46 !important;
+}
+.cosmos-hover-41:hover {
+  color: #f4f4f5 !important;
+  border-color: #3f3f46 !important;
+}
+.cosmos-hover-42:hover {
+  color: #f4f4f5 !important;
+  border-color: #3f3f46 !important;
+}
+.cosmos-hover-43:hover {
+  color: #f4f4f5 !important;
+  border-color: #3f3f46 !important;
+}
+.cosmos-hover-44:hover {
+  color: #f4f4f5 !important;
+  border-color: #3f3f46 !important;
+}
+.cosmos-hover-45:hover {
+  color: #fb7185 !important;
+  border-color: rgba(244, 63, 94, 0.5) !important;
+}
+.cosmos-hover-46:hover {
+  background: #e4e4e7 !important;
+}
+.cosmos-hover-47:hover {
+  color: #f4f4f5 !important;
+  border-color: #3f3f46 !important;
+}
+.cosmos-hover-48:hover {
+  background: #6ee7b7 !important;
+}
+.cosmos-hover-49:hover {
+  border-color: #71717a !important;
+}
+.cosmos-hover-50:hover {
+  border-color: #818cf8 !important;
+}
+.cosmos-hover-51:hover {
+  border-color: #3f3f46 !important;
+}
+.cosmos-hover-52:hover {
+  background: rgba(244, 63, 94, 0.18) !important;
+}
+.cosmos-hover-53:hover {
+  color: #f4f4f5 !important;
+  border-color: #3f3f46 !important;
+}
+.cosmos-hover-54:hover {
+  border-color: #71717a !important;
+}
+.cosmos-hover-55:hover {
+  color: #f4f4f5 !important;
+  border-color: #3f3f46 !important;
+}
+.cosmos-hover-56:hover {
+  background: #e4e4e7 !important;
+}
+.cosmos-hover-57:hover {
+  color: #f4f4f5 !important;
+}
+.cosmos-hover-58:hover {
+  color: #f4f4f5 !important;
+  border-color: #3f3f46 !important;
+}
+.cosmos-hover-59:hover {
+  color: #fb7185 !important;
+  border-color: #3f3f46 !important;
+}
+.cosmos-hover-60:hover {
+  background: #e4e4e7 !important;
+}
+.cosmos-hover-61:hover {
+  color: #f4f4f5 !important;
+}
+.cosmos-hover-62:hover {
+  color: #f4f4f5 !important;
+  border-color: #3f3f46 !important;
+}
+.cosmos-hover-63:hover {
+  background: #e4e4e7 !important;
+}
+.cosmos-hover-64:hover {
+  color: #f4f4f5 !important;
+}
+.cosmos-hover-65:hover {
+  color: #f4f4f5 !important;
+  border-color: #3f3f46 !important;
+}
+.cosmos-hover-66:hover {
+  color: #f4f4f5 !important;
+  border-color: #3f3f46 !important;
+}
+.cosmos-hover-67:hover {
+  background: #e4e4e7 !important;
+}
+html,
+body {
+  min-height: 100%;
+  margin: 0;
+}
+.startup {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #a1a1aa;
+  font-size: 13px;
+}
+.panel-loading {
+  position: fixed;
+  right: 20px;
+  top: 80px;
+  z-index: 60;
+  background: #18181b;
+  padding: 14px;
+  border-radius: 12px;
+  color: #fafafa;
+}
+
+.sync-status {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 10px 16px;
+  background: #18181b;
+  color: #d4d4d8;
+  border-bottom: 1px solid #3f3f46;
+  font-size: 12px;
+}
+.sync-status button {
+  background: transparent;
+  color: #fafafa;
+  border: 1px solid #52525b;
+  border-radius: 7px;
+  padding: 5px 9px;
+  cursor: pointer;
+}
+
+/* Un seul niveau de séparations entre les cosmos, sans alourdir leurs cartes. */
+.etage-title-row { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px; width: 100%; }
+.etage-title-row h2 { grid-column: 2; margin: 0; font-size: 14px; font-weight: 800; letter-spacing: .24em; text-transform: uppercase; color: #fafafa; text-align: center; }
+.etage-title-row > button { justify-self: end; }
+.etage-title-row button, .cosmos-section button, .section-editor button { border: 1px solid #27272a; border-radius: 7px; background: transparent; color: #a1a1aa; padding: 5px 9px; font: inherit; font-size: 11px; cursor: pointer; }
+.etage-title-row button:hover, .cosmos-section button:hover, .section-editor button:hover { color: #fafafa; background: #18181b; }
+.etage-title-row button:focus-visible, .cosmos-section button:focus-visible, .section-editor :focus-visible, .cosmos-membership select:focus-visible { outline: 2px solid #a1a1aa; outline-offset: 3px; }
+.etage-title-row .etage-toggle { position: relative; border: 0; padding: 5px 8px; color: inherit; font: inherit; letter-spacing: inherit; text-transform: inherit; text-align: inherit; }
+.etage-chevron { position: absolute; right: 100%; top: 50%; transform: translateY(-50%); color: #71717a; font-size: 11px; letter-spacing: 0; }
+.etage-content { display: flex; flex-direction: column; gap: 8px; }
+.etage-content[hidden] { display: none; }
+.cosmos-section { margin-top: 8px; padding: 2px 10px; border: 1px solid transparent; border-radius: 8px; }
+.cosmos-section.is-over { border-color: #a1a1aa; background: #18181b; }
+.cosmos-section-heading { display: flex; align-items: center; gap: 10px; min-height: 28px; }
+.cosmos-section .cosmos-section-toggle { display: flex; align-items: center; gap: 10px; padding-left: 0; border: 0; color: #d4d4d8; font-size: 12px; font-weight: 650; letter-spacing: .08em; text-align: left; }
+.section-chevron { color: #71717a; width: 10px; }
+.section-count { color: #71717a; font-size: 10px; font-weight: 400; letter-spacing: 0; white-space: nowrap; }
+.cosmos-section .section-options { margin-left: auto; padding: 2px 8px; font-size: 15px; }
+.section-menu { display: flex; flex-wrap: wrap; gap: 6px; padding: 6px 0 3px 20px; }
+.section-menu button:disabled { opacity: .35; cursor: default; }
+.section-empty { padding: 8px 20px; color: #71717a; font-size: 11px; }
+.section-editor { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; max-width: 100%; }
+.section-editor input { width: min(280px,100%); min-width: 0; border: 1px solid #52525b; border-radius: 7px; background: #09090b; padding: 6px 9px; color: #fafafa; font: inherit; font-size: 12px; }
+.section-editor [role=alert] { flex-basis: 100%; color: #fda4af; font-size: 11px; }
+.cosmos-membership { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: #a1a1aa; white-space: nowrap; }
+.cosmos-membership select { max-width: 180px; padding: 5px; color: #d4d4d8; background: #09090b; border: 1px solid #27272a; border-radius: 7px; font: inherit; }
+@media (max-width: 640px) {
+  .etage-title-row { grid-template-columns: 1fr auto; }
+  .etage-title-row h2 { grid-column: 1; font-size: 12px; letter-spacing: .12em; text-align: left; }
+  .cosmos-section-toggle { flex-wrap: wrap; }
+}
+
+.quick-mini-create { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 14px; }
+.quick-mini-plus { color: #71717a; width: 24px; flex: none; text-align: center; }
+.quick-mini-create input { width: 280px; max-width: calc(100% - 120px); min-width: 120px; background: transparent; border: 1px solid transparent; border-radius: 6px; padding: 6px 8px; color: #f4f4f5; font: inherit; font-size: 12px; }
+.quick-mini-create input::placeholder { color: #71717a; }
+.quick-mini-create input:hover, .quick-mini-create input:focus { border-color: #3f3f46; background: #09090b; }
+.quick-mini-create input:focus-visible, .quick-mini-create button:focus-visible { outline: 2px solid #a1a1aa; outline-offset: 2px; }
+.quick-mini-create button { border: 1px solid #27272a; border-radius: 6px; padding: 6px 9px; background: #09090b; color: #a1a1aa; cursor: pointer; font: inherit; font-size: 11px; }
+.quick-mini-create button:disabled { opacity: .4; cursor: default; }
+.quick-mini-context { color: #71717a; font-size: 10px; }
+.quick-mini-error { flex-basis: 100%; padding-left: 32px; color: #fda4af; font-size: 11px; }

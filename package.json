@@ -6,11 +6,32 @@
     "node": "22.x"
   },
   "scripts": {
-    "test": "node --test",
-    "creer-utilisateur": "node --env-file=.env.local scripts/creer-utilisateur.mjs"
+    "test": "node --import tsx --test tests/*.test.mjs",
+    "creer-utilisateur": "node --env-file=.env.local scripts/creer-utilisateur.mjs",
+    "dev": "react-router dev --port 8123",
+    "build": "react-router build",
+    "preview": "vite preview",
+    "typecheck": "react-router typegen && tsc",
+    "test:build": "node tests/production-smoke.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.123.0",
-    "@supabase/supabase-js": "^2.115.0"
+    "@supabase/supabase-js": "2.115.0",
+    "isbot": "5.2.2",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "react-router": "8.3.1"
+  },
+  "devDependencies": {
+    "@react-router/dev": "8.3.1",
+    "@testing-library/react": "16.3.3",
+    "@types/node": "22.20.1",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.7",
+    "jsdom": "30.0.1",
+    "prettier": "3.9.6",
+    "tsx": "4.23.13",
+    "typescript": "7.0.2",
+    "vite": "8.2.2"
   }
 }

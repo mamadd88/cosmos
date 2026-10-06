@@ -1,0 +1,945 @@
+.cosmos-table {
+  width: 100%;
+  padding: 26px 24px 32px;
+  color: #a1a1aa;
+}
+.cosmos-table .ct-kpis {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 23px;
+}
+.cosmos-table .ct-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.cosmos-table .ct-toolbar input,
+.cosmos-table .ct-toolbar select,
+.cosmos-table .ct-toolbar button {
+  height: 35px;
+  border: 1px solid #27272a;
+  border-radius: 7px;
+  color: #d4d4d8;
+  background: #101012;
+  padding: 7px 11px;
+  font: inherit;
+  font-size: 12px;
+}
+.cosmos-table .ct-search {
+  width: min(470px, 100%);
+}
+.cosmos-table .ct-search input {
+  width: 100%;
+}
+.cosmos-table .ct-search input::placeholder {
+  color: #71717a;
+}
+.cosmos-table .ct-toolbar select {
+  color-scheme: dark;
+  cursor: pointer;
+}
+.cosmos-table .ct-toolbar button {
+  cursor: pointer;
+}
+.cosmos-table .ct-fold-actions {
+  display: flex;
+  gap: 6px;
+}
+.cosmos-table .ct-count {
+  margin-left: auto;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: #a1a1aa;
+  white-space: nowrap;
+}
+.cosmos-table .ct-count span {
+  padding: 0 7px;
+  color: #52525b;
+}
+.cosmos-table .ct-floors {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+.cosmos-table .ct-floor {
+  min-width: 0;
+  border: 1px solid #27272a;
+  border-radius: 11px;
+  overflow: clip;
+  background: #0c0c0e;
+}
+.cosmos-table .ct-floor-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 49px;
+  padding: 10px 17px;
+  background: #161618;
+}
+.cosmos-table .ct-floor-heading h2 {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.cosmos-table .ct-clickable-header {
+  cursor: pointer;
+}
+.cosmos-table .ct-floor-heading:not([data-drop-position]):hover {
+  background: #1c1c1f;
+}
+.cosmos-table .ct-floor-heading h2 button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 0;
+  padding: 3px 0;
+  background: transparent;
+  color: #fafafa;
+  font-size: 12px;
+  letter-spacing: 0.21em;
+  font-weight: 700;
+  cursor: pointer;
+}
+.cosmos-table .ct-floor-chevron {
+  color: #71717a;
+  font-size: 11px;
+  letter-spacing: 0;
+}
+.cosmos-table .ct-floor-count {
+  color: #8c8c97;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+}
+.cosmos-table .ct-floor-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.cosmos-table .ct-add-group,
+.cosmos-table .ct-group-create button {
+  padding: 5px 9px;
+  border: 1px solid #3f3f46;
+  border-radius: 6px;
+  background: transparent;
+  color: #d4d4d8;
+  font: inherit;
+  font-size: 11px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.cosmos-table .ct-add-group:hover,
+.cosmos-table .ct-group-create button:not(:disabled):hover {
+  background: #27272a;
+  color: #fafafa;
+}
+.cosmos-table .ct-add-group:disabled,
+.cosmos-table .ct-group-create button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.cosmos-table .ct-group-create {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 17px;
+  border-top: 1px solid #27272a;
+  background: #111113;
+}
+.cosmos-table .ct-group-create input {
+  flex: 1 1 200px;
+  max-width: 380px;
+  min-width: 0;
+  padding: 7px 10px;
+  border: 1px solid #3f3f46;
+  border-radius: 6px;
+  background: #09090b;
+  color: #fafafa;
+  font: inherit;
+  font-size: 12px;
+}
+.cosmos-table .ct-group-create [role='alert'] {
+  flex-basis: 100%;
+  color: #fb7185;
+  font-size: 11px;
+}
+.cosmos-table .ct-separator {
+  color: #52525b;
+  padding: 0 7px;
+}
+.cosmos-table .ct-table-scroll {
+  overflow-x: auto;
+}
+.cosmos-table .ct-table-scroll[hidden] {
+  display: none;
+}
+.cosmos-table table {
+  width: 100%;
+  min-width: 1600px;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+.cosmos-table .ct-col-name {
+  width: calc(15% + 48px);
+}
+.cosmos-table .ct-col-status {
+  width: 4%;
+}
+.cosmos-table .ct-col-objectif {
+  width: calc(15% - 48px);
+}
+.cosmos-table .ct-col-actuel {
+  width: 7%;
+}
+.cosmos-table .ct-col-steps {
+  width: 5%;
+}
+.cosmos-table .ct-col-entropie {
+  width: 11%;
+}
+.cosmos-table .ct-col-reponse {
+  width: 14%;
+}
+.cosmos-table .ct-col-alerte {
+  width: 10%;
+}
+.cosmos-table .ct-col-kill {
+  width: 10%;
+}
+.cosmos-table .ct-col-projection {
+  width: 9%;
+}
+.cosmos-table thead {
+  background: #111113;
+}
+.cosmos-table thead th {
+  padding: 10px 13px;
+  color: #8d8d98;
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: left;
+  border-top: 1px solid #27272a;
+  border-bottom: 1px solid #27272a;
+}
+.cosmos-table td,
+.cosmos-table tbody th {
+  padding: 12px 13px;
+  border-bottom: 1px solid #202024;
+  vertical-align: top;
+  font-size: 11.5px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+.cosmos-table tbody th {
+  text-align: left;
+  font-weight: 500;
+}
+.cosmos-table .ct-name-cell {
+  position: relative;
+  border-right: 1px solid #242428;
+}
+.cosmos-table .ct-drag-handle {
+  position: absolute;
+  top: 8px;
+  left: 2px;
+  width: 15px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  color: #52525b;
+  font-size: 15px;
+  line-height: 20px;
+  cursor: grab;
+}
+.cosmos-table .ct-cosmos-cell > .ct-drag-handle {
+  left: 10px;
+}
+.cosmos-table .ct-mini-cell > .ct-drag-handle {
+  left: 32px;
+  top: 12px;
+}
+.cosmos-table .ct-drag-handle:hover,
+.cosmos-table .ct-drag-handle:focus-visible {
+  color: #e4e4e7;
+  background: #27272a;
+}
+.cosmos-table .ct-drag-handle:active {
+  cursor: grabbing;
+}
+.cosmos-table .ct-drag-handle:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.cosmos-table [data-dragging='true'] > * {
+  opacity: 0.4;
+}
+.cosmos-table [data-drop-position='before'] > th,
+.cosmos-table [data-drop-position='before'] > td {
+  box-shadow: inset 0 2px #d4d4d8;
+}
+.cosmos-table [data-drop-position='after'] > th,
+.cosmos-table [data-drop-position='after'] > td {
+  box-shadow: inset 0 -2px #d4d4d8;
+}
+.cosmos-table [data-drop-position='inside'] > th,
+.cosmos-table [data-drop-position='inside'] > td,
+.cosmos-table .ct-floor-heading[data-drop-position='inside'] {
+  background: #29292e;
+  box-shadow: inset 0 -2px #a1a1aa;
+}
+.cosmos-table [data-drop-position='open'] > th,
+.cosmos-table [data-drop-position='open'] > td,
+.cosmos-table .ct-floor-heading[data-drop-position='open'] {
+  background: #222226;
+}
+.cosmos-table .ct-section-row > th,
+.cosmos-table .ct-section-row > td {
+  background: #19191c;
+  border-top: 1px solid #35353b;
+  border-bottom: 1px solid #303035;
+  padding-top: 9px;
+  padding-bottom: 9px;
+}
+.cosmos-table .ct-section-row.ct-clickable-header:not([data-drop-position]):hover > th,
+.cosmos-table .ct-section-row.ct-clickable-header:not([data-drop-position]):hover > td {
+  background: #202024;
+}
+.cosmos-table .ct-section-cell {
+  padding-left: 22px;
+  color: #d4d4d8;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+.cosmos-table .ct-section-cell .ct-node-name {
+  text-transform: uppercase;
+}
+.cosmos-table .ct-cosmos-row > th,
+.cosmos-table .ct-cosmos-row > td {
+  background: #111113;
+  padding-top: 9px;
+  padding-bottom: 9px;
+}
+.cosmos-table .ct-cosmos-row.ct-clickable-header:not([data-drop-position]):hover > th,
+.cosmos-table .ct-cosmos-row.ct-clickable-header:not([data-drop-position]):hover > td {
+  background: #19191c;
+}
+.cosmos-table .ct-cosmos-cell {
+  color: #d4d4d8;
+  padding-left: 31px;
+}
+.cosmos-table .ct-cosmos-actions-cell {
+  vertical-align: middle;
+}
+.cosmos-table .ct-cosmos-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.cosmos-table .ct-cosmos-action-list {
+  display: flex;
+  gap: 6px;
+  order: -1;
+}
+.cosmos-table .ct-cosmos-actions button,
+.cosmos-table .ct-cosmos-dialog button {
+  padding: 4px 9px;
+  border: 1px solid #3f3f46;
+  border-radius: 6px;
+  background: #111113;
+  color: #d4d4d8;
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.cosmos-table .ct-cosmos-actions .ct-actions-toggle {
+  padding: 0 7px;
+  font-size: 16px;
+  line-height: 22px;
+}
+.cosmos-table .ct-cosmos-actions button:hover,
+.cosmos-table .ct-cosmos-dialog button:not(:disabled):hover {
+  background: #27272a;
+}
+.cosmos-table .ct-cosmos-actions button:disabled,
+.cosmos-table .ct-cosmos-dialog button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.cosmos-table button.ct-action-danger {
+  color: #fb7185;
+}
+.cosmos-table .ct-cosmos-dialog {
+  width: min(440px, calc(100vw - 32px));
+  max-height: calc(100dvh - 48px);
+  margin: auto;
+  padding: 22px;
+  border: 1px solid #3f3f46;
+  border-radius: 12px;
+  background: #101012;
+  color: #d4d4d8;
+  box-shadow: 0 24px 80px #0008;
+}
+.cosmos-table .ct-cosmos-dialog::backdrop {
+  background: #0007;
+}
+.cosmos-table .ct-cosmos-dialog h2 {
+  margin: 0;
+  font-size: 16px;
+  color: #fafafa;
+}
+.cosmos-table .ct-cosmos-dialog p {
+  margin: 12px 0;
+  font-size: 12px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.cosmos-table .ct-cosmos-dialog label {
+  display: grid;
+  gap: 8px;
+  font-size: 12px;
+}
+.cosmos-table .ct-cosmos-dialog input {
+  min-width: 0;
+  width: 100%;
+  padding: 9px 11px;
+  border: 1px solid #3f3f46;
+  border-radius: 6px;
+  background: #09090b;
+  color: #fafafa;
+  font: inherit;
+}
+.cosmos-table .ct-cosmos-dialog [role='alert'] {
+  color: #fb7185;
+}
+.cosmos-table .ct-cosmos-dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 20px;
+}
+.cosmos-table .ct-rubrique-row > th,
+.cosmos-table .ct-rubrique-row > td {
+  padding-top: 6px;
+  padding-bottom: 6px;
+  background: #0f0f11;
+}
+.cosmos-table .ct-rubrique-cell {
+  padding-left: 54px;
+}
+.cosmos-table .ct-rubrique-tag {
+  display: inline-block;
+  max-width: 100%;
+  padding: 2px 8px;
+  border: 1px solid #3f3f46;
+  border-radius: 999px;
+  color: #c4c4cc;
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.cosmos-table .ct-mini-cell {
+  padding-left: 54px;
+}
+.cosmos-table .ct-quick-create-row > td {
+  padding: 0;
+  background: #101012;
+}
+.cosmos-table .ct-quick-create-row .quick-mini-create {
+  padding: 7px 13px 7px 33px;
+}
+.cosmos-table .ct-quick-create-row .quick-mini-plus {
+  width: 18px;
+}
+.cosmos-table .ct-node-button {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.cosmos-table .ct-node-button:disabled {
+  cursor: default;
+}
+.cosmos-table .ct-node-button:not(:disabled):hover {
+  color: #fafafa;
+}
+.cosmos-table .ct-node-chevron {
+  flex: none;
+  width: 10px;
+  color: #858590;
+  font-size: 10px;
+}
+.cosmos-table .ct-node-name {
+  flex: 1;
+  min-width: 0;
+}
+.cosmos-table .ct-cosmos-color {
+  flex: none;
+  align-self: center;
+  width: 3px;
+  height: 16px;
+  border-radius: 2px;
+}
+.cosmos-table .ct-node-count {
+  flex: none;
+  margin-left: auto;
+  color: #71717a;
+  font-size: 9px;
+  font-weight: 400;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+.cosmos-table .ct-mini-row {
+  cursor: pointer;
+}
+.cosmos-table .ct-mini-row:hover > td,
+.cosmos-table .ct-mini-row:hover > th {
+  background: #151517;
+}
+.cosmos-table .ct-mini-name {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+.cosmos-table .ct-mini-button {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  padding: 0;
+  border: 0;
+  border-radius: 3px;
+  color: #ededf0;
+  background: transparent;
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.cosmos-table .ct-mini-button > span:nth-child(2) {
+  flex: 1;
+}
+.cosmos-table .ct-mini-button:hover {
+  color: #fff;
+}
+.cosmos-table .ct-weight {
+  flex: none;
+  height: 6px;
+  width: 6px;
+  border: 1px solid;
+  border-radius: 50%;
+}
+.cosmos-table .ct-text-toggle {
+  flex: none;
+  padding: 1px 4px;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  color: #71717a;
+  font-size: 10px;
+  cursor: pointer;
+}
+.cosmos-table .ct-text-toggle:hover {
+  color: #fafafa;
+}
+.cosmos-table .ct-text {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+.cosmos-table .ct-expanded .ct-text {
+  display: block;
+  overflow: visible;
+}
+.cosmos-table .ct-expanded > td,
+.cosmos-table .ct-expanded > th {
+  background: #151517;
+}
+.cosmos-table .ct-actual {
+  color: #e4e4e7;
+}
+.cosmos-table .ct-alert {
+  color: #fbbf24;
+}
+.cosmos-table .ct-kill {
+  color: #fb7185;
+}
+.cosmos-table .ct-empty {
+  color: #484851;
+}
+.cosmos-table .ct-status-cell,
+.cosmos-table thead .ct-status-heading {
+  padding-left: 8px;
+  padding-right: 8px;
+}
+.cosmos-table .ct-status {
+  display: inline-block;
+  border: 0;
+  border-radius: 5px;
+  padding: 2px 6px;
+  white-space: nowrap;
+  font-family: inherit;
+  font-size: 10px;
+  line-height: inherit;
+  cursor: pointer;
+}
+.cosmos-table .ct-status:disabled {
+  cursor: default;
+}
+.cosmos-table .ct-status:not(:disabled):hover {
+  box-shadow: 0 0 0 1px currentColor;
+}
+.cosmos-table .ct-projection-date {
+  color: #b7b7c1;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+}
+.cosmos-table .ct-projection-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 3px 10px;
+}
+.cosmos-table .ct-projection-days {
+  white-space: nowrap;
+}
+.cosmos-table .ct-projection-zone {
+  display: block;
+  font-size: 10px;
+}
+.cosmos-table .ct-projection-track {
+  display: block;
+  height: 4px;
+  margin: 6px 0 4px;
+  border-radius: 2px;
+  background: #27272a;
+  overflow: hidden;
+}
+.cosmos-table .ct-projection-track > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+}
+.cosmos-table .ct-projection-days,
+.cosmos-table .ct-projection-continuous {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+}
+.cosmos-table .ct-projection-continuous {
+  color: #71717a;
+}
+.cosmos-table .ct-steps-cell,
+.cosmos-table thead .ct-steps-heading {
+  text-align: center;
+}
+.cosmos-table .ct-steps-count {
+  display: inline-block;
+  padding: 3px 7px;
+  border: 1px solid #3f3f46;
+  border-radius: 6px;
+  background: #111113;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+.cosmos-table button.ct-steps-count {
+  cursor: pointer;
+}
+.cosmos-table button.ct-steps-count:hover {
+  border-color: #71717a;
+}
+.cosmos-table .ct-steps-dialog {
+  width: min(440px, calc(100vw - 32px));
+  max-height: calc(100dvh - 48px);
+  margin: auto;
+  padding: 0;
+  border: 1px solid #3f3f46;
+  border-radius: 12px;
+  background: #101012;
+  color: #d4d4d8;
+  box-shadow: 0 24px 80px #0008;
+}
+.cosmos-table .ct-steps-dialog[open] {
+  display: flex;
+  flex-direction: column;
+}
+.cosmos-table .ct-steps-dialog::backdrop {
+  background: #0007;
+}
+.cosmos-table .ct-steps-dialog-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px;
+  border-bottom: 1px solid #27272a;
+}
+.cosmos-table .ct-steps-dialog h2 {
+  margin: 0;
+  color: #fafafa;
+  font-size: 15px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.cosmos-table .ct-steps-dialog-heading p {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0 0;
+  font-size: 11px;
+  color: #a1a1aa;
+}
+.cosmos-table .ct-steps-close {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border: 1px solid #3f3f46;
+  border-radius: 6px;
+  color: #a1a1aa;
+  background: transparent;
+  font-size: 18px;
+  cursor: pointer;
+}
+.cosmos-table .ct-steps-list {
+  min-height: 0;
+  max-height: 340px;
+  overflow-y: auto;
+  list-style: none;
+  margin: 0;
+  padding: 8px 18px;
+}
+.cosmos-table .ct-steps-list li + li {
+  border-top: 1px solid #27272a;
+}
+.cosmos-table .ct-steps-list label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 0;
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+.cosmos-table .ct-steps-list input {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin: 1px 0 0;
+  color-scheme: dark;
+  accent-color: #d4d4d8;
+}
+.cosmos-table .ct-step-done {
+  text-decoration: line-through;
+  color: #71717a;
+}
+.cosmos-table .ct-steps-empty {
+  padding: 6px 18px;
+  font-size: 12px;
+  color: #a1a1aa;
+}
+.cosmos-table .ct-step-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 18px;
+  border-top: 1px solid #27272a;
+}
+.cosmos-table .ct-step-form > label {
+  font-size: 11px;
+  color: #a1a1aa;
+}
+.cosmos-table .ct-step-form > div {
+  display: flex;
+  gap: 8px;
+}
+.cosmos-table .ct-step-form input,
+.cosmos-table .ct-step-form button {
+  padding: 8px 10px;
+  border: 1px solid #3f3f46;
+  border-radius: 6px;
+  background: #09090b;
+  color: #e4e4e7;
+  font: inherit;
+  font-size: 12px;
+}
+.cosmos-table .ct-step-form input {
+  flex: 1;
+  min-width: 0;
+}
+.cosmos-table .ct-step-form button {
+  cursor: pointer;
+}
+.cosmos-table .ct-step-form :disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.cosmos-table .ct-no-results {
+  color: #71717a;
+  padding: 20px 14px;
+}
+.cosmos-table .ct-quote {
+  margin: 24px 0 0;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+}
+.cosmos-table :is(button, a, input, select):focus-visible {
+  outline: 2px solid #a1a1aa;
+  outline-offset: 3px;
+}
+.cosmos-table .ct-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+@media (max-width: 700px) {
+  .cosmos-table {
+    padding: 20px 12px;
+  }
+  .cosmos-table .ct-count {
+    width: 100%;
+    margin-left: 0;
+  }
+  .cosmos-table .ct-floor-heading {
+    padding: 10px 12px;
+  }
+  .cosmos-table .ct-floor-heading > span {
+    font-size: 9px;
+  }
+  .cosmos-table .ct-search {
+    flex: 1;
+    min-width: 190px;
+  }
+  .cosmos-table .ct-search input,
+  .cosmos-table .ct-toolbar select,
+  .cosmos-table .ct-step-form input {
+    font-size: 16px;
+    height: 40px;
+  }
+}
+
+.cosmos-table .ct-group-line-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+}
+.cosmos-table .ct-group-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.cosmos-table .ct-group-name .ct-node-button {
+  flex: 1;
+  min-width: 0;
+}
+.cosmos-table .ct-group-rename {
+  flex: none;
+  padding: 2px 5px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #a1a1aa;
+  font: inherit;
+  cursor: pointer;
+}
+.cosmos-table .ct-group-rename:hover {
+  background: #27272a;
+  color: #fafafa;
+}
+.cosmos-table .ct-group-rename:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.cosmos-table .ct-group-inline-edit {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  cursor: default;
+}
+.cosmos-table .ct-group-inline-edit input {
+  width: 100%;
+  min-width: 0;
+  padding: 5px 7px;
+  border: 1px solid #52525b;
+  border-radius: 5px;
+  background: #09090b;
+  color: #fafafa;
+  font: inherit;
+}
+.cosmos-table .ct-group-inline-edit button {
+  padding: 3px 6px;
+  border: 1px solid #3f3f46;
+  border-radius: 5px;
+  background: #111113;
+  color: #d4d4d8;
+  font: inherit;
+  cursor: pointer;
+}
+.cosmos-table .ct-group-inline-edit button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.cosmos-table .ct-group-inline-edit [role='alert'] {
+  color: #fb7185;
+  width: 100%;
+}
+
+.cosmos-table .ct-inline-delete:hover {
+  color: #fb7185;
+  background: #2b151b;
+}
+
+.cosmos-table .ct-cosmos-name {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  min-width: 0;
+}
+.cosmos-table .ct-cosmos-name > .ct-node-button {
+  flex: 1;
+  min-width: 0;
+  width: auto;
+}
+
+.cosmos-table .ct-cosmos-name > .ct-group-rename,
+.cosmos-table .ct-mini-name > .ct-group-rename {
+  box-sizing: border-box;
+  flex: 0 0 20px;
+  width: 20px;
+  padding: 2px 0;
+}
