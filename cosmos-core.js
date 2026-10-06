@@ -20,11 +20,13 @@ const POIDS_ORDER = {vital:0,important:1,normal:2};
 const poidsOf = x => POIDS.includes(x.poids)?x.poids:'normal';
 // point devant le nom : plein et lumineux (vital), atténué (important), creux discret (normal)
 const POIDS_DOT = {vital:{bg:'#fafafa',border:'#fafafa',glow:'0 0 6px rgba(250,250,250,0.55)'},important:{bg:'#71717a',border:'#71717a',glow:'none'},normal:{bg:'transparent',border:'#3f3f46',glow:'none'}};
-const startOf = x => /^\d{4}-\d{2}-\d{2}$/.test(x.startAt||'')?x.startAt:(x.createdAt||null);
+const isDraft = x => x.draft === true;
+const startOf = x => /^\d{4}-\d{2}-\d{2}$/.test(x.startAt||'')?x.startAt:(isDraft(x)?null:(x.createdAt||null));
 const notStarted = x => { const s=startOf(x); return !!s && s>isoD(TODAY); };
-const statutOf = x => x.closed?'Clôturé':(x.pause||notStarted(x))?'Pause':(hasSas(x)&&!x.sasDone)?'SAS':'Actif';
+const statutOf = x => x.closed?'Clôturé':(isDraft(x)||x.pause||notStarted(x))?'Pause':(hasSas(x)&&!x.sasDone)?'SAS':'Actif';
 // migration des anciens statuts manuels (Draft/Actif/Pause/Clôturé) vers les drapeaux pause / closed
 const migrate = rows => rows.map(x=>{ const y={...x}; delete y.tags; if(y.pause==null) y.pause=x.statut==='Pause'; if(y.closed==null) y.closed=x.statut==='Clôturé'; if(y.sasDone==null) y.sasDone=false;
+  if(isDraft(y)) { y.pause=true; return y; }
   if(sasPendingOf(y)&&!sasUntilOf(y)) y.sasUntil=inferSasUntil(y);
   if(!y.cloture||y.cloture==='Permanent'||y.cloture==='À dater') y.cloture=mandatDepuis(startOf(y)||y.createdAt); return y; });
 // steps: [texte, fait]. Les champs etat/maintenance sont conservés dans les données d'exemple mais ne sont plus utilisés.
@@ -103,7 +105,7 @@ const alertDaysOf = x => { const n=parseInt(x.alertDays,10); return isNaN(n)||n<
 const projectionOf = x => {
   const eff=echeanceEffective(x); const c=eff.iso; const finalIso=eff.final;
   const finalDays=finalIso?Math.round((new Date(finalIso+'T00:00:00')-TODAY)/86400000):null;
-  if(!c) return {permanent:true,sas:false,zone:'continu',color:PROJ.continu[1],zoneLabel:PROJ.continu[0],finalIso,finalPermanent:true,finalDays};
+  if(!c) return {permanent:true,undated:isDraft(x),sas:false,zone:'continu',color:PROJ.continu[1],zoneLabel:PROJ.continu[0],finalIso,finalPermanent:true,finalDays};
   const end=new Date(c+'T00:00:00'), start=new Date((startOf(x)||daysAgo(0))+'T00:00:00');
   const days=Math.round((end-TODAY)/86400000);
   if(x.closed) return {permanent:false,sas:false,days,pct:100,zone:'termine',color:PROJ.termine[1],zoneLabel:PROJ.termine[0],label:'terminé',finalIso,finalPermanent:!finalIso,finalDays};
@@ -167,16 +169,17 @@ const validateMini=(x,rows=[])=>{
   if(!x.cosmos) return 'Choisis un cosmos.';
   if(!String(x.name||'').trim()) return 'Le nom du mini-cosmos est obligatoire.';
   if(rows.some(r=>r.id!==x.id&&r.cosmos===x.cosmos&&String(r.name||'').trim().toLowerCase()===x.name.trim().toLowerCase())) return 'Ce nom existe déjà dans ce cosmos.';
-  if(!String(x.entropie||'').trim()||!String(x.reponse||'').trim()) return 'Renseigne l’entropie et sa réponse.';
+  const partial=isDraft(x)&&(x.pause===true||x.closed===true);
+  if(!partial&&(!String(x.entropie||'').trim()||!String(x.reponse||'').trim())) return 'Renseigne l’entropie et sa réponse.';
   const validDate=d=>/^\d{4}-\d{2}-\d{2}$/.test(d||'')&&!isNaN(new Date(d+'T00:00:00'))&&isoD(new Date(d+'T00:00:00'))===d;
   const start=startOf(x), end=resolveCloture(x.cloture);
-  if(!validDate(start)) return 'La date de début est invalide.';
-  if(!validDate(end)) return 'Choisis une échéance valide.';
-  if(end<start) return 'L’échéance doit être après la date de début ou le même jour.';
-  if(hasSas(x)) { const until=sasUntilOf(x); if(!validDate(until)) return 'Choisis une date de fin de test valide.';
-    if(until<start||until>end) return 'La fin du test doit être comprise entre le début et l’échéance.'; }
+  if((!partial||x.startAt||start)&&!validDate(start)) return 'La date de début est invalide.';
+  if((!partial||x.cloture)&&!validDate(end)) return 'Choisis une échéance valide.';
+  if(start&&end&&end<start) return 'L’échéance doit être après la date de début ou le même jour.';
+  if(hasSas(x)) { const until=sasUntilOf(x); if((!partial||x.sasUntil)&&!validDate(until)) return 'Choisis une date de fin de test valide.';
+    if(until&&((start&&until<start)||(end&&until>end))) return 'La fin du test doit être comprise entre le début et l’échéance.'; }
   if(x.alertDays!=null&&(!Number.isInteger(Number(x.alertDays))||Number(x.alertDays)<0)) return 'Le préavis doit être un nombre entier positif ou nul.';
   return '';
 };
 
-export { validateMini, COLORS, STATUTS, STATUT_STYLE, hasSas, sasUntilOf, sasPendingOf, isMandat, mandatDepuis, POIDS, POIDS_LABEL, POIDS_ORDER, POIDS_DOT, poidsOf, inferSasUntil, echeanceEffective, plusDays, plusMonths, startOf, notStarted, statutOf, migrate, r, SEED, ACTUEL, CLOTURE, TYPES, MOIS_S, lastDay, fmtJM, fmtFR, resolveCloture, clotureLabel, clotureShort, clotureInfo, clotureOptions, clotureSel, PROJ, alertDaysOf, projectionOf, TODAY, refreshToday, isoD, daysAgo, progOf, nextOf, EMPTY_FORM, freshForm, TEMPLATES, chipOff, chipOn };
+export { isDraft, validateMini, COLORS, STATUTS, STATUT_STYLE, hasSas, sasUntilOf, sasPendingOf, isMandat, mandatDepuis, POIDS, POIDS_LABEL, POIDS_ORDER, POIDS_DOT, poidsOf, inferSasUntil, echeanceEffective, plusDays, plusMonths, startOf, notStarted, statutOf, migrate, r, SEED, ACTUEL, CLOTURE, TYPES, MOIS_S, lastDay, fmtJM, fmtFR, resolveCloture, clotureLabel, clotureShort, clotureInfo, clotureOptions, clotureSel, PROJ, alertDaysOf, projectionOf, TODAY, refreshToday, isoD, daysAgo, progOf, nextOf, EMPTY_FORM, freshForm, TEMPLATES, chipOff, chipOn };

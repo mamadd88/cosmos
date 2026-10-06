@@ -1,22 +1,28 @@
 // cosmos-sync.js — synchronisation avec Supabase (facultative).
-// Sans /api/config (fichier ouvert en local) ou sans variables Supabase côté serveur, l'app reste en localStorage.
+// La SPA reçoit sa configuration publique au build. Le chargement /api/config reste compatible avec les outils existants.
+// Sans configuration Supabase, l'app utilise localStorage.
 // Ce module ignore l'interface : il charge l'état, sauvegarde en différentiel (une transaction par lot),
 // et remonte ce qui a changé ailleurs — agents IA, autre appareil — sans jamais écraser une saisie en cours.
 import { migrate } from './cosmos-core.js';
+import { normalizeFloorTitles } from './cosmos-floors.js';
+import { valueChangeJournal } from './cosmos-journal.js';
 
-export async function createSync({ author = 'Toi' } = {}) {
-  let cfg = {};
-  try { const r = await fetch('/api/config', { cache: 'no-store' }); if (r.ok) cfg = await r.json(); } catch (e) { /* pas de serveur : mode local */ }
+/** @param {{author?: string, config?: {supabaseUrl?: string, supabaseKey?: string}, clientFactory?: typeof import('@supabase/supabase-js').createClient}} options */
+export async function createSync({ author = 'Toi', config, clientFactory } = {}) {
+  let cfg = config || {};
+  if (!config) try { const r = await fetch('/api/config', { cache: 'no-store' }); if (r.ok) cfg = await r.json(); } catch (e) { /* pas de serveur : mode local */ }
   if (!cfg.supabaseUrl || !cfg.supabaseKey) return null;
-  if (!window.supabase) throw new Error('supabase-js non chargé');
-  const db = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseKey);
+  const factory = clientFactory || globalThis.window?.supabase?.createClient;
+  if (!factory) throw new Error('supabase-js non chargé');
+  const db = factory(cfg.supabaseUrl, cfg.supabaseKey);
 
   // Ce que le serveur connaît, pour calculer les différences
   const cache = { rows: new Map(), cosmosJson: '', journalIds: new Set(), lastPoll: null };
   let queue = null, timer = null, retryTimer = null, inflight = null, retries = 0, revision = 0, onError = () => {}, currentEmail = '', conflict = false;
   const serverStructure = {};
-  const structureKeys = ['cosmos', 'etageDe', 'etages', 'titresDe'];
-  const structureValue = (s, key) => s[key] || (key === 'cosmos' ? [] : {});
+  let authEpoch = 0, disposed = false, currentUserId = '';
+  const structureKeys = ['cosmos', 'etageDe', 'etages', 'titresEtages', 'titresDe', 'sections', 'sectionDe'];
+  const structureValue = (s, key) => s[key] || (key === 'cosmos' || key === 'sections' ? [] : {});
 
   // Postgres réordonne les clés JSON : comparer leur contenu, tout en conservant l'ordre des tableaux.
   const rowKey = x => JSON.stringify(x, (_key, value) => value && typeof value === 'object' && !Array.isArray(value)
@@ -27,23 +33,25 @@ export async function createSync({ author = 'Toi' } = {}) {
   const fr = e => { const m = String((e && e.message) || e); if (/invalid login credentials/i.test(m)) return 'Email ou mot de passe incorrect'; if (/email not confirmed/i.test(m)) return 'Email non confirmé'; if (/rate limit/i.test(m)) return 'Trop de tentatives, réessaie dans un instant'; if (/failed to fetch|networkerror/i.test(m)) return 'Réseau indisponible'; return m; };
 
   // ---- session -------------------------------------------------------------
-  async function session() { const { data } = await db.auth.getSession(); currentEmail = data.session?.user?.email || ''; return data.session; }
-  async function login(email, password) { const { data, error } = await db.auth.signInWithPassword({ email, password }); if (error) throw new Error(fr(error)); currentEmail = data.user?.email || ''; return data.session; }
-  async function logout() { await db.auth.signOut(); currentEmail = ''; }
-  function onAuth(cb) { db.auth.onAuthStateChange((event, s) => { currentEmail = s?.user?.email || currentEmail; cb(event, s); }); }
+  async function session() { const { data, error } = await db.auth.getSession(); if (error) throw new Error(fr(error)); currentEmail = data.session?.user?.email || ''; currentUserId = data.session?.user?.id || ''; return data.session; }
+  async function login(email, password) { const { data, error } = await db.auth.signInWithPassword({ email, password }); if (error) throw new Error(fr(error)); currentEmail = data.user?.email || ''; currentUserId = data.user?.id || ''; return data.session; }
+  function cancelPending() { clearTimeout(timer); clearTimeout(retryTimer); queue = null; revision++; authEpoch++; }
+  function dispose() { disposed = true; cancelPending(); onError = () => {}; db.auth?.stopAutoRefresh?.(); }
+  async function logout() { const { error } = await db.auth.signOut(); if (error) throw new Error(fr(error)); cancelPending(); currentEmail = ''; }
+  function onAuth(cb) { const result = db.auth.onAuthStateChange((event, s) => { const userId = s?.user?.id || ''; if (event === 'SIGNED_OUT' || (currentUserId && currentUserId !== userId)) cancelPending(); currentEmail = s?.user?.email || ''; currentUserId = userId; cb(event, s); }); return () => result.data.subscription.unsubscribe(); }
   const email = () => currentEmail;
 
   // ---- chargement ----------------------------------------------------------
   async function readState() {
-    const { data, error } = await db.rpc('charger_etat');
+    const { data, error } = await db.rpc('charger_etat_v4');
     if (error) throw new Error(fr(error));
     if (!data || !Array.isArray(data.cosmos) || !Array.isArray(data.miniCosmos) || !Array.isArray(data.journal) || !Array.isArray(data.propositions)) throw new Error('État reçu de la base incomplet');
     return data;
   }
   function stateFrom(data) {
     const rows = (data.miniCosmos || []).map(r => r.data);
-    return { cosmos: data.cosmos || [], etageDe: data.etageDe || {}, etages: data.etages || {}, titresDe: data.titresDe || {}, rows, journal: (data.journal || []).map(jEntry), journalArchived: data.journalArchived || 0,
-      propositions: (data.propositions || []).map(pEntry), empty: !(data.cosmos || []).length && !rows.length };
+    return { cosmos: data.cosmos || [], etageDe: data.etageDe || {}, etages: data.etages || {}, titresEtages: normalizeFloorTitles(data.titresEtages), titresDe: data.titresDe || {}, sections: data.sections || [], sectionDe: data.sectionDe || {}, rows, journal: valueChangeJournal((data.journal || []).map(jEntry)), journalArchived: data.journalArchived || 0,
+      propositions: (data.propositions || []).map(pEntry), empty: !(data.cosmos || []).length && !rows.length && !(data.sections || []).length && !Object.keys(data.titresEtages || {}).length };
   }
   function remember(data, state) {
     for (const key of structureKeys) serverStructure[key] = structureValue(data, key);
@@ -53,37 +61,38 @@ export async function createSync({ author = 'Toi' } = {}) {
     cache.lastPoll = data.now;
   }
   async function load() {
-    revision++;
+    const version = ++revision;
     const data = await readState(), state = stateFrom(data);
+    if (disposed || version !== revision) throw new Error('Lecture remplacée par une session ou un chargement plus récent');
     remember(data, state);
     return state;
   }
   // Après migration côté app : considère l'état courant comme sauvegardé (les migrations sont rejouées à chaque chargement)
   function prime(state) {
     cache.rows = new Map(state.rows.map((x, i) => { const p = cache.rows.get(x.id); return [x.id, { json: rowKey(x), position: i, savedAt: p ? p.savedAt : null, serverData: p ? p.serverData : x, serverPosition: p ? p.serverPosition : i }]; }));
-    cache.cosmosJson = rowKey(state.cosmos);
-    cache.etageDeJson = rowKey(state.etageDe || {});
-    cache.etagesJson = rowKey(state.etages || {});
-    cache.titresDeJson = rowKey(state.titresDe || {});
-    (state.journal || []).forEach(e => cache.journalIds.add(e.id));
+    for (const key of structureKeys) cache[key + 'Json'] = rowKey(structureValue(state, key));
+    valueChangeJournal(state.journal).forEach(e => cache.journalIds.add(e.id));
   }
 
   // ---- sauvegarde différentielle (regroupée, une transaction par lot) ---------
   function save(state) {
+    if (disposed) return;
     revision++;
     clearTimeout(retryTimer); retries = 0;
-    queue = { ...state, replace: !!state.replace || !!(queue && queue.replace) };
+    queue = { ...state, journal: valueChangeJournal(state.journal), replace: !!state.replace || !!(queue && queue.replace) };
     clearTimeout(timer); if (!conflict) timer = setTimeout(flush, 350);
   }
   function flush() {
     clearTimeout(timer); clearTimeout(retryTimer);
+    if (disposed) return Promise.resolve();
     if (inflight) return inflight;
     if (conflict) return Promise.resolve();
     inflight = (async () => {
       while (queue) {
-        const s = queue; queue = null;
-        try { await doSave(s); retries = 0; }
+        const s = queue, epoch = authEpoch; queue = null;
+        try { await doSave(s, epoch); retries = 0; }
         catch (e) {
+          if (disposed || epoch !== authEpoch) break;
           conflict = e.code === 'P4090';
           onError(Object.assign(new Error(fr(e)), { code: e.code }));
           if (!queue) queue = s; else queue.replace = queue.replace || s.replace;
@@ -94,7 +103,7 @@ export async function createSync({ author = 'Toi' } = {}) {
     })().finally(() => { inflight = null; });
     return inflight;
   }
-  async function doSave(s) {
+  async function doSave(s, epoch) {
     const rowsPayload = [], seen = new Set();
     s.rows.forEach((x, i) => {
       seen.add(x.id); const j = rowKey(x), p = cache.rows.get(x.id);
@@ -113,26 +122,38 @@ export async function createSync({ author = 'Toi' } = {}) {
     const etagesPayload = etagesJson !== cache.etagesJson ? (s.etages || {}) : null;       // carte complète { étage : repère }
     const titresDeJson = rowKey(s.titresDe || {});
     const titresDePayload = titresDeJson !== cache.titresDeJson ? (s.titresDe || {}) : null;   // carte complète { cosmos : [titres] }
+    const sectionsJson = rowKey(s.sections || []), sectionDeJson = rowKey(s.sectionDe || {});
+    const sectionsPayload = sectionsJson !== cache.sectionsJson ? (s.sections || []) : null;
+    const sectionDePayload = sectionDeJson !== cache.sectionDeJson ? (s.sectionDe || {}) : null;
+    const titresEtagesJson = rowKey(s.titresEtages || {});
+    const titresEtagesPayload = titresEtagesJson !== cache.titresEtagesJson ? (s.titresEtages || {}) : null;
     const replace = !!s.replace;
-    if (!replace && !rowsPayload.length && !deleted.length && !cosmosPayload && !journalPayload.length && !etageDePayload && !etagesPayload && !titresDePayload) return;
+    if (!replace && !rowsPayload.length && !deleted.length && !cosmosPayload && !journalPayload.length && !etageDePayload && !etagesPayload && !titresDePayload && !sectionsPayload && !sectionDePayload && !titresEtagesPayload) return;
     const args = replace
       ? { p_cosmos: s.cosmos, p_rows: s.rows.map((x, i) => ({ id: x.id, data: x, position: i })), p_deleted: [], p_journal: s.journal || [], p_replace: true, p_author: author, p_etage_de: s.etageDe || {}, p_etages: s.etages || {}, p_titres_de: s.titresDe || {} }
       : { p_cosmos: cosmosPayload, p_rows: rowsPayload, p_deleted: deleted, p_journal: journalPayload, p_replace: false, p_author: author, p_etage_de: etageDePayload, p_etages: etagesPayload, p_titres_de: titresDePayload };
+    args.p_sections = replace ? (s.sections || []) : sectionsPayload;
+    args.p_section_de = replace ? (s.sectionDe || {}) : sectionDePayload;
+    args.p_titres_etages = replace ? (s.titresEtages || {}) : titresEtagesPayload;
     args.p_expected = { ...serverStructure, deleted: Object.fromEntries(deleted.map(id => { const p = cache.rows.get(id); return [id, { data: p.serverData, position: p.serverPosition }]; })) };
-    const { data, error } = await db.rpc('sync_etat_v2', args);
+    const { data, error } = await db.rpc('sync_etat_v4', args);
+    if (disposed || epoch !== authEpoch) return;
     if (error) throw error;
     const at = data && data.savedAt;
     if (replace) { cache.rows = new Map(); cache.journalIds = new Set(); }
     const saved = new Map((data?.rows || []).map(r => [r.id, r]));
     (replace ? args.p_rows : rowsPayload).forEach(r => { const remote = saved.get(r.id) || r; cache.rows.set(r.id, { json: rowKey(r.data), position: r.position, serverData: remote.data, serverPosition: remote.position, savedAt: at }); });
-    for (const [arg, key] of [['p_cosmos','cosmos'], ['p_etage_de','etageDe'], ['p_etages','etages'], ['p_titres_de','titresDe']]) {
+    for (const [arg, key] of [['p_cosmos','cosmos'], ['p_etage_de','etageDe'], ['p_etages','etages'], ['p_titres_etages','titresEtages'], ['p_titres_de','titresDe'], ['p_sections','sections'], ['p_section_de','sectionDe']]) {
       if (args[arg] !== null) serverStructure[key] = data?.structure?.[key] ?? structureValue(s, key);
     }
     deleted.forEach(id => cache.rows.delete(id));
     cache.cosmosJson = cosmosJson;
     cache.etageDeJson = etageDeJson;
     cache.etagesJson = etagesJson;
+    cache.titresEtagesJson = titresEtagesJson;
     cache.titresDeJson = titresDeJson;
+    cache.sectionsJson = sectionsJson;
+    cache.sectionDeJson = sectionDeJson;
     (replace ? (s.journal || []) : journalPayload).forEach(e => cache.journalIds.add(e.id));
     if (at && (!cache.lastPoll || at > cache.lastPoll)) cache.lastPoll = at;
   }
@@ -142,7 +163,7 @@ export async function createSync({ author = 'Toi' } = {}) {
     return state.rows.length !== cache.rows.size
       || state.rows.some((x, i) => { const p = cache.rows.get(x.id); return !p || p.json !== rowKey(x) || p.position !== i; })
       || structureKeys.some(key => rowKey(structureValue(state, key)) !== cache[key + 'Json'])
-      || (state.journal || []).some(j => !cache.journalIds.has(j.id));
+      || valueChangeJournal(state.journal).some(j => !cache.journalIds.has(j.id));
   }
   // Un instantané complet détecte aussi les suppressions, les déplacements et les changements sans horodatage.
   // getState renvoie null pendant une édition ; applyState est appelé sans attente après la mise à jour du cache.
@@ -187,7 +208,7 @@ export async function createSync({ author = 'Toi' } = {}) {
     const cut = new Date(); cut.setFullYear(cut.getFullYear() - 1);
     const { data, error } = await db.from('journal').select('id,t,author,type,mini_id,mini,cosmos,detail,changes').lt('t', cut.toISOString()).order('t', { ascending: false });
     if (error) throw new Error(fr(error));
-    return data.map(jEntry);
+    return valueChangeJournal(data.map(jEntry));
   }
 
   // Le bouton de résolution exporte d'abord la copie locale. Un échec de lecture conserve la file.
@@ -199,5 +220,5 @@ export async function createSync({ author = 'Toi' } = {}) {
     clearTimeout(timer); clearTimeout(retryTimer); queue = null; conflict = false; retries = 0; revision++;
     remember(data, state); return state;
   }
-  return { hasPending: () => !!queue || !!inflight, reloadAfterConflict, session, login, logout, onAuth, email, load, prime, save, flush, poll, decideProposition, listAgents, createAgent, revokeAgent, assist, journalArchive, onError: cb => { onError = cb; } };
+  return { cacheScope: cfg.supabaseUrl, dispose, hasPending: () => !!queue || !!inflight, reloadAfterConflict, session, login, logout, onAuth, email, load, prime, save, flush, poll, decideProposition, listAgents, createAgent, revokeAgent, assist, journalArchive, onError: cb => { onError = cb; } };
 }

@@ -7,6 +7,7 @@
 //   delete from mini_cosmos where id like 'mc-old-%' ; delete from journal where id like 'old-%'
 import { createClient } from '@supabase/supabase-js';
 import { readFileSync } from 'node:fs';
+import { valueChangeJournal } from '../cosmos-journal.js';
 
 const args = process.argv.slice(2); const file = args.find(a => !a.startsWith('--'));
 const PAUSE = args.includes('--pause'), SANS_SAS = args.includes('--sans-sas'), SEC = args.includes('--sec');
@@ -56,12 +57,8 @@ minis.forEach(m => { if (taken.has(m.cosmos + '|' + m.name.toLowerCase())) m.nam
 const newCosmos = [...new Set(minis.map(m => m.cosmos))].filter(c => !curCos.some(x => x.name === c));
 let pos = Math.max(-1, ...curMinis.map(m => m.position)) + 1;
 const miniRows = minis.map(m => ({ id: m.id, user_id: UID, data: m, position: pos++, updated_by: 'Import' }));
-const journalRows = (old.journal || []).filter(e => e && e.t && e.type).map((e, i) => ({
+const journalRows = valueChangeJournal(old.journal).filter(e => e && e.t && e.type).map((e, i) => ({
   id: 'old-' + (e.id || i), user_id: UID, t: e.t, author: e.author || 'Import', type: e.type, mini_id: null, mini: e.mini || null, cosmos: e.cosmos || null, detail: e.detail || '', changes: e.changes || null }));
-const resume = Object.entries(minis.reduce((a, m) => (a[m.cosmos] = (a[m.cosmos] || 0) + 1, a), {})).map(([c, n]) => c + ' ' + n).join(', ');
-journalRows.push({ id: 'old-import-' + Date.now().toString(36), user_id: UID, t: new Date().toISOString(), author: 'Import', type: 'donnees', mini_id: null, mini: null, cosmos: null,
-  detail: 'Import de ' + file + ' — ' + minis.length + ' mini-cosmos ajoutés (' + resume + ')' + (PAUSE ? ' en Pause' : '') + (SANS_SAS ? ', sans SAS' : '') + ' · ' + (journalRows.length) + ' entrées de journal reprises', changes: null });
-
 console.log('Conversion :'); console.table(minis.map(m => ({ cosmos: m.cosmos, name: m.name, cloture: m.cloture, preavis: m.alertDays, etapes: m.actions.length, pause: m.pause, sas: m.sas, id: m.id })));
 console.log('Nouveaux cosmos :', newCosmos.join(', ') || 'aucun', '· journal :', journalRows.length, 'entrées');
 if (SEC) { console.log('(--sec : rien écrit)'); process.exit(0); }
@@ -73,5 +70,5 @@ if (newCosmos.length) {
   if (error) { console.error('cosmos :', error.message); process.exit(1); }
 }
 { const { error } = await sb.from('mini_cosmos').insert(miniRows); if (error) { console.error('mini_cosmos :', error.message); process.exit(1); } }
-{ const { error } = await sb.from('journal').insert(journalRows); if (error) { console.error('journal :', error.message, '(les mini-cosmos sont importés)'); process.exit(1); } }
+if (journalRows.length) { const { error } = await sb.from('journal').insert(journalRows); if (error) { console.error('journal :', error.message, '(les mini-cosmos sont importés)'); process.exit(1); } }
 console.log('Importé :', minis.length, 'mini-cosmos,', newCosmos.length, 'cosmos,', journalRows.length, 'entrées de journal. Recharge l’app pour voir les nouveaux cosmos.');
