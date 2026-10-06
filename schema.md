@@ -33,7 +33,7 @@ Modèle figé au 2026-09-04. Le JSON exporté par l'application (`version: 1`) s
 **evenements** — historique compact par mini-cosmos (alimente les statistiques)
 - `id` uuid PK · `mini_cosmos_id` FK (cascade) · `type` enum `created | statut | step` · `valeur` text nullable · `created_at` timestamptz
 
-**journal** — trace complète de toute écriture (humain ou agent IA)
+**journal** — historique des changements réels de Valeur actuelle (humain ou agent IA)
 - `id` uuid PK · `created_at` timestamptz · `author` text
 - `type` enum `creation | statut | etape | modification | deplacement | suppression | cosmos | donnees`
 - `mini_cosmos_id` uuid nullable (FK sans cascade : la trace survit à la suppression) · `mini_nom`, `cosmos_nom` text (dénormalisés pour la lecture)
@@ -153,7 +153,7 @@ Le modèle ci-dessus reste la référence conceptuelle. L'implémentation retenu
 | `etages` | le repère de chaque étage : `(user_id, etage)` clé, `repere` |
 | `mini_cosmos` | une ligne par mini-cosmos : `id` (celui de l'app), `data` jsonb, `position`, colonnes générées (dont `sas_until`, fin du test d'entrée, et `poids` : vital / important / normal), `updated_at`, `updated_by` (« Toi » ou nom d'agent) |
 | `etapes` (vue) | `mini_cosmos_id`, `position`, `texte`, `done` |
-| `journal` | trace de toute écriture : `t` (horodatage de l'auteur), `created_at` (serveur), `author`, `type` (+ `proposition`, `note`), `mini_id` sans FK, `changes` jsonb |
+| `journal` | changements de Valeur actuelle uniquement : `t` (horodatage de l'auteur), `created_at` (serveur), `author`, `type = modification`, `mini_id` sans FK, `changes` jsonb avant/après |
 | `agents` | une clé par agent : `key_hash` (SHA-256, jamais la clé), `ecriture_directe`, `actif`, `last_used_at` |
 | `propositions` | suggestions d'agents : `patch` jsonb (objectif, actuel, entropie, reponse, sas, alerte, kill, etapes), `motif`, `statut` en_attente / acceptee / refusee |
 
@@ -164,7 +164,26 @@ Toutes les tables portent `user_id` et une politique RLS `user_id = auth.uid()` 
 
 **Titres** : `cosmos.titres` (jsonb, liste ordonnée de noms) sépare les terrains d'une pièce ; `data->>'titre'` range un terrain sous l'un d'eux. Un titre n'a ni objectif ni date ; renommer ou supprimer un titre met à jour ou vide le champ des terrains concernés.
 
+**Création rapide (2026-09-08)** : `data.draft = true` identifie une fiche à compléter, créée avec `pause = true` et des champs métier et dates vides. Ce marqueur reste dans le JSONB, les exports et le cache ; aucune colonne supplémentaire n’est nécessaire. Le chargement ne lui déduit ni début depuis `createdAt`, ni mandat, ni date de fin de SAS. L’édition partielle reste autorisée en pause ; les valeurs déjà renseignées sont validées. « Reprendre » exige les règles habituelles et un début explicite, puis passe `draft` et `pause` à `false`. Les RPC v3 conservent ce marqueur et les chaînes vides avec la même protection contre les conflits que les autres champs.
+
 
 **SAS daté** (migration `20260904030000_sas_until.sql`) : `data->>'sasUntil'` = fin du test. Règle de déduction quand elle manque (app et SQL, fonction `sas_until_deduit`) : date explicite « (30/09) » dans le texte du SAS, sinon « 14 jours » / « 2 semaines » / « 1 mois » depuis le début, sinon 14 jours. L'échéance effective d'un mini-cosmos (`echeanceEffective` dans `cosmos-core.js`) est cette date tant que le SAS n'est pas franchi, puis la clôture.
 
 Passer un jour au modèle entièrement normalisé (tables `etapes`, `evenements`) est une migration SQL pure à partir de `data`, sans changer le format d'échange de l'app.
+
+**Journal restreint (2026-09-06)** : seuls les événements de type `modification` dont `changes` contient un changement réel du champ `Valeur actuelle` sont conservés. Le trigger `journal_valeur_actuelle_uniquement` filtre INSERT et UPDATE, enlève les autres champs d’un événement mixte et normalise son détail. Il ignore les entrées non admises sans annuler la sauvegarde du mini-cosmos. `agent_modifier` journalise uniquement `actuel` lorsqu’il change ; `agent_proposer` conserve la proposition sans événement ; `agent_noter` renvoie une erreur explicite. Les exemples et les anciennes données ne régénèrent pas le Journal depuis `history[]`.
+
+
+### Séparations des cosmos (2026-09-07)
+
+`cosmos_sections` contient `user_id`, `id` (identifiant stable), `name` (1–60 caractères), `etage` (ethos/logos/pathos), `position` et `created_at`. La clé primaire `(user_id,id)`, l’unicité du nom dans l’étage et les politiques RLS isolent chaque compte. `cosmos.section_id` est facultatif ; sa clé étrangère inclut le propriétaire. Un déclencheur vérifie la cohérence de l’étage. Supprimer une séparation libère ses cosmos, sans cascade vers les mini-cosmos. Changer l’étage d’un cosmos depuis un ancien client libère son ancienne séparation.
+
+`charger_etat_v3()` complète l’état existant avec `sections: [{id,name,etage}]` et `sectionDe: {nomCosmos: idSection}`. `sync_etat_v3()` ajoute `p_sections` et `p_section_de`, compare les versions attendues sous verrou et sauvegarde la structure dans la même transaction que les autres données. Les RPC précédentes restent disponibles. Les sections sont à un seul niveau ; le repli est un réglage local. Aucun événement de Journal n’est produit par cette organisation.
+
+### Titres des espaces
+
+`cosmos_titres_etages` contient `(user_id, etage)` et `titre` (1–300 caractères). Les trois identifiants restent fixes ; seul le libellé change. Les titres sont séparés des repères de la table `etages`, protégés par RLS et absents du Journal.
+
+`charger_etat_v4()` ajoute `titresEtages: {ethos?: string, logos?: string, pathos?: string}`. `sync_etat_v4()` ajoute `p_titres_etages` (carte complète, `null` = inchangée, `{}` = titres par défaut). Elle vérifie `p_expected.titresEtages` sous verrou, puis sauvegarde dans la même transaction que la v3. Les RPC v3 restent compatibles et ne modifient jamais les titres. La migration `20260911013857_titres_etages.sql` doit précéder la mise en ligne du client v4.
+
+La migration `20260911025128_titres_etages_300_caracteres.sql` porte la limite à 300 caractères dans la contrainte de table et la RPC v4, sans réécrire les titres existants.
