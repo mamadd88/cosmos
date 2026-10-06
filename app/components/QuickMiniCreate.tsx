@@ -4,13 +4,11 @@ import { useCosmos } from '../state/CosmosContext';
 export function QuickMiniCreate({
   cosmos,
   titre,
-  reveal = true,
   disabled: blocked = false,
   onCreated,
 }: {
   cosmos: string;
   titre?: string;
-  reveal?: boolean;
   disabled?: boolean;
   onCreated?: () => void;
 }) {
@@ -27,7 +25,7 @@ export function QuickMiniCreate({
       onSubmit={(event) => {
         event.preventDefault();
         if (disabled) return;
-        if (controller.quickCreate(cosmos, { reveal })) {
+        if (controller.quickCreate(cosmos)) {
           onCreated?.();
           input.current?.focus();
         }

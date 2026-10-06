@@ -9,11 +9,9 @@ import {
   validateMini,
   isDraft,
   COLORS,
-  STATUTS,
   STATUT_STYLE,
   hasSas,
   sasUntilOf,
-  sasPendingOf,
   isMandat,
   mandatDepuis,
   POIDS,
@@ -29,14 +27,7 @@ import {
   notStarted,
   statutOf,
   migrate,
-  r,
   SEED,
-  ACTUEL,
-  CLOTURE,
-  TYPES,
-  MOIS_S,
-  lastDay,
-  fmtJM,
   fmtFR,
   resolveCloture,
   clotureLabel,
@@ -51,8 +42,6 @@ import {
   refreshToday,
   isoD,
   daysAgo,
-  progOf,
-  nextOf,
   EMPTY_FORM,
   freshForm,
   TEMPLATES,
@@ -121,14 +110,11 @@ export function createControllerClass(environment = {}) {
       etages: {},
       titresEtages: /** @type {Record<string, string>} */ ({}),
       editFloor: /** @type {string | null} */ (null),
-      editEtage: null,
-      editEtageText: '',
       newEtage: 'logos',
       titresDe: {},
       sections: [],
       sectionDe: {},
       editSection: /** @type {{ id: string | null, etage: string, name: string } | null} */ (null),
-      sectionMenu: null,
       sectionError: '',
       cosmosAction: /** @type {{ type: 'rename' | 'delete' | 'rubrique', cosmos: string } | null} */ (null),
       miniDeleteId: /** @type {string | null} */ (null),
@@ -139,14 +125,9 @@ export function createControllerClass(environment = {}) {
       ),
       createdCosmos: /** @type {string | null} */ (null),
       revealCosmos: /** @type {string | null} */ (null),
-      editTitre: null,
-      editTitreName: '',
-      addTitreFor: null,
-      newTitreName: '',
       quickDrafts: /** @type {Record<string, {name: string, error: string}>} */ ({}),
       rows: [],
       journal: [],
-      filter: 'Tous',
       selected: null,
       showCosmosModal: false,
       showMiniModal: false,
@@ -167,14 +148,6 @@ export function createControllerClass(environment = {}) {
       newAgentDirect: false,
       newAgentKey: '',
       newAgentKeyName: '',
-      plis: (() => {
-        try {
-          const p = JSON.parse(localStorage.getItem('cosmos-plis-v1') || '{}');
-          return { cosmos: p.cosmos || {}, sections: p.sections || {}, etages: p.etages || {} };
-        } catch (e) {
-          return { cosmos: {}, sections: {}, etages: {} };
-        }
-      })(),
     };
     setState(update, callback) {
       super.setState((previous) => {
@@ -389,7 +362,6 @@ export function createControllerClass(environment = {}) {
         showCosmosModal: false,
         syncConflict: '',
         editSection: null,
-        sectionMenu: null,
         sectionError: '',
         cosmosAction: null,
         groupAction: null,
@@ -572,9 +544,6 @@ export function createControllerClass(environment = {}) {
         s.syncRefreshing ||
         this._replace ||
         s.editing ||
-        s.editCosmos ||
-        s.editTitre ||
-        s.editEtage ||
         s.editFloor ||
         s.editSection ||
         s.cosmosAction ||
@@ -583,7 +552,6 @@ export function createControllerClass(environment = {}) {
         s.miniDeleteId ||
         s.rubriqueAction ||
         Object.values(s.quickDrafts).some((draft) => draft.name.trim()) ||
-        s.addTitreFor ||
         s.drag ||
         s.showMiniModal ||
         s.showCosmosModal
@@ -622,9 +590,6 @@ export function createControllerClass(environment = {}) {
                   confirmDeleteMini: false,
                   aiDetail: null,
                 });
-              if (s.cosmosFilter && s.cosmosFilter !== 'Tous' && !d.cosmos.includes(s.cosmosFilter))
-                patch.cosmosFilter = 'Tous';
-              if (s.cosmosMenu && !d.cosmos.includes(s.cosmosMenu)) patch.cosmosMenu = null;
               return patch;
             });
             changes.rows.forEach((r) =>
@@ -674,8 +639,6 @@ export function createControllerClass(environment = {}) {
           journalArchived: d.journalArchived,
           propositions: d.propositions,
           selected: rows.some((x) => x.id === this.state.selected) ? this.state.selected : null,
-          cosmosFilter: 'Tous',
-          cosmosMenu: null,
           syncConflict: '',
           syncConflictBusy: false,
         });
@@ -1162,7 +1125,7 @@ export function createControllerClass(environment = {}) {
     setQuickName(cosmos, name) {
       this.setState((s) => ({ quickDrafts: { ...s.quickDrafts, [cosmos]: { name, error: '' } } }));
     }
-    quickCreate(cosmos, { reveal = true } = {}) {
+    quickCreate(cosmos) {
       const s = this.state;
       if (!s.ready || s.syncRefreshing || s.needsLogin) return false;
       const name = (s.quickDrafts[cosmos]?.name || '').trim();
@@ -1199,26 +1162,9 @@ export function createControllerClass(environment = {}) {
       }
       const titre = this.titresOf(cosmos).at(-1);
       if (titre) row.titre = titre;
-      if (reveal)
-        this.setPlis((p) => {
-          delete p.cosmos[cosmos];
-          delete p.sections[s.sectionDe[cosmos]];
-          delete p.etages[this.etageOf(cosmos)];
-        });
       this.setState((st) => ({
         rows: [...st.rows, row],
         quickDrafts: { ...st.quickDrafts, [cosmos]: { name: '', error: '' } },
-        ...(reveal
-          ? {
-              filter: 'Tous',
-              projFilter: 'Tous',
-              timeFilter: 0,
-              monthFilter: '',
-              yearFilter: '',
-              quarterFilter: '',
-              tQuery: '',
-            }
-          : {}),
       }));
       this.flash(name + ' créé en pause — à compléter');
       return true;
@@ -1309,12 +1255,10 @@ export function createControllerClass(environment = {}) {
           quickDrafts: Object.fromEntries(
             Object.entries(st.quickDrafts).map(([key, draft]) => [key === name ? n : key, draft]),
           ),
-          cosmosFilter: st.cosmosFilter === name ? n : st.cosmosFilter,
           etageDe,
           titresDe,
         };
       });
-      this.renamePli('cosmos', name, n);
       this.logJ({ type: 'cosmos', cosmos: n, detail: 'Cosmos renommé : ' + name + ' → ' + n });
       this.flash(name + ' renommé en ' + n);
       return { name: n, error: '' };
@@ -1331,8 +1275,6 @@ export function createControllerClass(environment = {}) {
         return {
           cosmos: st.cosmos.filter((c) => c !== name),
           rows: st.rows.filter((x) => x.cosmos !== name),
-          cosmosFilter: st.cosmosFilter === name ? 'Tous' : st.cosmosFilter,
-          confirmDelete: null,
           etageDe,
           titresDe,
           ...(selectedRemoved
@@ -1346,9 +1288,6 @@ export function createControllerClass(environment = {}) {
               }
             : {}),
         };
-      });
-      this.setPlis((p) => {
-        delete p.cosmos[name];
       });
       this.logJ({ type: 'cosmos', cosmos: name, detail: 'Cosmos supprimé avec ' + count + ' mini-cosmos' });
       this.flash('Cosmos ' + name + ' supprimé');
@@ -1426,15 +1365,6 @@ export function createControllerClass(environment = {}) {
       });
       this.flash('Titre ' + name + ' supprimé, les terrains restent');
       return true;
-    }
-    deplacerTitre(cosmos, name, delta) {
-      const L = [...this.titresOf(cosmos)];
-      const i = L.indexOf(name),
-        j = i + delta;
-      if (i < 0 || j < 0 || j >= L.length) return;
-      L.splice(i, 1);
-      L.splice(j, 0, name);
-      this.setTitres(cosmos, L);
     }
     // ranger un terrain sous un titre de sa pièce, ou l'en sortir (titre vide)
     rangerSous(id, titre) {
@@ -1594,7 +1524,7 @@ export function createControllerClass(environment = {}) {
         });
     }
     // déposer une pièce sur l'en-tête (ou la zone vide) d'un étage : elle rejoint la fin de cet étage
-    moveCosmosToEtage(name, etage, { reveal = true } = {}) {
+    moveCosmosToEtage(name, etage) {
       const from = this.etageOf(name);
       this.setState((s) => {
         const E = { ...(s.etageDe || {}), [name]: etage };
@@ -1604,49 +1534,12 @@ export function createControllerClass(environment = {}) {
           sectionDe: { ...s.sectionDe, [name]: undefined },
         };
       });
-      if (reveal)
-        this.setPlis((p) => {
-          delete p.etages[etage];
-        });
       if (from !== etage)
         this.logJ({
           type: 'cosmos',
           cosmos: name,
           detail: 'Étage : ' + ETAGE_LABEL[from] + ' → ' + ETAGE_LABEL[etage],
         });
-    }
-    // Monter / Descendre : dans la même séparation, ou parmi les cosmos non rangés.
-    moveCosmosBy(name, delta) {
-      this.setState((s) => {
-        const inE = this.sectionSiblings(name);
-        const k = inE.indexOf(name),
-          m = k + delta;
-        if (k < 0 || m < 0 || m >= inE.length) return {};
-        const other = inE[m];
-        const c = [...s.cosmos];
-        const i = c.indexOf(name),
-          j = c.indexOf(other);
-        c.splice(i, 1);
-        c.splice(j, 0, name);
-        return { cosmos: c };
-      });
-    }
-    sectionSiblings(name) {
-      const s = this.state;
-      return s.cosmos.filter(
-        (n) => this.etageOf(n) === this.etageOf(name) && (s.sectionDe[n] || '') === (s.sectionDe[name] || ''),
-      );
-    }
-    startSection(etage, id = null) {
-      const section = this.state.sections.find((x) => x.id === id);
-      this.setPlis((p) => {
-        delete p.etages[etage];
-      });
-      this.setState({
-        editSection: { id, etage, name: section?.name || '' },
-        sectionMenu: null,
-        sectionError: '',
-      });
     }
     saveSection(draft = this.state.editSection) {
       if (!draft) return false;
@@ -1680,28 +1573,18 @@ export function createControllerClass(environment = {}) {
     deleteSection(id) {
       this.setState((s) => ({
         sections: s.sections.filter((x) => x.id !== id),
-        sectionMenu: null,
         editSection: null,
       }));
-      this.setPlis((p) => {
-        delete p.sections[id];
-      });
       this.flash('Séparation supprimée, cosmos conservés dans leur étage');
     }
-    assignSection(name, id, { reveal = true } = {}) {
+    assignSection(name, id) {
       const section = this.state.sections.find((x) => x.id === id);
       if (!this.state.cosmos.includes(name) || (id && !section)) return;
       this.setState((s) => ({
         cosmos: [...s.cosmos.filter((n) => n !== name), name],
         etageDe: { ...s.etageDe, [name]: section?.etage || this.etageOf(name) },
         sectionDe: { ...s.sectionDe, [name]: id || undefined },
-        cosmosMenu: null,
       }));
-      if (reveal)
-        this.setPlis((p) => {
-          delete p.etages[section?.etage || this.etageOf(name)];
-          if (id) delete p.sections[id];
-        });
     }
     moveSection(id, targetId, placement = 'auto') {
       this.setState((s) => {
@@ -1718,140 +1601,10 @@ export function createControllerClass(environment = {}) {
         return { sections };
       });
     }
-    moveSectionBy(id, delta) {
-      const section = this.state.sections.find((x) => x.id === id);
-      const siblings = this.state.sections.filter((x) => x.etage === section?.etage);
-      const target = siblings[siblings.findIndex((x) => x.id === id) + delta];
-      if (target) this.moveSection(id, target.id);
-    }
-    sectionGroups(etage, groups, filtered) {
-      const s = this.state;
-      const sections = s.sections.filter((x) => x.etage === etage);
-      const unassigned = groups.filter((g) => !s.sectionDe[g.name]);
-      const items = [...unassigned];
-      const drop = (ev, id) => {
-        ev.preventDefault();
-        ev.stopPropagation();
-        const drag = this.state.drag;
-        if (drag?.type === 'group') this.assignSection(drag.id, id);
-        if (drag?.type === 'section') this.moveSection(drag.id, id);
-        this.setState({ drag: null, over: null });
-      };
-      sections.forEach((section, index) => {
-        const children = groups.filter((g) => s.sectionDe[g.name] === section.id);
-        if (filtered && !children.length && s.editSection?.id !== section.id && !s.drag) return;
-        const collapsed = !!s.plis?.sections?.[section.id] && !filtered;
-        items.push({
-          isSection: true,
-          id: section.id,
-          name: section.name,
-          etage,
-          count: s.cosmos.filter((n) => s.sectionDe[n] === section.id).length,
-          collapsed,
-          toggle: () => this.togglePli('sections', section.id),
-          editing: s.editSection?.id === section.id,
-          menuOpen: s.sectionMenu === section.id,
-          toggleMenu: () => this.setState({ sectionMenu: s.sectionMenu === section.id ? null : section.id }),
-          rename: () => this.startSection(etage, section.id),
-          remove: () => this.deleteSection(section.id),
-          canMoveUp: index > 0,
-          canMoveDown: index < sections.length - 1,
-          moveUp: () => this.moveSectionBy(section.id, -1),
-          moveDown: () => this.moveSectionBy(section.id, 1),
-          dragStart: (ev) => {
-            ev.stopPropagation();
-            ev.dataTransfer.effectAllowed = 'move';
-            ev.dataTransfer.setData('text/plain', section.id);
-            this.setState({ drag: { type: 'section', id: section.id } });
-          },
-          dragEnd: () => this.setState({ drag: null, over: null }),
-          dragOver: (ev) => {
-            const drag = this.state.drag;
-            if (
-              drag?.type !== 'group' &&
-              !(drag?.type === 'section' && sections.some((x) => x.id === drag.id))
-            )
-              return;
-            ev.preventDefault();
-            ev.stopPropagation();
-            if (this.state.over !== section.id) this.setState({ over: section.id });
-          },
-          drop: (ev) => drop(ev, section.id),
-          over: s.over === section.id,
-        });
-        if (!collapsed) items.push(...children);
-      });
-      return items;
-    }
-    // repère d'un étage : enregistré à Entrée ou en quittant le champ, tracé dans le Journal s'il change ; Échap annule
-    saveEtageRepere(etage) {
-      if (this._etageCancel === etage) {
-        this._etageCancel = null;
-        return;
-      }
-      const s = this.state;
-      if (s.editEtage !== etage) return;
-      const t = (s.editEtageText || '').trim().slice(0, 320),
-        cur = (s.etages || {})[etage] || '';
-      this.setState((st) => {
-        const E = { ...(st.etages || {}) };
-        if (t) E[etage] = t;
-        else delete E[etage];
-        return { etages: E, editEtage: null, editEtageText: '' };
-      });
-      if (t !== cur)
-        this.logJ({
-          type: 'cosmos',
-          cosmos: ETAGE_LABEL[etage],
-          detail: t
-            ? 'Repère de l’étage ' + ETAGE_LABEL[etage] + ' : « ' + t + ' »'
-            : 'Repère de l’étage ' + ETAGE_LABEL[etage] + ' effacé',
-        });
-    }
-    // sections repliées de la page Cosmos : un réglage d'affichage, mémorisé dans ce navigateur (pas en base)
-    setPlis(fn) {
-      this.setState((st) => {
-        const p = {
-          cosmos: { ...st.plis?.cosmos },
-          sections: { ...st.plis?.sections },
-          etages: { ...st.plis?.etages },
-        };
-        fn(p);
-        try {
-          localStorage.setItem('cosmos-plis-v1', JSON.stringify(p));
-        } catch (e) {}
-        return { plis: p };
-      });
-    }
-    togglePli(kind, name) {
-      this.setPlis((p) => {
-        if (p[kind][name]) delete p[kind][name];
-        else p[kind][name] = 1;
-      });
-    }
-    setAllPlis(kind, names, closed) {
-      this.setPlis((p) => {
-        p[kind] = {};
-        if (closed)
-          names.forEach((n) => {
-            p[kind][n] = 1;
-          });
-      });
-    }
-    renamePli(kind, oldName, newName) {
-      this.setPlis((p) => {
-        if (p[kind][oldName]) {
-          delete p[kind][oldName];
-          p[kind][newName] = 1;
-        }
-      });
-    }
     decorate(x) {
       const statut = statutOf(x);
       const st = STATUT_STYLE[statut];
 
-      const prog = progOf(x);
-      const doneN = x.actions.filter((a) => a.done).length;
       const noDate = isDraft(x) && !resolveCloture(x.closed ? x.closedAt || x.cloture : x.cloture);
       const c = noDate
         ? { label: '—', short: '—', mandat: false }
@@ -1880,17 +1633,12 @@ export function createControllerClass(environment = {}) {
         statut,
         entropie,
         reponse: reponse || '—',
-        prog,
-        action: nextOf(x),
-        stepsLabel: doneN + ' / ' + x.actions.length,
         actuel: x.actuel || '—',
         cloture: su ? fmtFR(su) : c.label,
-        clotureIso: echeanceEffective(x).iso,
         clotureShort: su ? fmtFR(su) : c.short,
         clotureIsSas: !!su,
         clotureFinal: c.label,
         clotureColor: st[0],
-        nameColor: '#fafafa',
         poids: poidsOf(x),
         poidsLabel: POIDS_LABEL[poidsOf(x)],
         poidsBg: POIDS_DOT[poidsOf(x)].bg,
@@ -1904,14 +1652,12 @@ export function createControllerClass(environment = {}) {
         sasUntil: sasUntilOf(x) || '',
         sasUntilLabel: sasUntilOf(x) ? fmtFR(sasUntilOf(x)) : '',
         projIsSas: !!pj.sas,
-        projPreavis: pj.preavis != null ? pj.preavis : alertDaysOf(x),
         projPreavisLabel: pj.sas
           ? 'bleu tout le temps du test, rouge s\u2019il est dépassé'
           : 'tension à ' + (pj.preavis != null ? pj.preavis : alertDaysOf(x)) + ' j',
         projThen: thenLabel,
         hasSas: hasSas(x),
         sasPending,
-        notSasPending: !sasPending,
         sas: x.sas || '',
         statutColor: st[0],
         statutBg: st[1],
@@ -1921,7 +1667,6 @@ export function createControllerClass(environment = {}) {
         projColor: pj.color,
         projLabel: pj.label || '',
         projDays: pj.permanent ? null : pj.days,
-        projZone: pj.zone,
         projZoneLabel: pj.zoneLabel,
         alertDays: alertDaysOf(x),
         projRange: pj.permanent
@@ -1935,38 +1680,8 @@ export function createControllerClass(environment = {}) {
         notStarted: notStarted(x),
         alerte: x.alerte,
         kill: x.kill,
-        propCount: (this.state.propositions || []).filter((p) => p.miniId === x.id).length,
-        hasProps: (this.state.propositions || []).some((p) => p.miniId === x.id),
         open: () =>
           this.navigate({ selected: x.id, confirmDeleteMini: false, editing: false, aiDetail: null }),
-        dragStart: (ev) => {
-          ev.dataTransfer.effectAllowed = 'move';
-          ev.dataTransfer.setData('text/plain', x.id);
-          this.setState({ drag: { type: 'row', id: x.id } });
-        },
-        dragOver: (ev) => {
-          const d = this.state.drag;
-          if (d && d.type === 'row') {
-            const src = this.state.rows.find((r) => r.id === d.id);
-            if (!src || statutOf(src) !== statut) return;
-            ev.preventDefault();
-            ev.stopPropagation();
-            if (this.state.over !== x.id) this.setState({ over: x.id });
-          }
-        },
-        drop: (ev) => {
-          ev.preventDefault();
-          ev.stopPropagation();
-          const d = this.state.drag;
-          if (d && d.type === 'row' && d.id !== x.id) this.moveRow(d.id, x.id, x.cosmos);
-          this.setState({ drag: null, over: null });
-        },
-        dragEnd: () => this.setState({ drag: null, over: null }),
-        dropLine: this.state.over === x.id ? '2px solid #fafafa' : '2px solid transparent',
-        rowBg: this.state.over === x.id ? 'rgba(63,63,70,0.35)' : 'transparent',
-        dragOpacity: this.state.drag && this.state.drag.id === x.id ? 0.4 : 1,
-        isRow: true,
-        isSep: false,
         titre: x.titre || '',
       };
     }
@@ -2364,11 +2079,9 @@ export function createControllerClass(environment = {}) {
       const TAB_OFF = { color: '#a1a1aa', bg: 'transparent', border: 'transparent' };
       if (!s.ready)
         return {
-          isTable: false,
           booting: !s.needsLogin,
           needsLogin: !!s.needsLogin,
           bootError: s.bootError || '',
-          clock: s.clock,
           lastExportLabel: '',
           lastExportColor: 'transparent',
           tabTable: TAB_OFF,
@@ -2389,7 +2102,6 @@ export function createControllerClass(environment = {}) {
           doLogin: () => this.doLogin(),
         };
       const rowsN = s.rows.map((x) => ({ ...x, statut: statutOf(x) }));
-      const visible = rowsN.filter((x) => s.filter === 'Clôturé' || x.statut !== 'Clôturé');
       const isoOf = (x) => echeanceEffective(x).iso;
       const clotureOpts = clotureOptions();
       const mf = s.monthFilter || '',
@@ -2431,480 +2143,6 @@ export function createControllerClass(environment = {}) {
         monthW = selW(mf ? MOIS[+mf.slice(5, 7) - 1] + ' ' + mf.slice(0, 4) : 'Mois'),
         yearW = selW(yf || 'Année');
       const selStyle = (v) => (v ? chipOn : chipOff);
-      const pf = s.projFilter || 'Tous';
-      const inProj = (x) => pf === 'Tous' || projectionOf(x).zone === pf;
-      const cf = s.cosmosFilter || 'Tous';
-      const etageOf = (n) => etageDeNom(s.etageDe, n);
-      const parEtage = { ethos: [], logos: [], pathos: [] };
-      s.cosmos.forEach((n) => parEtage[etageOf(n)].push(n));
-      const T = this.timeFilter();
-      // recherche : nom, cosmos, objectif, valeur actuelle, entropie, réponse, seuils, SAS, étapes
-      const tq = (s.tQuery || '').trim().toLowerCase();
-      const matchTq = (x) =>
-        !tq ||
-        [
-          x.name,
-          x.cosmos,
-          x.objectif,
-          x.actuel,
-          x.entropie,
-          x.reponse,
-          x.alerte,
-          x.kill,
-          x.sas,
-          ...(x.actions || []).map((a) => a.text),
-        ]
-          .join(' ')
-          .toLowerCase()
-          .includes(tq);
-      // la puce cosmos choisit la section
-      const filtered = visible.filter(
-        (x) => (s.filter === 'Tous' || x.statut === s.filter) && inProj(x) && T.inTime(x) && matchTq(x),
-      );
-      const projChips = [
-        ['Tous', 'Tous', null],
-        ['ok', PROJ.ok[0], PROJ.ok[1]],
-        ['sas', PROJ.sas[0], PROJ.sas[1]],
-        ['tension', PROJ.tension[0], PROJ.tension[1]],
-        ['jourj', PROJ.jourj[0], PROJ.jourj[1]],
-        ['retard', PROJ.retard[0], PROJ.retard[1]],
-      ].map(([k, label, dot]) => ({
-        label,
-        dot: dot || 'transparent',
-        dotW: dot ? '6px' : '0px',
-        ...(pf === k ? chipOn : chipOff),
-        count: k === 'Tous' ? visible.length : visible.filter((x) => projectionOf(x).zone === k).length,
-        vitalW:
-          (k === 'tension' || k === 'jourj' || k === 'retard') &&
-          visible.some((x) => poidsOf(x) === 'vital' && projectionOf(x).zone === k)
-            ? '6px'
-            : '0px',
-        onClick: () => this.setState({ projFilter: k }),
-      }));
-      const cosmosChips = ['Tous', ...s.cosmos].map((c, i) => ({
-        label: c,
-        ...(cf === c ? chipOn : chipOff),
-        dot: c === 'Tous' ? 'transparent' : COLORS[(i - 1) % COLORS.length],
-        dotW: c === 'Tous' ? '0px' : '6px',
-        count: c === 'Tous' ? visible.length : visible.filter((x) => x.cosmos === c).length,
-        onClick: () => this.setState({ cosmosFilter: c }),
-      }));
-      const timeChips = [
-        [0, 'Tous'],
-        [7, '7 j'],
-        [30, '30 j'],
-        [90, '90 j'],
-      ].map(([d, label]) => ({
-        label,
-        ...(T.tf === d ? chipOn : chipOff),
-        count: visible.filter((x) => T.inTime(x, d)).length,
-        onClick: () => this.setState({ timeFilter: d }),
-      }));
-      const COLS = [
-        ['name', 'Mini-cosmos'],
-        ['objectif', 'Objectif'],
-        ['actuel', 'Valeur actuelle'],
-        ['alerte', 'Alerte (seuil)'],
-        ['kill', 'Kill'],
-        ['entropie', 'Entropie'],
-        ['reponse', 'Réponse entropie'],
-        ['action', 'Prochaine étape'],
-        ['statut', 'Statut'],
-        ['cloture', 'Clôture'],
-        ['proj', 'Projection'],
-      ];
-      const sort = s.sort || null;
-      const STATUT_ORDER = { Actif: 0, SAS: 1, Pause: 2, Clôturé: 3 };
-      const sortVal = (x, k) => {
-        if (k === 'proj') return x.projDays == null ? 99999 : x.projDays;
-        if (k === 'action') return x.sasPending ? x.sas : x.action;
-        if (k === 'statut') return STATUT_ORDER[x.statut] ?? 9;
-        if (k === 'cloture') return x.clotureIso || '9999-99';
-        const v = x[k];
-        return v == null || v === '—' ? '' : String(v);
-      };
-      const sortRows = (rows) => {
-        const r = [...rows];
-        const statutDir = sort && sort.key === 'statut' && sort.dir === 'desc' ? -1 : 1;
-        const col = sort && sort.key !== 'statut' ? sort : null;
-        r.sort((a, b) => {
-          const sa = (STATUT_ORDER[a.statut] ?? 9) - (STATUT_ORDER[b.statut] ?? 9);
-          if (sa) return sa * statutDir;
-          if (!col) return (POIDS_ORDER[a.poids] ?? 2) - (POIDS_ORDER[b.poids] ?? 2);
-          const va = sortVal(a, col.key),
-            vb = sortVal(b, col.key);
-          const c =
-            typeof va === 'number' && typeof vb === 'number'
-              ? va - vb
-              : String(va).localeCompare(String(vb), 'fr', { numeric: true, sensitivity: 'base' });
-          return col.dir === 'desc' ? -c : c;
-        });
-        return r.map((x, i) => ({
-          ...x,
-          blockTop: i > 0 && r[i - 1].statut !== x.statut ? '1px solid rgba(63,63,70,0.9)' : x.dropLine,
-        }));
-      };
-      const columns = COLS.map(([key, label]) => ({
-        key,
-        label,
-        active: sort && sort.key === key,
-        color: (sort && sort.key === key) || (key === 'statut' && !sort) ? '#fafafa' : '#52525b',
-        arrow:
-          sort && sort.key === key ? (sort.dir === 'asc' ? '↑' : '↓') : key === 'statut' && !sort ? '↑' : '',
-        onClick: () =>
-          this.setState((st) => {
-            const cur = st.sort;
-            if (!cur || cur.key !== key) return { sort: { key, dir: 'asc' } };
-            if (cur.dir === 'asc') return { sort: { key, dir: 'desc' } };
-            return { sort: null };
-          }),
-      }));
-      const anyFilterEarly = s.filter !== 'Tous' || pf !== 'Tous' || cf !== 'Tous' || T.any || !!tq;
-      // plis : ouvert par défaut ; chevron, trait d'en-tête et bascule d'une section
-      const plis = s.plis || {};
-      const isClosed = (kind, name) => !!(plis[kind] || {})[name];
-      const pliOf = (kind, name) => {
-        const open = !isClosed(kind, name);
-        return {
-          open,
-          chevron: open ? '90deg' : '0deg',
-          headBorder: open ? 'rgba(39,39,42,0.8)' : 'transparent',
-          toggle: () => this.togglePli(kind, name),
-          stopIt: (ev) => ev.stopPropagation(),
-        };
-      };
-      // ligne d'insertion pendant le glisser d'une section : en haut si elle vient d'en dessous, en bas si elle vient d'au-dessus
-      const dragNow = s.drag;
-      const dropShadowOf = (type, from, to, key) =>
-        dragNow && dragNow.type === type && s.over === key && from >= 0 && from !== to
-          ? from > to
-            ? 'inset 0 2px 0 0 #fafafa'
-            : 'inset 0 -2px 0 0 #fafafa'
-          : 'none';
-      // bande d'en-tête d'une pièce : une ligne de tableau, mêmes colonnes pour toutes — thermomètre, six compteurs (zéros compris), points de poids, alerte
-      const SEV = { retard: 0, jourj: 1, tension: 2 };
-      const bandOf = (list) => {
-        const open = list.filter((x) => x.statut !== 'Clôturé'),
-          run = open.filter((x) => x.statut !== 'Pause');
-        const pj = run.map((x) => {
-          const p = projectionOf(x);
-          return { x, z: p.zone, v: poidsOf(x), d: p.days };
-        });
-        const z = (k) => pj.filter((o) => o.z === k).length;
-        const t = {
-          ok: z('ok'),
-          test: z('sas'),
-          warn: z('tension') + z('jourj'),
-          bad: z('retard'),
-          cont: z('continu'),
-        };
-        const thermo = [
-          ['ok', '#34d399'],
-          ['test', '#818cf8'],
-          ['warn', '#fbbf24'],
-          ['bad', '#fb7185'],
-          ['cont', '#3f3f46'],
-        ]
-          .filter(([k]) => t[k] > 0)
-          .map(([k, color]) => ({ flex: t[k], color }));
-        const alarmZ = pj.filter((o) => o.v === 'vital' && SEV[o.z] != null).map((o) => o.z);
-        const alarm = alarmZ.includes('retard') ? '#fb7185' : alarmZ.length ? '#fbbf24' : '';
-        const dots = [
-          ...pj
-            .filter((o) => o.v === 'vital')
-            .map(() => ({ bg: '#fafafa', glow: '0 0 6px rgba(250,250,250,0.6)' })),
-          ...pj.filter((o) => o.v === 'important').map(() => ({ bg: '#71717a', glow: 'none' })),
-        ];
-        const paused = open.length - run.length,
-          mandats = open.filter((x) => isMandat(x.cloture)).length;
-        const counters = [
-          [open.filter((x) => x.statut === 'SAS').length, 'SAS', '#818cf8', 'en SAS'],
-          [paused, 'pause', '#d4a054', 'en pause'],
-          [
-            open.filter((x) => !!resolveCloture(x.cloture) && !isMandat(x.cloture)).length,
-            'datés',
-            '#a1a1aa',
-            'à échéance datée',
-          ],
-          [mandats, 'mandats', '#a1a1aa', 'sous mandat d’un an'],
-          [t.warn, 'tension', '#fbbf24', 'en tension ou au jour J'],
-          [t.bad, 'retard', '#fb7185', 'en retard'],
-        ].map(([n, l, color, what]) => ({
-          value: n,
-          label: l,
-          color: n > 0 ? color : '#3f3f46',
-          title: n + ' ' + what,
-        }));
-        return {
-          countLabel: open.length + ' mini-cosmos',
-          thermo,
-          thermoTitle:
-            t.ok +
-            ' tenus · ' +
-            t.test +
-            ' en test · ' +
-            t.warn +
-            ' en tension · ' +
-            t.bad +
-            ' en retard · ' +
-            t.cont +
-            ' sans date',
-          dots,
-          alarm,
-          hasAlarm: !!alarm,
-          counters,
-        };
-      };
-      // page Cosmos : une section par pièce, dans l'ordre des cosmos (l'ordre domino), avec renommage, suppression et glisser-déposer
-      const cosmosGroups = () =>
-        s.cosmos
-          .map((name, i) => ({ name, i }))
-          .filter((g) => cf === 'Tous' || g.name === cf)
-          .map(({ name, i }) => {
-            const all = rowsN.filter((x) => x.cosmos === name);
-            const roomRows = filtered.filter((x) => x.cosmos === name).map((x) => this.decorate(x));
-            const titres = this.titresOf(name);
-            const connus = new Set(titres);
-            const rows = [...sortRows(roomRows.filter((r) => !r.titre || !connus.has(r.titre)))];
-            titres.forEach((t, ti) => {
-              const sous = roomRows.filter((r) => r.titre === t);
-              const total = all.filter((x) => x.titre === t && x.statut !== 'Clôturé').length;
-              if (anyFilterEarly && sous.length === 0) return;
-              const editing = !!(s.editTitre && s.editTitre.cosmos === name && s.editTitre.name === t);
-              const key = 't:' + name + '|' + t;
-              const menuOpen = s.titreMenu === key;
-              const ferme = () => this.setState({ titreMenu: null });
-              rows.push({
-                isSep: true,
-                isRow: false,
-                id: 'sep:' + name + '|' + t,
-                name: t,
-                countLabel:
-                  (anyFilterEarly ? sous.length + ' / ' + total : String(total)) +
-                  ' terrain' +
-                  (total > 1 ? 's' : ''),
-                isEditing: editing,
-                notEditing: !editing,
-                editName: editing ? s.editTitreName || '' : t,
-                menuOpen,
-                menuColor: menuOpen ? '#fafafa' : '#71717a',
-                toggleMenu: (ev) => {
-                  ev.stopPropagation();
-                  this.setState({ titreMenu: menuOpen ? null : key });
-                },
-                startEdit: (ev) => {
-                  ev.stopPropagation();
-                  this.setState({ editTitre: { cosmos: name, name: t }, editTitreName: t, titreMenu: null });
-                },
-                setEditName: (e) => this.setState({ editTitreName: e.target.value }),
-                saveEdit: () => {
-                  if (this.state.editTitre && this.state.editTitre.name === t)
-                    this.renommerTitre(name, t, this.state.editTitreName);
-                  this.setState({ editTitre: null });
-                },
-                editKey: (e) => {
-                  if (e.key === 'Enter') e.currentTarget.blur();
-                  if (e.key === 'Escape') this.setState({ editTitre: null });
-                },
-                up: () => {
-                  ferme();
-                  this.deplacerTitre(name, t, -1);
-                },
-                down: () => {
-                  ferme();
-                  this.deplacerTitre(name, t, 1);
-                },
-                upColor: ti > 0 ? '#a1a1aa' : '#3f3f46',
-                downColor: ti < titres.length - 1 ? '#a1a1aa' : '#3f3f46',
-                remove: () => {
-                  ferme();
-                  this.supprimerTitre(name, t);
-                },
-                addUnder: () =>
-                  this.setState({
-                    showMiniModal: true,
-                    tab: 0,
-                    form: freshForm({ cosmos: name, titre: t }),
-                    aiForm: null,
-                    titreMenu: null,
-                  }),
-                sepDragOver: (ev) => {
-                  const d = this.state.drag;
-                  if (!d || d.type !== 'row') return;
-                  ev.preventDefault();
-                  ev.stopPropagation();
-                  if (this.state.over !== key) this.setState({ over: key });
-                },
-                sepDrop: (ev) => {
-                  ev.preventDefault();
-                  ev.stopPropagation();
-                  const d = this.state.drag;
-                  if (d && d.type === 'row') this.deposerSurTitre(d.id, name, t);
-                  this.setState({ drag: null, over: null });
-                },
-                sepBg: s.over === key ? 'rgba(63,63,70,0.35)' : 'transparent',
-              });
-              sortRows(sous).forEach((r) => rows.push(r));
-            });
-            const nbLignes = roomRows.length;
-            const dg = s.drag,
-              isGroupDrag = dg && dg.type === 'group';
-            return {
-              name,
-              quickTitre: this.titresOf(name).at(-1) || '',
-              sectionId: s.sectionDe[name] || '',
-              sectionOptions: s.sections.filter((section) => section.etage === etageOf(name)),
-              setSection: (ev) => this.assignSection(name, ev.target.value),
-              color: COLORS[i % COLORS.length],
-              rows,
-              count: nbLignes,
-              empty: nbLignes === 0,
-              addingTitre: s.addTitreFor === name,
-              newTitreName: s.addTitreFor === name ? s.newTitreName || '' : '',
-              setNewTitreName: (e) => this.setState({ newTitreName: e.target.value }),
-              addTitre: (ev) => {
-                ev.stopPropagation();
-                this._titreDone = false;
-                this.setPlis((p) => {
-                  delete p.cosmos[name];
-                });
-                this.setState({ addTitreFor: name, newTitreName: '', cosmosMenu: null });
-              },
-              newTitreKey: (e) => {
-                if (e.key === 'Enter') {
-                  this._titreDone = true;
-                  if (this.creerTitre(name, this.state.newTitreName))
-                    this.setState({ addTitreFor: null, newTitreName: '' });
-                  else this._titreDone = false;
-                }
-                if (e.key === 'Escape') {
-                  this._titreDone = true;
-                  this.setState({ addTitreFor: null, newTitreName: '' });
-                }
-              },
-              newTitreBlur: () => {
-                if (this._titreDone) return;
-                const v = (this.state.newTitreName || '').trim();
-                if (v) this.creerTitre(name, v);
-                this.setState({ addTitreFor: null, newTitreName: '' });
-              },
-              emptyLabel: anyFilterEarly
-                ? 'aucun mini-cosmos pour ce filtre'
-                : 'aucun mini-cosmos — ajoute-en un avec le bouton +',
-              ...bandOf(all),
-              ...pliOf('cosmos', name),
-              ...(tq ? { open: true, chevron: '90deg', headBorder: 'rgba(39,39,42,0.8)' } : {}),
-              menuOpen: s.cosmosMenu === name,
-              menuColor: s.cosmosMenu === name ? '#fafafa' : '#71717a',
-              toggleMenu: (ev) => {
-                ev.stopPropagation();
-                this.setState({ cosmosMenu: s.cosmosMenu === name ? null : name });
-              },
-              moveUp: (ev) => {
-                ev.stopPropagation();
-                this.setState({ cosmosMenu: null });
-                this.moveCosmosBy(name, -1);
-              },
-              moveDown: (ev) => {
-                ev.stopPropagation();
-                this.setState({ cosmosMenu: null });
-                this.moveCosmosBy(name, 1);
-              },
-              upColor: this.sectionSiblings(name).indexOf(name) > 0 ? '#a1a1aa' : '#3f3f46',
-              downColor:
-                this.sectionSiblings(name).indexOf(name) < this.sectionSiblings(name).length - 1
-                  ? '#a1a1aa'
-                  : '#3f3f46',
-              dropShadow: dropShadowOf('group', dg ? s.cosmos.indexOf(dg.id) : -1, i, 'g:' + name),
-              gDragStart: (ev) => {
-                ev.dataTransfer.effectAllowed = 'move';
-                ev.dataTransfer.setData('text/plain', name);
-                this.setState({ drag: { type: 'group', id: name } });
-              },
-              gDragOver: (ev) => {
-                const d = this.state.drag;
-                if (!d || !['group', 'row'].includes(d.type)) return;
-                ev.preventDefault();
-                const key = (d.type === 'group' ? 'g:' : 'c:') + name;
-                if (this.state.over !== key) this.setState({ over: key });
-              },
-              gDrop: (ev) => {
-                ev.preventDefault();
-                const d = this.state.drag;
-                if (d && d.type === 'group') this.moveCosmos(d.id, name);
-                else if (d && d.type === 'row') this.moveRow(d.id, null, name);
-                this.setState({ drag: null, over: null });
-              },
-              gDragEnd: () => this.setState({ drag: null, over: null }),
-              isEditing: s.editCosmos === name,
-              notEditing: s.editCosmos !== name,
-              editName: s.editCosmosName ?? name,
-              startEdit: (ev) => {
-                ev.stopPropagation();
-                this.setState({
-                  editCosmos: name,
-                  editCosmosName: name,
-                  confirmDelete: null,
-                  cosmosMenu: null,
-                });
-              },
-              setEditName: (e) => this.setState({ editCosmosName: e.target.value }),
-              saveEdit: () => {
-                if (this.state.editCosmos !== name) return;
-                this.renameCosmos(name, this.state.editCosmosName);
-                this.setState({ editCosmos: null });
-              },
-              cancelEdit: () => this.setState({ editCosmos: null }),
-              editKey: (e) => {
-                if (e.key === 'Enter') e.currentTarget.blur();
-                if (e.key === 'Escape') this.setState({ editCosmos: null });
-              },
-              totalRows: rowsN.filter((x) => x.cosmos === name).length,
-              confirmDelete: s.confirmDelete === name,
-              notConfirmDelete: s.confirmDelete !== name,
-              askDelete: (ev) => {
-                ev.stopPropagation();
-                this.setState({ confirmDelete: name, editCosmos: null, cosmosMenu: null });
-              },
-              cancelDelete: (ev) => {
-                ev.stopPropagation();
-                this.setState({ confirmDelete: null });
-              },
-              doDelete: (ev) => {
-                ev.stopPropagation();
-                this.deleteCosmos(name);
-              },
-              cardBorder:
-                s.over === 'g:' + name || s.over === 'c:' + name
-                  ? 'rgba(161,161,170,0.9)'
-                  : 'rgba(39,39,42,0.8)',
-              cardOpacity: isGroupDrag && dg.id === name ? 0.4 : 1,
-              addMini: (ev) => {
-                ev.stopPropagation();
-                this.setState({
-                  showMiniModal: true,
-                  tab: 0,
-                  form: freshForm({ cosmos: name }),
-                  aiForm: null,
-                  cosmosMenu: null,
-                });
-              },
-            };
-          });
-      const groups = cosmosGroups();
-      const closedN = s.cosmos.filter((n) => isClosed('cosmos', n)).length;
-      const sectionsHint =
-        s.cosmos.length +
-        ' pièce' +
-        (s.cosmos.length > 1 ? 's' : '') +
-        (closedN ? ' · ' + closedN + ' repliée' + (closedN > 1 ? 's' : '') : '');
-      const filterNames = ['Tous', 'SAS', 'Actif', 'Pause', 'Clôturé'];
-      const filterChips = filterNames.map((f) => ({
-        label: f,
-        ...(s.filter === f ? chipOn : chipOff),
-        count: f === 'Tous' ? visible.length : rowsN.filter((x) => x.statut === f).length,
-        onClick: () => this.setState({ filter: f }),
-      }));
       const sel =
         s.editing && s.editDraft && s.editDraft.id === s.selected
           ? s.editDraft
@@ -3388,81 +2626,24 @@ export function createControllerClass(environment = {}) {
           })),
         };
       }).filter((g) => g.count > 0);
-      const anyFilter = anyFilterEarly;
-      const shownGroups = anyFilter ? groups.filter((g) => g.count > 0) : groups;
-      // les trois étages : en-tête (titre fixe, ligne Total de l'étage, repère éditable), zone de dépôt si vide, puis ses pièces
-      const etagesVals = ETAGES.map(([e, label, sens, sous]) => {
-        const names = parEtage[e];
-        const groupsE = shownGroups.filter((g) => etageOf(g.name) === e);
-        const t = (s.etages || {})[e] || '';
-        const editing = s.editEtage === e;
-        const key = 'e:' + e;
-        const dg = s.drag;
-        return {
-          etage: e,
-          name: floorTitle(s.titresEtages, e),
-          open: !isClosed('etages', e),
-          contentId: 'cosmos-etage-' + e,
-          toggleLabel: (isClosed('etages', e) ? 'Déplier ' : 'Replier ') + label,
-          toggle: () => this.togglePli('etages', e),
-          sens,
-          groups: this.sectionGroups(e, groupsE, anyFilter),
-          addSection: () => this.startSection(e),
-          creatingSection: s.editSection?.etage === e && !s.editSection.id,
-          empty: names.length === 0,
-          show:
-            !!s.drag ||
-            s.editSection?.etage === e ||
-            !(names.length > 0 && groupsE.length === 0 && anyFilter),
-          repereLabel: t || '+ repère de l’étage',
-          repereColor: t ? '#d4d4d8' : '#3f3f46',
-          repereTitle: t
-            ? t + ' — cliquer pour modifier'
-            : 'ajouter le repère de cet étage : une phrase, une citation',
-          isEditing: editing,
-          notEditing: !editing,
-          repereDraft: editing ? s.editEtageText || '' : t,
-          startRepere: (ev) => {
-            ev.stopPropagation();
-            this._etageCancel = null;
-            this.setState({ editEtage: e, editEtageText: t });
-          },
-          setRepereDraft: (ev) => this.setState({ editEtageText: ev.target.value }),
-          saveRepere: () => this.saveEtageRepere(e),
-          stopIt: (ev) => ev.stopPropagation(),
-          repereKey: (ev) => {
-            if (ev.key === 'Enter') ev.currentTarget.blur();
-            if (ev.key === 'Escape') {
-              this._etageCancel = e;
-              this.setState({ editEtage: null, editEtageText: '' });
-            }
-          },
-          dragOver: (ev) => {
-            const d = this.state.drag;
-            if (!d || d.type !== 'group') return;
-            ev.preventDefault();
-            if (this.state.over !== key) this.setState({ over: key });
-          },
-          drop: (ev) => {
-            ev.preventDefault();
-            const d = this.state.drag;
-            if (d && d.type === 'group') this.moveCosmosToEtage(d.id, e);
-            this.setState({ drag: null, over: null });
-          },
-          zoneBorder: s.over === key ? '#a1a1aa' : '#3f3f46',
-          headShadow: dg && dg.type === 'group' && s.over === key ? 'inset 0 -2px 0 0 #fafafa' : 'none',
-        };
-      });
       const etageChips = ETAGES.map(([e, label]) => ({
         label: s.titresEtages[e] || label,
         ...((s.newEtage || 'logos') === e ? chipOn : chipOff),
         onClick: () => this.setState({ newEtage: e }),
       }));
       const etageHint = ETAGES.find(([e]) => e === (s.newEtage || 'logos'))[2];
-      // cartes KPI de la page Cosmos : la ligne Total de la bande — mêmes colonnes, mêmes couleurs, calculées sur tous les mini-cosmos ouverts, filtres ignorés
+      // cartes KPI de la page Cosmos : calculées sur tous les mini-cosmos ouverts, filtres ignorés
       const kpiCards = (() => {
-        const b = bandOf(rowsN);
-        const open = rowsN.filter((x) => x.statut !== 'Clôturé');
+        const open = rowsN.filter((x) => x.statut !== 'Clôturé'),
+          run = open.filter((x) => x.statut !== 'Pause');
+        const zones = run.map((x) => projectionOf(x).zone);
+        const z = (k) => zones.filter((zone) => zone === k).length;
+        const counter = (n, label, color, what) => ({
+          label,
+          value: String(n),
+          color: n > 0 ? color : '#3f3f46',
+          title: n + ' ' + what,
+        });
         return [
           {
             label: 'cosmos',
@@ -3476,12 +2657,22 @@ export function createControllerClass(environment = {}) {
             color: '#fafafa',
             title: open.length + ' mini-cosmos ouverts, toutes pièces confondues',
           },
-          ...b.counters.map((k) => ({
-            label: k.label,
-            value: String(k.value),
-            color: k.color,
-            title: k.title,
-          })),
+          counter(open.filter((x) => x.statut === 'SAS').length, 'SAS', '#818cf8', 'en SAS'),
+          counter(open.length - run.length, 'pause', '#d4a054', 'en pause'),
+          counter(
+            open.filter((x) => !!resolveCloture(x.cloture) && !isMandat(x.cloture)).length,
+            'datés',
+            '#a1a1aa',
+            'à échéance datée',
+          ),
+          counter(
+            open.filter((x) => isMandat(x.cloture)).length,
+            'mandats',
+            '#a1a1aa',
+            'sous mandat d’un an',
+          ),
+          counter(z('tension') + z('jourj'), 'tension', '#fbbf24', 'en tension ou au jour J'),
+          counter(z('retard'), 'retard', '#fb7185', 'en retard'),
         ];
       })();
       const view = s.view || 'table';
@@ -3490,59 +2681,14 @@ export function createControllerClass(environment = {}) {
         syncConflict: s.syncConflict || '',
         syncConflictBusy: !!s.syncConflictBusy,
         resolveSyncConflict: () => this.resolveSyncConflict(),
-        clock: s.clock,
-        columns,
-        groups: shownGroups,
-        etages: etagesVals,
         etageChips,
         etageHint,
-        noResult: anyFilter && shownGroups.length === 0,
-        filterChips,
-        projChips,
-        tQuery: s.tQuery || '',
-        setTQuery: (e) => this.setState({ tQuery: e.target.value }),
-        showFilters: !!s.showFilters,
-        toggleFilters: () => this.setState((st) => ({ showFilters: !st.showFilters })),
-        filtersChevron: s.showFilters ? '90deg' : '0deg',
-        ...(() => {
-          const n = [s.filter !== 'Tous', pf !== 'Tous', cf !== 'Tous', T.any].filter(Boolean).length;
-          return {
-            filtersLabel: n ? 'Filtres · ' + n : 'Filtres',
-            filtersColor: n ? '#fafafa' : '#a1a1aa',
-            filtersBorder: n ? 'rgba(161,161,170,0.9)' : '#27272a',
-            filtersTitle: s.showFilters
-              ? 'Cacher les filtres'
-              : n
-                ? n +
-                  ' filtre' +
-                  (n > 1 ? 's' : '') +
-                  ' actif' +
-                  (n > 1 ? 's' : '') +
-                  ' — cliquer pour les voir'
-                : 'Afficher les filtres : statut, zone, délai, cosmos',
-          };
-        })(),
-        sectionsHint,
-        openAll: () =>
-          this.setPlis((p) => {
-            p.cosmos = {};
-            p.sections = {};
-            p.etages = {};
-          }),
-        closeAll: () =>
-          this.setPlis((p) => {
-            p.cosmos = Object.fromEntries(s.cosmos.map((name) => [name, 1]));
-            p.sections = Object.fromEntries(s.sections.map((section) => [section.id, 1]));
-            p.etages = Object.fromEntries(ETAGES.map(([etage]) => [etage, 1]));
-          }),
-        cosmosChips,
         monthGroups,
         quarterGroups,
         yearOptions,
         quarterW,
         monthW,
         yearW,
-        timeChips,
         monthFilter: mf,
         yearFilter: yf,
         quarterFilter: qf,
@@ -3552,7 +2698,6 @@ export function createControllerClass(environment = {}) {
         yearStyle: selStyle(yf),
         setMonth: (e) => this.setPeriodFilter('month', e.target.value),
         setYear: (e) => this.setPeriodFilter('year', e.target.value),
-        isTable: view === 'table',
         isEcheances: view === 'echeances',
         isTemplates: view === 'templates',
         isJournal: view === 'journal',
@@ -3681,7 +2826,6 @@ export function createControllerClass(environment = {}) {
         tplQuery: s.tplQuery || '',
         setTplQuery: (e) => this.setState({ tplQuery: e.target.value }),
         tplTotal: TEMPLATES.reduce((a, [, i]) => a + i.length, 0),
-        stats: { total: visible.length, shown: filtered.length, cosmos: s.cosmos.length },
         detail,
         closeDetail: () => this.navigate({ selected: null, confirmDeleteMini: false, editing: false }),
         confirmDeleteMini: !!s.confirmDeleteMini,
@@ -3744,7 +2888,6 @@ export function createControllerClass(environment = {}) {
           onClick: () => this.setState((st) => ({ form: { ...st.form, echeance: k } })),
         })),
         formIsDated: f.echeance === 'datee',
-        formIsMandat: f.echeance === 'mandat',
         formEcheanceHint:
           f.echeance === 'mandat'
             ? 'mandat d\u2019un an jusqu\u2019au ' +

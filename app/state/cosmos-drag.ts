@@ -225,8 +225,8 @@ export function useCosmosDrag(controller: Controller) {
       else if (target.type === 'cosmos') controller.moveRow(source.id, null, target.name);
     } else if (source.type === 'group') {
       if (target.type === 'cosmos') controller.moveCosmos(source.id, target.name, placement);
-      else if (target.type === 'section') controller.assignSection(source.id, target.id, { reveal: false });
-      else if (target.type === 'floor') controller.moveCosmosToEtage(source.id, target.id, { reveal: false });
+      else if (target.type === 'section') controller.assignSection(source.id, target.id);
+      else if (target.type === 'floor') controller.moveCosmosToEtage(source.id, target.id);
     } else if (target.type === 'section') controller.moveSection(source.id, target.id, placement);
     setAnnouncement('Déplacement effectué.');
     end();

@@ -467,7 +467,6 @@ function GroupRows({
                       <QuickMiniCreate
                         cosmos={cosmos.name}
                         titre={controller.titresOf(cosmos.name).at(-1)}
-                        reveal={false}
                         disabled={
                           !!drag.active ||
                           !!controller.state.editSection ||

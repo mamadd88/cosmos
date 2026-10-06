@@ -215,16 +215,14 @@ function application(document = { getElementById: () => null }) {
   return app;
 }
 
-test('le volet supprimé se ferme, le filtre retiré se réinitialise et les données ne repartent pas en sauvegarde', async t => {
+test('le volet supprimé se ferme et les données ne repartent pas en sauvegarde', async t => {
   const h = await setup(t);
   const app = application();
   app.sync = h.sync;
-  app.state = { ...app.state, ...h.local, ready: true, selected: 'mc-a', cosmosFilter: 'TRAVAIL', cosmosMenu: 'TRAVAIL' };
+  app.state = { ...app.state, ...h.local, ready: true, selected: 'mc-a' };
   h.server.state = { ...snapshot([]), cosmos: [], etageDe: {}, etages: {} };
   await app.pollDb();
   assert.equal(app.state.selected, null);
-  assert.equal(app.state.cosmosFilter, 'Tous');
-  assert.equal(app.state.cosmosMenu, null);
   assert.deepEqual(app.state.rows, []);
   assert.equal(app.state.ready, true);
   app.componentDidUpdate();
@@ -338,8 +336,7 @@ const input = value => ({ target: { value } });
 
 test('valider un renommage identique garde les titres et l’étage', () => {
   const app = editableApp();
-  app.renderVals().groups[0].startEdit({ stopPropagation() {} });
-  app.renderVals().groups[0].saveEdit();
+  app.renameCosmos('TRAVAIL', 'TRAVAIL');
   assert.deepEqual(app.state.titresDe, { TRAVAIL: ['PROJETS'] });
   assert.deepEqual(app.state.etageDe, { TRAVAIL: 'ethos' });
   assert.equal(app.state.journal.length, 0);
@@ -347,21 +344,11 @@ test('valider un renommage identique garde les titres et l’étage', () => {
 
 test('renommer réellement déplace les titres, l’étage et les mini-cosmos', () => {
   const app = editableApp();
-  app.setState({ editCosmos: 'TRAVAIL', editCosmosName: 'PROJETS' });
-  app.renderVals().groups[0].saveEdit();
+  app.renameCosmos('TRAVAIL', 'PROJETS');
   assert.deepEqual(app.state.cosmos, ['PROJETS']);
   assert.deepEqual(app.state.titresDe, { PROJETS: ['PROJETS'] });
   assert.deepEqual(app.state.etageDe, { PROJETS: 'ethos' });
   assert.equal(app.state.rows[0].cosmos, 'PROJETS');
-});
-
-test('le tri clôture compare les dates réelles, dates précises et mandats compris', () => {
-  const app = editableApp([mini('mc-late'), { ...mini('mc-middle'), cloture: 'A:2026-11-01' }, { ...mini('mc-early'), cloture: 'M:2026-10' }]);
-  const ids = () => app.renderVals().groups[0].rows.filter(x => x.isRow).map(x => x.id);
-  app.renderVals().columns.find(x => x.key === 'cloture').onClick();
-  assert.deepEqual(ids(), ['mc-early', 'mc-middle', 'mc-late']);
-  app.renderVals().columns.find(x => x.key === 'cloture').onClick();
-  assert.deepEqual(ids(), ['mc-late', 'mc-middle', 'mc-early']);
 });
 
 for (const exit of ['close', 'finish', 'navigate']) test(`une édition valide est enregistrée avec son journal (${exit})`, () => {
@@ -421,11 +408,6 @@ test('clôturer et réouvrir conserve le mandat, les dates et le statut calculé
   assert.equal(app.state.journal.length, 0);
 });
 
-test('Échap pendant le renommage ne renomme pas le cosmos au blur suivant', () => {
-  const app=editableApp(); app.setState({editCosmos:'TRAVAIL',editCosmosName:'RENOMMÉ'});
-  const g=app.renderVals().groups[0]; g.editKey({key:'Escape'}); g.saveEdit();
-  assert.deepEqual(app.state.cosmos,['TRAVAIL']); assert.deepEqual(app.state.titresDe,{TRAVAIL:['PROJETS']});
-});
 test('le rangement sous un titre fait partie du brouillon annulable', () => {
   const app=editableApp(); app.setState({selected:'mc-a'}); app.beginEdit('mc-a');
   app.rangerSous('mc-a','PROJETS'); assert.equal(app.state.rows[0].titre,undefined); assert.equal(app.state.editDraft.titre,'PROJETS');
@@ -577,12 +559,6 @@ test('Échéances : réinitialiser retire tous les critères, recherche comprise
   assert.equal(app.renderVals().echHasFilters, true);
   app.renderVals().resetEcheancesFilters();
   assert.equal(app.renderVals().echShown, 1); assert.equal(app.renderVals().echHasFilters, false);
-});
-
-test('Cosmos : les filtres partagés suivent les mêmes bornes de délai et de période', t => {
-  const app = deadlinesApp(t, [deadline('mc-past', '2026-09-05'), deadline('mc-future', '2026-09-10')], { view: 'table', timeFilter: 7 });
-  assert.deepEqual(app.renderVals().groups.flatMap(g => g.rows.filter(r => r.isRow).map(r => r.id)), ['mc-future']);
-  assert.equal(app.renderVals().timeChips.find(c => c.label === '7 j').count, 1);
 });
 
 function journalApp(t, journal, rows = [], state = {}, now = '2026-09-06T12:00:00+02:00') {

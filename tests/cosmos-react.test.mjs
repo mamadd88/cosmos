@@ -33,6 +33,7 @@ const { createMemoryRouter, RouterProvider } = await import('react-router');
 const { CosmosProvider } = await import('../app/state/CosmosContext.tsx');
 const { createControllerClass } = await import('../app/state/CosmosController.js');
 const { canonicalPath, readRoute, routeUrl } = await import('../app/state/routing.ts');
+const { buildCosmosFloors } = await import('../app/state/cosmos-table.ts');
 const { default: AppShell } = await import('../app/components/AppShell.tsx');
 const pages = await Promise.all(
   ['cosmos', 'echeances', 'journal', 'modeles'].map((name) =>
@@ -278,11 +279,9 @@ test('cosmos drag : mini-cosmos vers une rubrique vide, un autre cosmos et un co
   assert.deepEqual(controller.state.journal, []);
 });
 
-test('cosmos drag : cosmos entre groupes et étages, avec enfants, sans modifier les plis de l’ancienne interface', async t => {
+test('cosmos drag : cosmos entre groupes et étages, avec enfants', async t => {
   const { ui, controller } = await mountCosmosDrag(t);
-  act(() => controller.setState({ plis: { cosmos: {}, sections: { g4: 1 }, etages: { pathos: 1 } } }));
   const beforeRows = JSON.parse(JSON.stringify(controller.state.rows));
-  const beforePlis = JSON.parse(JSON.stringify(controller.state.plis));
   const beforeTitles = JSON.parse(JSON.stringify(controller.state.titresDe));
   finishCosmosDrag(ui, beginCosmosDrag(ui, 'le cosmos TRAVAIL'), { type: 'cosmos', name: 'ATELIER' }, 'after');
   assert.deepEqual(controller.state.cosmos.filter(x => controller.state.sectionDe[x] === 'g2'), ['ATELIER', 'TRAVAIL', 'VIDE']);
@@ -297,7 +296,6 @@ test('cosmos drag : cosmos entre groupes et étages, avec enfants, sans modifier
   assert.deepEqual(Array.from(ui.getByRole('table', { name: 'Tableau ETHOS' }).querySelectorAll('.ct-node-name'), node => node.textContent), ['TRAVAIL', 'VERTUS', 'AUTRE']);
   assert.equal(ui.queryByText('Sans groupe', { exact: true }), null);
   assert.deepEqual(controller.state.rows, beforeRows);
-  assert.deepEqual(controller.state.plis, beforePlis);
   assert.deepEqual(controller.state.titresDe, beforeTitles);
   assert.deepEqual(controller.state.journal, []);
   assert.equal(JSON.parse(localStorage.getItem('cosmos-app-v1')).etageDe.TRAVAIL, 'ethos');
@@ -558,10 +556,7 @@ test('cosmos dépôt : le survol reste temporaire après dépôt et le clavier n
 
 test('cosmos actions : trois commandes et renommage validé conservant enfants, groupe, rubriques et brouillons', async t => {
   const { ui, controller, router } = await mountCosmosDrag(t);
-  act(() => {
-    controller.setQuickName('TRAVAIL', 'À poursuivre');
-    controller.setState({ plis: { cosmos: { TRAVAIL: 1 }, etages: {}, sections: {} } });
-  });
+  act(() => controller.setQuickName('TRAVAIL', 'À poursuivre'));
   const before = savedCosmosData(controller);
   fireEvent.click(ui.getByRole('button', { name: 'Replier le cosmos TRAVAIL' }));
   const trigger = ui.getByRole('button', { name: 'Actions du cosmos TRAVAIL' });
@@ -590,7 +585,6 @@ test('cosmos actions : trois commandes et renommage validé conservant enfants, 
   assert.deepEqual(controller.state.rows, before.miniCosmos.map(x => x.cosmos === 'TRAVAIL' ? { ...x, cosmos: 'TRAVAIL RENOMMÉ' } : x));
   assert.equal(controller.state.quickDrafts['TRAVAIL RENOMMÉ'].name, 'À poursuivre');
   assert.equal(controller.state.quickDrafts.TRAVAIL, undefined);
-  assert.equal(controller.state.plis.cosmos['TRAVAIL RENOMMÉ'], 1);
   assert.ok(ui.getByRole('button', { name: 'Déplier le cosmos TRAVAIL RENOMMÉ' }));
   assert.equal(router.state.location.pathname, '/cosmos');
   assert.deepEqual(controller.state.journal, []);
@@ -835,7 +829,6 @@ test('cosmos groupes : deux actions et renommage validé conservant identité, c
   const { ui, controller } = await mountCosmosDrag(t);
   act(() => controller.setQuickName('TRAVAIL', 'Idée à poursuivre'));
   const before = savedCosmosData(controller);
-  const plis = JSON.stringify(controller.state.plis);
   fireEvent.click(ui.getByRole('button', { name: 'Replier le groupe PROJETS' }));
   const trigger = ui.getByRole('button', { name: 'Actions du groupe PROJETS' });
   assert.ok(trigger.closest('.ct-section-row'));
@@ -870,7 +863,6 @@ test('cosmos groupes : deux actions et renommage validé conservant identité, c
     sections: before.sections.map(x => x.id === 'g1' ? { ...x, name: 'VERTUS' } : x),
   });
   assert.equal(controller.state.quickDrafts.TRAVAIL.name, 'Idée à poursuivre');
-  assert.equal(JSON.stringify(controller.state.plis), plis);
   assert.equal(ui.getAllByRole('button', { name: 'Déplier le groupe VERTUS' }).length, 1);
   assert.deepEqual(JSON.parse(localStorage.getItem('cosmos-app-v1')).sections, controller.state.sections);
   assert.deepEqual(controller.state.journal, []);
@@ -948,7 +940,6 @@ test('cosmos groupes : actions sur groupe vide, filtres, lecture seule et nettoy
 test('cosmos tableau : création de groupes depuis les trois en-têtes, repliés ou filtrés, avec sauvegarde', async t => {
   const { ui, controller } = await mount(t, '/cosmos');
   const before = savedCosmosData(controller);
-  const plis = JSON.stringify(controller.state.plis);
   fireEvent.click(ui.getByRole('button', { name: 'Tout fermer', exact: true }));
   const query = ui.getByRole('searchbox', { name: 'Rechercher dans les tableaux' });
   const status = ui.getByRole('combobox', { name: 'Filtrer par statut' });
@@ -982,7 +973,6 @@ test('cosmos tableau : création de groupes depuis les trois en-têtes, repliés
   assert.deepEqual(controller.state.rows, before.miniCosmos);
   assert.deepEqual(controller.state.cosmos, before.cosmos);
   assert.deepEqual(controller.state.sectionDe, before.sectionDe);
-  assert.equal(JSON.stringify(controller.state.plis), plis);
   assert.deepEqual(controller.state.journal, []);
 });
 
@@ -1101,7 +1091,6 @@ test('cosmos plis : fermé par défaut, ouvertures mémorisées après navigatio
     sections: [{ id: 'g1', name: 'PROJETS', etage: 'logos' }],
     sectionDe: { TRAVAIL: 'g1' },
   }));
-  const originalPlis = JSON.stringify(controller.state.plis);
   const before = savedCosmosData(controller);
   assert.equal(ui.queryAllByRole('table').length, 0);
   for (const floor of ['ETHOS', 'LOGOS', 'PATHOS'])
@@ -1122,7 +1111,6 @@ test('cosmos plis : fermé par défaut, ouvertures mémorisées après navigatio
   fireEvent.click(ui.getByRole('button', { name: floorTitles.LOGOS, exact: true }));
   assert.ok(ui.getByText('Projet de test'), 'fermer un étage conserve les ouvertures de ses enfants');
   assert.deepEqual(savedCosmosData(controller), before);
-  assert.equal(JSON.stringify(controller.state.plis), originalPlis);
   ui.unmount();
   router.dispose();
   ({ ui, controller, router } = await mount(t, '/cosmos', { openCosmos: false, clearStorage: false }));
@@ -1244,7 +1232,6 @@ test('cosmos tableau : les trois étages gardent leurs cosmos vides et leurs reg
     return JSON.parse(JSON.stringify(data));
   };
   const before = stableData();
-  const plis = JSON.stringify(controller.state.plis);
   fireEvent.click(cosmosButton());
   assert.equal(cosmosButton().getAttribute('aria-expanded'), 'false');
   assert.equal(logos.queryByText('Projet de test'), null);
@@ -1275,7 +1262,6 @@ test('cosmos tableau : les trois étages gardent leurs cosmos vides et leurs reg
   assert.equal(ui.getAllByRole('table').length, 3);
   assert.ok(ui.getByText('Projet de test'));
   assert.ok(ui.getByText('BUFFET'));
-  assert.equal(JSON.stringify(controller.state.plis), plis, 'le repli de l’cosmos reste indépendant de la page Cosmos');
   assert.deepEqual(stableData(), before, 'l’cosmos ne modifie ni les données ni le journal');
   fireEvent.click(ui.getByRole('link', { name: 'Journal', exact: true }));
   await waitFor(() => assert.equal(router.state.location.pathname, '/journal'));
@@ -1427,7 +1413,6 @@ test('cosmos tableau : les compteurs d’étapes distinguent absence, progressio
 test('cosmos tableau : cocher et ajouter des étapes sauvegarde sans écrire au Journal ni changer le statut', async t => {
   const { ui, controller } = await mount(t, '/cosmos');
   const before = JSON.parse(JSON.stringify(controller.state.rows[0]));
-  const plis = JSON.stringify(controller.state.plis);
   const badge = () => ui.getByRole('button', { name: /^Étapes de Projet de test :/ });
   badge().focus();
   fireEvent.click(badge());
@@ -1469,7 +1454,6 @@ test('cosmos tableau : cocher et ajouter des étapes sauvegarde sans écrire au 
   assert.equal(ui.getByRole('textbox', { name: 'Nouvelle étape' }).value, '', 'fermer abandonne uniquement le texte non ajouté');
   fireEvent.click(ui.getByRole('button', { name: 'Fermer les étapes' }));
   assert.deepEqual({ ...controller.state.rows[0], actions: before.actions }, before);
-  assert.equal(JSON.stringify(controller.state.plis), plis);
   assert.deepEqual(controller.state.journal, []);
 });
 
@@ -1679,30 +1663,29 @@ test('le formulaire React crée un mini-cosmos avec sa gouvernance et son évén
   assert.ok(ui.getByRole('button', { name: 'Ouvrir la fiche de Nouveau projet' }));
 });
 
-test('séparations : ordre continu, flèches et déplacements entre étages', async t => {
+test('séparations : ordre continu et déplacements entre groupes et étages', async t => {
   const { controller } = await mount(t);
   act(() => controller.setState({
     cosmos: ['A', 'B', 'C', 'D'], etageDe: { A: 'logos', B: 'logos', C: 'logos', D: 'logos' }, rows: [],
     sections: [{ id: 's1', name: 'Première', etage: 'logos' }, { id: 's2', name: 'Deuxième', etage: 'logos' }, { id: 's3', name: 'Vertus', etage: 'ethos' }],
     sectionDe: { A: 's1', B: 's2', C: 's1' },
   }));
+  const names = etage => buildCosmosFloors(controller.state, '', 'Tous').find(f => f.id === etage).groups.flatMap(g => g.items.map(i => i.name));
   assert.deepEqual(controller.state.cosmos, ['D', 'A', 'C', 'B']);
-  assert.deepEqual(controller.renderVals().groups.map(g => g.name), ['D', 'A', 'C', 'B']);
-  act(() => controller.moveCosmosBy('C', -1));
+  assert.deepEqual(names('logos'), ['D', 'A', 'C', 'B']);
+  act(() => controller.moveCosmos('C', 'A', 'before'));
   assert.deepEqual(controller.state.cosmos, ['D', 'C', 'A', 'B']);
-  act(() => controller.moveCosmosBy('C', -1));
-  assert.deepEqual(controller.state.cosmos, ['D', 'C', 'A', 'B'], 'la flèche reste dans la séparation');
-  act(() => controller.moveSectionBy('s2', -1));
+  act(() => controller.moveSection('s2', 's1'));
   assert.deepEqual(controller.state.cosmos, ['D', 'B', 'C', 'A']);
   act(() => controller.moveCosmos('D', 'A'));
   assert.equal(controller.state.sectionDe.D, 's1');
   act(() => controller.assignSection('A', 's3'));
   assert.equal(controller.state.etageDe.A, 'ethos');
   assert.equal(controller.state.sectionDe.A, 's3');
-  assert.equal(controller.renderVals().etages.find(e => e.etage === 'ethos').groups.some(g => g.name === 'A'), true);
+  assert.ok(names('ethos').includes('A'));
   act(() => controller.moveCosmosToEtage('A', 'pathos'));
   assert.equal(controller.state.sectionDe.A, undefined);
-  assert.equal(controller.renderVals().etages.find(e => e.etage === 'pathos').groups.some(g => g.name === 'A'), true);
+  assert.ok(names('pathos').includes('A'));
   assert.deepEqual(controller.state.journal, []);
 });
 
@@ -1715,7 +1698,6 @@ test('cosmos tableau : la dernière ligne réutilise la création rapide, sous l
   assert.equal(form.closest('tr').parentElement.lastElementChild, form.closest('tr'));
   assert.ok(within(form).getByText('Sous « DERNIÈRE »'));
   const before = savedCosmosData(controller);
-  const plis = JSON.stringify(controller.state.plis);
   assert.equal(within(form).getByRole('button', { name: 'Créer un mini-cosmos dans TRAVAIL' }).disabled, true);
   for (const name of ['Première idée', 'Deuxième idée']) {
     fireEvent.change(input, { target: { value: '  ' + name + '  ' } });
@@ -1736,7 +1718,6 @@ test('cosmos tableau : la dernière ligne réutilise la création rapide, sous l
   assert.deepEqual(controller.state.rows[0], before.miniCosmos[0]);
   assert.deepEqual(JSON.parse(localStorage.getItem('cosmos-app-v1')).miniCosmos, controller.state.rows);
   assert.deepEqual(controller.state.journal, []);
-  assert.equal(JSON.stringify(controller.state.plis), plis);
   fireEvent.change(input, { target: { value: 'Première idée' } });
   fireEvent.submit(form);
   assert.equal(controller.state.rows.length, 3);
@@ -1747,7 +1728,7 @@ test('cosmos tableau : la dernière ligne réutilise la création rapide, sous l
 
 test('cosmos tableau : création dans un cosmos vide, filtres et repli locaux, et blocage pendant une synchronisation', async t => {
   const { ui, controller } = await mount(t, '/cosmos');
-  act(() => controller.setState({ cosmos: ['TRAVAIL', 'VIDE'], filter: 'Actif', tQuery: 'Filtre initial' }));
+  act(() => controller.setState({ cosmos: ['TRAVAIL', 'VIDE'] }));
   fireEvent.click(ui.getByRole('button', { name: 'Tout ouvrir', exact: true }));
   const input = ui.getByRole('textbox', { name: 'Nouveau mini-cosmos dans VIDE' });
   fireEvent.change(input, { target: { value: 'Premier mini' } });
@@ -1776,8 +1757,6 @@ test('cosmos tableau : création dans un cosmos vide, filtres et repli locaux, e
   assert.equal(query.value, '');
   assert.equal(status.value, 'Tous');
   assert.ok(ui.getByRole('button', { name: 'Ouvrir la fiche de Visible après création' }));
-  assert.equal(controller.state.filter, 'Actif', 'le filtre de l’ancienne interface reste indépendant');
-  assert.equal(controller.state.tQuery, 'Filtre initial');
   assert.deepEqual(controller.state.journal, []);
 });
 
