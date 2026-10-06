@@ -1,8 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { StaticRouter } from 'react-router';
+import { createControllerClass } from '../app/state/CosmosController.js';
+import { CosmosContext } from '../app/state/CosmosContext.tsx';
+import JournalPage from '../app/routes/journal.tsx';
 import * as core from '../cosmos-core.js';
 import { createSync } from '../cosmos-sync.js';
+import { valueChangeJournal } from '../cosmos-journal.js';
 
 process.env.TZ = 'Europe/Paris';
 const clone = value => structuredClone(value);
@@ -18,19 +24,19 @@ async function setup(t, initial = snapshot()) {
   t.mock.timers.enable({ apis: ['setTimeout'] });
   const server = { state: clone(initial), writes: [], reads: 0, readGate: null, writeGate: null, failWrite: false };
   const db = { async rpc(name, args) {
-    if (name === 'charger_etat') {
+    if (name === 'charger_etat_v4') {
       server.reads++;
       const data = clone(server.state);
       if (server.readGate) await server.readGate.promise;
       return { data, error: null };
     }
-    assert.equal(name, 'sync_etat_v2');
+    assert.equal(name, 'sync_etat_v4');
     server.writes.push(clone(args));
     if (server.writeGate) await server.writeGate.promise;
     if (server.failWrite) return { error: { message: 'Réseau indisponible' } };
     if (args.p_replace) server.state = snapshot([]);
     if (args.p_cosmos) server.state.cosmos = clone(args.p_cosmos);
-    for (const [arg, key] of [['p_etage_de', 'etageDe'], ['p_etages', 'etages'], ['p_titres_de', 'titresDe']]) {
+    for (const [arg, key] of [['p_etage_de', 'etageDe'], ['p_etages', 'etages'], ['p_titres_etages', 'titresEtages'], ['p_titres_de', 'titresDe'], ['p_sections', 'sections'], ['p_section_de', 'sectionDe']]) {
       if (args[arg]) server.state[key] = clone(args[arg]);
     }
     server.state.miniCosmos = server.state.miniCosmos.filter(r => !args.p_deleted.includes(r.id));
@@ -105,7 +111,7 @@ test('une base vidée reste vide après la relève', async t => {
 
 test('le journal et les propositions reflètent aussi les retraits et l’archivage', async t => {
   const h = await setup(t, { ...snapshot(), journal: [{ id: 'j-old', t: '2025-09-06T10:00:00Z', type: 'note', author: 'Toi' }], propositions: [{ id: 'p-old', agent: 'Agent', miniId: 'mc-a' }] });
-  h.server.state.journal = [{ id: 'j-new', t: '2026-09-06T10:01:00Z', type: 'note', author: 'Agent', detail: 'Relève' }];
+  h.server.state.journal = [{ id: 'j-new', t: '2026-09-06T10:01:00Z', type: 'modification', author: 'Agent', detail: 'Valeur actuelle modifiée', changes: [{field:'Valeur actuelle',before:'1',after:'2'}] }];
   h.server.state.journalArchived = 1;
   h.server.state.propositions = [];
   await h.poll();
@@ -202,19 +208,10 @@ test('une réponse incomplète ne supprime pas les données locales', async t =>
   assert.equal(h.local, before);
 });
 
-// Exécuter uniquement la logique de l’interface, sans DOM ni navigateur.
-const html = await readFile(new URL('../Cosmos.dc.html', import.meta.url), 'utf8');
-const script = html.match(/<script type="text\/x-dc"[^>]*>([\s\S]*?)<\/script>/)[1]
-  .replaceAll("import('./cosmos-core.js')", `import(${JSON.stringify(new URL('../cosmos-core.js', import.meta.url).href)})`)
-  .replaceAll("import('./cosmos-sync.js')", `import(${JSON.stringify(new URL('../cosmos-sync.js', import.meta.url).href)})`);
+// Exécuter le contrôleur utilisé par React, sans navigateur ni ancien runtime HTML.
 function application(document = { getElementById: () => null }) {
-  class Logic {
-    props = {};
-    setState(update, cb) { this.state = { ...this.state, ...(typeof update === 'function' ? update(this.state) : update) }; cb?.(); }
-  }
-  const { Component, bindCore } = new Function('DCLogic', 'document', 'location', script + '\nreturn { Component, bindCore };')(Logic, document, { hash: '#/cosmos', origin: 'http://localhost:8123' });
-  bindCore(core);
-  const app = new Component();
+  const Controller = createControllerClass({ document, location: { pathname: '/cosmos', origin: 'http://localhost:8123' } });
+  const app = new Controller();
   app.messages = [];
   app.flash = message => app.messages.push(message);
   app.syncHash = () => {};
@@ -375,6 +372,7 @@ for (const exit of ['close', 'finish', 'navigate']) test(`une édition valide es
   const app = editableApp(); app.setState({ selected: 'mc-a' });
   app.renderVals().detail.toggleEdit();
   app.renderVals().detail.edit.objectif(input('Objectif modifié'));
+  app.renderVals().detail.edit.actuel(input('Valeur modifiée'));
   assert.equal(app.state.rows[0].objectif, 'Objectif initial');
   assert.equal(app.serialize().miniCosmos[0].objectif, 'Objectif initial');
   if (exit === 'close') app.renderVals().closeDetail();
@@ -382,7 +380,7 @@ for (const exit of ['close', 'finish', 'navigate']) test(`une édition valide es
   else app.renderVals().detail.toggleEdit();
   assert.equal(app.state.rows[0].objectif, 'Objectif modifié');
   assert.equal(app.state.journal.length, 1);
-  assert.deepEqual(app.state.journal[0].changes, [{ field: 'Objectif', before: 'Objectif initial', after: 'Objectif modifié' }]);
+  assert.deepEqual(app.state.journal[0].changes, [{ field: 'Valeur actuelle', before: '', after: 'Valeur modifiée' }]);
   app.renderVals().closeDetail();
   assert.equal(app.state.journal.length, 1);
 });
@@ -423,7 +421,8 @@ test('clôturer et réouvrir conserve le mandat, les dates et le statut calculé
   app.renderVals().detail.toggleClose();
   assert.equal(app.state.rows[0].closedAt, undefined); assert.equal(app.state.rows[0].cloture, 'A:2027-09-06');
   assert.equal(core.statutOf(app.state.rows[0]), 'Pause');
-  assert.equal(app.state.rows[0].history.at(-1).value, 'Pause');
+  assert.equal(app.state.rows[0].history, undefined);
+  assert.equal(app.state.journal.length, 0);
 });
 
 test('Échap pendant le renommage ne renomme pas le cosmos au blur suivant', () => {
@@ -601,53 +600,122 @@ function journalApp(t, journal, rows = [], state = {}, now = '2026-09-06T12:00:0
 const journalEntry = (id, patch = {}) => ({ id, t: '2026-09-06T10:00:00.000Z', type: 'creation', author: 'Toi', miniId: 'mc-a', mini: 'Projet', cosmos: 'TRAVAIL', detail: 'Mini-cosmos créé', ...patch });
 const journalMetrics = app => Object.fromEntries(app.activityVals().jActivity.map(m => [m.label, m.value]));
 
-test('Journal : une proposition IA conserve les valeurs et les étapes complètes, sans entrée pour un changement identique', () => {
+test('Journal : toute une édition produit une seule variation finale de Valeur actuelle', () => {
+  const app = editableApp([{ ...mini('mc-a'), actuel: '0' }]);
+  app.beginEdit('mc-a');
+  app.update('mc-a', { actuel: '1', objectif: 'Nouveau' });
+  app.update('mc-a', { actuel: '2', pause: true }, { type: 'statut', value: 'Pause' });
+  app.update('mc-a', { actions: [{ text: 'Livrer', done: true }] }, { type: 'step' });
+  assert.equal(app.state.journal.length, 0);
+  assert.equal(app.finishEdit(), true);
+  assert.deepEqual(app.state.journal[0].changes, [{ field: 'Valeur actuelle', before: '0', after: '2' }]);
+  assert.equal(app.state.journal.length, 1);
+  assert.equal(app.state.rows[0].objectif, 'Nouveau');
+  assert.equal(app.state.rows[0].pause, true);
+  assert.equal(app.state.rows[0].actions[0].done, true);
+  app.beginEdit('mc-a');
+  app.update('mc-a', { actuel: '3' });
+  app.update('mc-a', { actuel: '2', objectif: 'Autre objectif' });
+  app.finishEdit();
+  assert.equal(app.state.rows[0].objectif, 'Autre objectif');
+  assert.equal(app.state.journal.length, 1);
+  app.update('mc-a', { actuel: '' });
+  assert.deepEqual(app.state.journal[0].changes, [{ field: 'Valeur actuelle', before: '2', after: '' }]);
+  app.update('mc-a', { actuel: '' });
+  assert.equal(app.state.journal.length, 2);
+});
+
+test('Journal : une édition sans Valeur actuelle et les événements accessoires ne sont pas journalisés', () => {
+  const app = editableApp();
+  app.beginEdit('mc-a');
+  app.update('mc-a', { objectif: 'Nouveau', name: 'Renommé', titre: 'PROJETS', poids: 'vital' });
+  assert.equal(app.finishEdit(), true);
+  assert.equal(app.state.rows[0].name, 'Renommé');
+  for (const type of ['creation', 'statut', 'etape', 'deplacement', 'suppression', 'cosmos', 'donnees', 'proposition', 'note'])
+    app.logJ({ type, detail: 'Événement accessoire' });
+  assert.equal(app.state.journal.length, 0);
+  assert.deepEqual(app.journalFromRows(core.SEED), []);
+});
+
+test('Journal : les anciens exports conservent seulement les valeurs avant/après utiles', () => {
+  const events = [
+    { id: 'mixed', type: 'modification', detail: 'Objectif et étapes', changes: [
+      { field: 'Objectif', before: 'ancien', after: 'nouveau' },
+      { field: 'Valeur actuelle', before: '0', after: '1' },
+    ] },
+    { id: 'same', type: 'modification', changes: [{ field: 'Valeur actuelle', before: '1', after: '1' }] },
+    { id: 'bad', type: 'modification', changes: [{ field: 'Valeur actuelle', after: '2' }] },
+    { id: 'note', type: 'note', detail: 'note' },
+  ];
+  const app = editableApp();
+  app.setState({ journal: events, journalArchive: events });
+  const expected = [{ ...events[0], detail: 'Valeur actuelle modifiée', changes: [events[0].changes[1]] }];
+  assert.deepEqual(app.serialize().journal, expected);
+  assert.deepEqual(app.serialize().journalArchive, expected);
+  assert.deepEqual(valueChangeJournal(events), expected);
+  assert.equal(events[0].changes.length, 2);
+});
+
+test('Journal : un événement ignoré ne provoque ni requête de sauvegarde ni blocage de la relève', async t => {
+  const h = await setup(t);
+  h.local.journal = [{ id: 'old-note', type: 'note', detail: 'Ancien onglet' }];
+  h.sync.save(h.local); await h.sync.flush();
+  assert.equal(h.server.writes.length, 0);
+  h.server.state.miniCosmos[0].data.actuel = 'Valeur distante';
+  await h.poll();
+  assert.equal(h.local.rows[0].actuel, 'Valeur distante');
+  assert.deepEqual(h.local.journal, []);
+});
+
+test('Journal : une proposition IA sauvegarde tout mais journalise uniquement la valeur actuelle', () => {
   const app = editableApp([{ ...mini('mc-a'), actions: [{ text: 'Étape initiale', done: true }] }]);
   const after = 'Objectif détaillé '.repeat(20);
-  assert.equal(app.applyPatch(app.state.rows[0], { objectif: after, etapes: ['Nouvelle étape'], poids: 'vital' }, 'Proposition de Nova acceptée'), true);
+  assert.equal(app.applyPatch(app.state.rows[0], { objectif: after, actuel: after, etapes: ['Nouvelle étape'], poids: 'vital' }, 'Proposition de Nova acceptée'), true);
   const entry = app.state.journal[0];
   assert.equal(entry.miniId, 'mc-a');
-  assert.deepEqual(entry.changes.find(c => c.field === 'Objectif'), { field: 'Objectif', before: 'Objectif initial', after });
-  assert.deepEqual(entry.changes.find(c => c.field === 'Étapes'), { field: 'Étapes', before: 'Étape initiale', after: 'Étape initiale\nNouvelle étape' });
-  assert.equal(entry.changes.find(c => c.field === 'Poids').after, 'Vital');
+  assert.deepEqual(entry.changes, [{ field: 'Valeur actuelle', before: '', after }]);
+  assert.equal(app.state.rows[0].objectif, after);
+  assert.deepEqual(app.state.rows[0].actions.map(a => a.text), ['Étape initiale', 'Nouvelle étape']);
+  assert.equal(app.state.rows[0].poids, 'vital');
   assert.equal(app.state.rows[0].actions[0].done, true);
   assert.deepEqual(app.serialize().journal[0].changes, entry.changes);
-  assert.equal(app.applyPatch(app.state.rows[0], { objectif: after, etapes: ['Nouvelle étape'], poids: 'vital' }, 'Identique'), false);
+  assert.equal(app.applyPatch(app.state.rows[0], { objectif: after, actuel: after, etapes: ['Nouvelle étape'], poids: 'vital' }, 'Identique'), false);
   assert.equal(app.state.journal.length, 1);
 });
 
 test('Journal : le brouillon IA ne publie ses détails qu’à validation et peut être annulé', () => {
   const app = editableApp();
   app.beginEdit('mc-a');
-  app.applyPatch(app.state.editDraft, { objectif: 'Objectif proposé' }, 'Proposition IA appliquée');
+  app.applyPatch(app.state.editDraft, { objectif: 'Objectif proposé', actuel: 'Valeur proposée' }, 'Proposition IA appliquée');
   assert.equal(app.state.journal.length, 0);
   assert.equal(app.state.rows[0].objectif, 'Objectif initial');
   app.cancelMiniEdit();
   assert.equal(app.state.journal.length, 0);
   app.beginEdit('mc-a');
-  app.applyPatch(app.state.editDraft, { objectif: 'Objectif proposé' }, 'Proposition IA appliquée');
+  app.applyPatch(app.state.editDraft, { objectif: 'Objectif proposé', actuel: 'Valeur proposée' }, 'Proposition IA appliquée');
   assert.equal(app.finishEdit(), true);
-  const entry = app.state.journal.find(e => e.detail.startsWith('Proposition IA'));
-  assert.deepEqual(entry.changes, [{ field: 'Objectif', before: 'Objectif initial', after: 'Objectif proposé' }]);
+  const entry = app.state.journal[0];
+  assert.deepEqual(entry.changes, [{ field: 'Valeur actuelle', before: '', after: 'Valeur proposée' }]);
 });
 
 test('Journal : les détails avant/après traversent la sauvegarde et le rechargement', async t => {
   const h = await setup(t);
   const app = editableApp(h.local.rows);
-  app.applyPatch(app.state.rows[0], { objectif: 'Objectif synchronisé' }, 'Proposition IA appliquée');
+  app.applyPatch(app.state.rows[0], { objectif: 'Objectif synchronisé', actuel: 'Valeur synchronisée' }, 'Proposition IA appliquée');
   h.sync.save(app.state); await h.sync.flush();
   assert.deepEqual(h.server.writes[0].p_journal[0].changes, app.state.journal[0].changes);
   const loaded = await h.sync.load();
   assert.deepEqual(loaded.journal[0].changes, app.state.journal[0].changes);
 });
 
-test('Journal : supprimer une fiche conserve son activité, son rythme et son identifiant dans la suppression', t => {
+test('Journal : supprimer une fiche conserve son historique sans ajouter un événement', t => {
   const entries = [journalEntry('j-created'), journalEntry('j-closed', { type: 'statut', detail: 'Statut → Clôturé (date effective 2026-09-06)' }), journalEntry('j-step', { type: 'etape', detail: 'Étape cochée : Livrer' })];
   const app = journalApp(t, entries, [{ ...mini('mc-a'), createdAt: '2026-09-06', history: [{ t: '2026-09-06', type: 'created' }] }], { selected: 'mc-a', jPeriod: 7 });
   const before = journalMetrics(app), rhythm = app.activityVals().jStepsPerWeek;
   app.renderVals().doDeleteMini();
   assert.equal(app.state.rows.length, 0);
-  assert.deepEqual(journalMetrics(app), { ...before, supprimés: 1 });
+  assert.deepEqual(journalMetrics(app), before);
+  assert.deepEqual(app.state.journal, entries);
   assert.equal(before['créés'], 1); assert.equal(before['clôturés'], 1); assert.equal(before['étapes cochées'], 1);
   assert.equal(app.activityVals().jStepsPerWeek, rhythm);
   assert.equal(app.state.journal[0].miniId, 'mc-a');
@@ -762,12 +830,13 @@ test('Journal : les valeurs complètes et les textes des étapes sont affichable
   }
 });
 
-test('Journal : modifier une étape conserve son texte avant/après même si le nombre reste identique', () => {
+test('Journal : modifier une étape sauvegarde le texte sans événement', () => {
   const app = editableApp([{ ...mini('mc-a'), actions: [{ text: 'Avant', done: false }] }]);
   app.beginEdit('mc-a');
   app.update('mc-a', { actions: [{ text: 'Après', done: false }] });
   assert.equal(app.finishEdit(), true);
-  assert.deepEqual(app.state.journal[0].changes, [{ field: 'Étapes', before: 'Avant', after: 'Après' }]);
+  assert.equal(app.state.rows[0].actions[0].text, 'Après');
+  assert.equal(app.state.journal.length, 0);
 });
 
 test('Journal : le tri temporel et la pagination restent corrects avec des fuseaux et un retrait distant', t => {
@@ -787,10 +856,112 @@ test('Journal : Tout compte le journal vivant sans recomposer les événements d
   assert.equal(app.activityVals().jPeriodLabel, 'journal des 12 derniers mois');
 });
 
-test('Journal : les commandes de fiche et de détails utilisent des contrôles HTML natifs accessibles au clavier', () => {
-  const markup = html.slice(html.indexOf('<sc-if value="{{ isJournal }}"'), html.indexOf('<sc-if value="{{ isEcheances }}"'));
+test('Journal : les commandes de fiche et de détails utilisent des contrôles HTML natifs accessibles au clavier', t => {
+  const app = journalApp(t, [journalEntry('linked', { changes: [{field:'Objectif',before:'Avant',after:'Après'}] }), journalEntry('unlinked', {miniId:'removed'})], [mini('mc-a')]);
+  app.setState({view:'journal'});
+  const markup = renderToStaticMarkup(createElement(StaticRouter, {location:'/journal'}, createElement(CosmosContext.Provider, {value:{controller:app,values:app.renderVals()}}, createElement(JournalPage))));
   const miniButton = markup.match(/<button\b[^>]*class="journal-mini"[^>]*>/)[0];
-  assert.match(miniButton, /type="button"/); assert.match(miniButton, /aria-label="\{\{ e.openLabel \}\}"/);
-  assert.match(miniButton, /disabled="\{\{ e.unlinked \}\}"/);
+  assert.match(miniButton, /type="button"/); assert.match(miniButton, /aria-label="[^"]+"/);
+  assert.match(markup, /<button[^>]*class="journal-mini"[^>]*disabled=""/);
   assert.match(markup, /<details\b[^>]*class="journal-changes"/); assert.match(markup, /<summary\b/);
+});
+
+test('la relève synchronise les séparations et leur suppression sans écrire ni masquer une édition', async t => {
+  const h = await setup(t);
+  h.server.state.sections = [{ id: 'sec-a', name: 'Projets', etage: 'logos' }];
+  h.server.state.sectionDe = { TRAVAIL: 'sec-a' };
+  await h.poll();
+  assert.deepEqual(h.local.sections, h.server.state.sections);
+  assert.deepEqual(h.local.sectionDe, h.server.state.sectionDe);
+  h.sync.save(h.local); await h.sync.flush();
+  assert.equal(h.server.writes.length, 0);
+  h.server.state.sections = []; h.server.state.sectionDe = {};
+  await h.poll();
+  assert.deepEqual(h.local.sections, []); assert.deepEqual(h.local.sectionDe, {});
+  h.sync.save(h.local); await h.sync.flush();
+  assert.equal(h.server.writes.length, 0);
+});
+
+test('une séparation vide se sauvegarde seule et ne déclenche pas les données d’exemple au chargement', async t => {
+  const h = await setup(t, { ...snapshot([]), cosmos: [], etageDe: {}, etages: {} });
+  h.local = { ...h.local, sections: [{ id: 'sec-empty', name: 'Vide', etage: 'logos' }] };
+  h.sync.save(h.local); await h.sync.flush();
+  assert.equal(h.server.writes.length, 1);
+  assert.deepEqual(h.server.writes[0].p_sections, h.local.sections);
+  assert.deepEqual(h.server.writes[0].p_rows, []);
+  assert.deepEqual(h.server.writes[0].p_journal, []);
+  assert.equal((await h.sync.load()).empty, false);
+});
+
+test('création rapide : migration et validation gardent les champs vides seulement pour les fiches à compléter', () => {
+  const draft = { id: 'quick', cosmos: 'TRAVAIL', name: 'Idée', draft: true, pause: true, actions: [], createdAt: '2026-09-08', startAt: '', cloture: '', entropie: '', reponse: '' };
+  const loaded = core.migrate([draft])[0];
+  assert.equal(loaded.cloture, ''); assert.equal(loaded.startAt, '');
+  assert.equal(core.startOf(loaded), null);
+  assert.equal(core.validateMini(loaded), ''); assert.equal(core.statutOf(loaded), 'Pause');
+  assert.equal(core.echeanceEffective(loaded).iso, null);
+  assert.equal(core.isMandat(loaded.cloture), false);
+  assert.ok(core.validateMini({ ...loaded, draft: false }));
+  assert.ok(core.validateMini({ ...loaded, pause: false }));
+  assert.ok(core.validateMini({ ...loaded, startAt: 'invalide' }));
+  assert.ok(core.validateMini({ ...loaded, startAt: '2026-02-30' }));
+  assert.ok(core.validateMini({ ...loaded, cloture: 'invalide' }));
+  assert.ok(core.validateMini({ ...loaded, startAt: '2026-09-08', cloture: '2026-09-07' }));
+  assert.ok(core.isMandat(core.migrate([{ ...draft, draft: false }])[0].cloture), 'les anciennes migrations restent compatibles');
+});
+
+test('création rapide : la relève et les exports ne créent ni mandat ni événement', async t => {
+  const h = await setup(t);
+  const draft = { ...mini('quick'), draft: true, pause: true, startAt: '', cloture: '', createdAt: '2026-09-08', entropie: '', reponse: '' };
+  h.server.state.miniCosmos.push({ id: draft.id, data: draft, position: 2 });
+  await h.poll();
+  assert.equal(h.local.rows.at(-1).cloture, '');
+  h.sync.save(h.local); await h.sync.flush(); assert.equal(h.server.writes.length, 0);
+  const app = editableApp(h.local.rows);
+  const exported = app.serialize();
+  assert.equal(exported.miniCosmos.at(-1).draft, true);
+  assert.equal(core.migrate(JSON.parse(JSON.stringify(exported)).miniCosmos).at(-1).cloture, '');
+  app.setState({ view: 'echeances' });
+  assert.ok(!app.echeancesVals().echeances.some(x => x.id === 'quick'));
+});
+
+test('création rapide : suppression du parent et duplication gardent un état cohérent', () => {
+  const app = editableApp();
+  app.setQuickName('TRAVAIL', 'À préciser'); assert.equal(app.quickCreate('TRAVAIL'), true);
+  const id = app.state.rows.at(-1).id;
+  app.setState({ selected: id }); app.renderVals().detail.duplicate();
+  const copy = app.state.rows.at(-1);
+  assert.equal(copy.draft, true); assert.equal(copy.pause, true); assert.equal(copy.cloture, ''); assert.equal(copy.startAt, '');
+  app.cancelMiniEdit();
+  app.setState({ selected: id });
+  app.update(id, { sas: 'Essai prévu', sasUntil: '2026-10-08' });
+  app.renderVals().detail.duplicate();
+  assert.equal(app.state.editDraft.sasUntil, '2026-10-08', 'une date de test déjà choisie est conservée');
+  app.cancelMiniEdit(); app.setQuickName('TRAVAIL', 'Saisie non validée');
+  app.setState({ cosmos: [], rows: [] });
+  assert.deepEqual(app.state.quickDrafts, {});
+  assert.equal(app.quickCreate('TRAVAIL'), false);
+  assert.equal(app.state.rows.length, 0);
+});
+
+test('les titres des espaces se synchronisent seuls, puis se récupèrent sans réécriture au rafraîchissement', async t => {
+  const h = await setup(t);
+  h.local = { ...h.local, titresEtages: { logos: 'A'.repeat(300) } };
+  h.sync.save(h.local);
+  await h.sync.flush();
+  assert.equal(h.server.writes.length, 1);
+  const payload = h.server.writes[0];
+  assert.deepEqual(payload.p_titres_etages, { logos: 'A'.repeat(300) });
+  assert.deepEqual(payload.p_rows, []);
+  assert.deepEqual(payload.p_journal, []);
+  assert.equal(payload.p_etages, null, 'les repères existants restent distincts des titres');
+  assert.deepEqual(payload.p_expected.titresEtages, {});
+  h.server.state.titresEtages = { logos: 'B'.repeat(300), ethos: 'MES VERTUS' };
+  await h.poll();
+  assert.deepEqual(h.local.titresEtages, h.server.state.titresEtages);
+  h.sync.save(h.local); await h.sync.flush();
+  assert.equal(h.server.writes.length, 1);
+  h.server.state.titresEtages = {};
+  await h.poll();
+  assert.deepEqual(h.local.titresEtages, {});
 });
